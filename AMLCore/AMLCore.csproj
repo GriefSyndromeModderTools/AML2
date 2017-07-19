@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{28E9ED24-3290-4302-946E-5FFAC448659E}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>AMLCore</RootNamespace>
+    <AssemblyName>AMLCore</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>bf7f177b</NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Costura">
+      <HintPath>..\packages\Costura.Fody.1.6.2\lib\portable-net+sl+win+wpa+wp\Costura.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="zlib.net">
+      <HintPath>..\packages\zlib.net.1.0.4.0\lib\zlib.net.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Injection\Engine\DirectX\Direct3DEntry.cs" />
+    <Compile Include="Injection\Engine\DirectX\Direct3DHelper.cs" />
+    <Compile Include="Injection\Game\SaveData\GSDataFile.cs" />
+    <Compile Include="Injection\Game\SaveData\SaveDataEntry.cs" />
+    <Compile Include="Injection\Game\SaveData\SaveDataHelper.cs" />
+    <Compile Include="Injection\Native\CalliGenerator.cs" />
+    <Compile Include="Internal\ArgumentHelper.cs" />
+    <Compile Include="Internal\OnlineUpdateCheck.cs" />
+    <Compile Include="Misc\IniFile.cs" />
+    <Compile Include="Injection\Engine\File\CachedModificationFileProxyFactory.cs" />
+    <Compile Include="Injection\Engine\File\FileEntry.cs" />
+    <Compile Include="Injection\Engine\File\FileReplacement.cs" />
+    <Compile Include="Injection\Engine\File\IFileProxy.cs" />
+    <Compile Include="Injection\Engine\File\SimpleFileProxy.cs" />
+    <Compile Include="Injection\Engine\Input\FloatingPointFlags.cs" />
+    <Compile Include="Injection\Engine\Input\IInputHandler.cs" />
+    <Compile Include="Injection\Engine\Input\InputEntry.cs" />
+    <Compile Include="Injection\Engine\Input\InputManager.cs" />
+    <Compile Include="Injection\Engine\Input\KeyConfigRedirect.cs" />
+    <Compile Include="Internal\DebugPoint.cs" />
+    <Compile Include="Internal\StackTraceHelper.cs" />
+    <Compile Include="Internal\TestInjection.cs" />
+    <Compile Include="Misc\WindowsHelper.cs" />
+    <Compile Include="Plugins\IEntryPoint.cs" />
+    <Compile Include="Injection\Native\AbstractNativeInjection.cs" />
+    <Compile Include="Injection\Native\AddressHelper.cs" />
+    <Compile Include="Injection\Native\AssemblyCodeStorage.cs" />
+    <Compile Include="Injection\Native\CodeInjection.cs" />
+    <Compile Include="Injection\Native\CodeModification.cs" />
+    <Compile Include="Injection\Native\FunctionPointerInjection.cs" />
+    <Compile Include="Injection\Native\NativeEntrance.cs" />
+    <Compile Include="Injection\Native\ReadWriteProtect.cs" />
+    <Compile Include="Injection\Native\SimpleLogInjection.cs" />
+    <Compile Include="Internal\CoreLoggers.cs" />
+    <Compile Include="Internal\InjectedArguments.cs" />
+    <Compile Include="Internal\LauncherArguments.cs" />
+    <Compile Include="Internal\Natives.cs" />
+    <Compile Include="Plugins\IPluginDescription.cs" />
+    <Compile Include="Logging\Logger.cs" />
+    <Compile Include="Misc\PathHelper.cs" />
+    <Compile Include="Internal\Startup.cs" />
+    <Compile Include="Plugins\IPluginOption.cs" />
+    <Compile Include="Plugins\LauncherOptionForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Plugins\LauncherOptionForm.Designer.cs">
+      <DependentUpon>LauncherOptionForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Plugins\LaunchMode.cs" />
+    <Compile Include="Plugins\PluginContainer.cs" />
+    <Compile Include="Plugins\PluginLoader.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Gui\" />
+    <Folder Include="Injection\Engine\Script\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="FodyWeavers.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Plugins\LauncherOptionForm.resx">
+      <DependentUpon>LauncherOptionForm.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="..\packages\Fody.2.0.0\build\portable-net+sl+win+wpa+wp\Fody.targets" Condition="Exists('..\packages\Fody.2.0.0\build\portable-net+sl+win+wpa+wp\Fody.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>这台计算机上缺少此项目引用的 NuGet 程序包。启用“NuGet 程序包还原”可下载这些程序包。有关详细信息，请参阅 http://go.microsoft.com/fwlink/?LinkID=322105。缺少的文件是 {0}。</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Fody.2.0.0\build\portable-net+sl+win+wpa+wp\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Fody.2.0.0\build\portable-net+sl+win+wpa+wp\Fody.targets'))" />
+    <Error Condition="!Exists('..\packages\Costura.Fody.1.6.2\build\portable-net+sl+win+wpa+wp\Costura.Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Costura.Fody.1.6.2\build\portable-net+sl+win+wpa+wp\Costura.Fody.targets'))" />
+  </Target>
+  <Import Project="..\packages\Costura.Fody.1.6.2\build\portable-net+sl+win+wpa+wp\Costura.Fody.targets" Condition="Exists('..\packages\Costura.Fody.1.6.2\build\portable-net+sl+win+wpa+wp\Costura.Fody.targets')" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
