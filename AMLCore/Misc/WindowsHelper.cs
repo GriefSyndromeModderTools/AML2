@@ -18,7 +18,7 @@ namespace AMLCore.Misc
 
         static WindowsHelper()
         {
-            if (!Startup.IsLauncher)
+            if (Startup.Mode == StartupMode.Injected)
             {
                 _WindowsThread = new Thread(WindowsThreadStart);
                 _WindowsThread.SetApartmentState(ApartmentState.STA);
@@ -35,7 +35,7 @@ namespace AMLCore.Misc
         
         private static void WindowsThreadStart()
         {
-            if (Startup.IsLauncher)
+            if (Startup.Mode != StartupMode.Injected)
             {
                 CoreLoggers.Main.Error("internal error: running windows thread in launcher");
             }

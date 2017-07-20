@@ -15,7 +15,9 @@ namespace AMLCore.Logging
 
         private static string GetFilenameFromProcess()
         {
-            return Startup.IsLauncher ? "Launcher" : "Game";
+            return Startup.Mode == StartupMode.Launcher ||
+                Startup.Mode == StartupMode.LauncherRestart ?
+                "Launcher" : "Game";
         }
 
         private static TextWriter OpenWriter(string path)

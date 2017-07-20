@@ -17,11 +17,15 @@ namespace Launcher
 {
     static class Program
     {
-        private static readonly Logger _Logger = new Logger("Launcher");
+        private static Logger _Logger;
 
         internal static void Run(string[] cliArgs)
         {
-            Startup.Initialize();
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            Startup.Initialize(cliArgs);
+            _Logger = new Logger("Launcher");
             _Logger.Info("launcher starts with arguments: {0}", String.Join(" ", cliArgs));
 
             RunInternal(cliArgs);
@@ -36,8 +40,6 @@ namespace Launcher
 
             if (args.RequiresGui)
             {
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
                 bool dialogReturn = false;
                 bool allowInjection = HasOnlineProcessStarted();
                 WindowsHelper.RunAndWait(() => {

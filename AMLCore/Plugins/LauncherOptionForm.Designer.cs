@@ -72,7 +72,7 @@
             this.listView1.HideSelection = false;
             this.listView1.Location = new System.Drawing.Point(3, 3);
             this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(498, 229);
+            this.listView1.Size = new System.Drawing.Size(524, 244);
             this.listView1.TabIndex = 2;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;
@@ -94,7 +94,6 @@
             this.tabControl1.SelectedIndex = 0;
             this.tabControl1.Size = new System.Drawing.Size(538, 276);
             this.tabControl1.TabIndex = 3;
-            this.tabControl1.Visible = false;
             // 
             // tabPage1
             // 
@@ -112,7 +111,7 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(504, 235);
+            this.tabPage2.Size = new System.Drawing.Size(530, 250);
             this.tabPage2.TabIndex = 0;
             this.tabPage2.Text = "组件列表";
             this.tabPage2.UseVisualStyleBackColor = true;
