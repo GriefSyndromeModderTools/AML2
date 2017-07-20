@@ -31,10 +31,6 @@ namespace AMLCore.Internal
             else
             {
                 Mode = StartupMode.Launcher;
-                if (args.Length == 0)
-                {
-                    OnlineUpdateCheck.Check();
-                }
             }
         }
 

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Windows.Forms;
 
 namespace AMLCore.Plugins
 {
@@ -97,6 +98,11 @@ namespace AMLCore.Plugins
             get { return _AssemblyName; }
         }
 
+        public string DisplayName
+        {
+            get { return _Desc?.DisplayName ?? AssemblyName; }
+        }
+
         public bool HasOptions
         {
             get { return _Option != null; }
@@ -134,6 +140,46 @@ namespace AMLCore.Plugins
                 CoreLoggers.Loader.Error("exception in adding option to {0}: {1}",
                     _AssemblyName, e.ToString());
             }
+        }
+
+        public void ResetOption()
+        {
+            try
+            {
+                _Option?.ResetOptions();
+            }
+            catch (Exception e)
+            {
+                CoreLoggers.Loader.Error("exception in resetting option to {0}: {1}",
+                    _AssemblyName, e.ToString());
+            }
+        }
+
+        public Control GetConfigControl()
+        {
+            if (_Option == null)
+            {
+                return null;
+            }
+            try
+            {
+                var x = _Option.GetConfigControl();
+                if (x != null)
+                {
+                    return x;
+                }
+                var obj = _Option.GetPropertyWindowObject();
+                if (obj != null)
+                {
+                    return new PropertyGrid() { SelectedObject = obj };
+                }
+            }
+            catch (Exception e)
+            {
+                CoreLoggers.Loader.Error("exception in GetConfigControl for {0}: {1}",
+                    _AssemblyName, e.ToString());
+            }
+            return null;
         }
 
         private void LogEntry(string phase, object obj)

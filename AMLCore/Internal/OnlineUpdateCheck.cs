@@ -54,6 +54,8 @@ namespace AMLCore.Internal
         private static string _Version;
         private static DownloadTask[] _Tasks;
 
+        internal static string LatestVersion { get => _Version; }
+
         private static void CheckGithub()
         {
             var url = @"https://api.github.com/repos/GriefSyndromeModderTools/AML2/releases/latest";
@@ -105,6 +107,16 @@ namespace AMLCore.Internal
                 CoreLoggers.Update.Error("version check failed, ignoring");
                 return false;
             }
+        }
+
+        public static bool CheckOnly()
+        {
+            if (Startup.Mode != StartupMode.Launcher)
+            {
+                CoreLoggers.Update.Error("cannot check update in game");
+                return false;
+            }
+            return CheckAll();
         }
 
         public static void Check()

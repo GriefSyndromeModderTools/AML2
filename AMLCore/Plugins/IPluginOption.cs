@@ -8,6 +8,7 @@ namespace AMLCore.Plugins
 {
     public interface IPluginOption
     {
+        void ResetOptions();
         void GetOptions(Action<string, string> list);
         void AddOption(string key, string value);
         object GetPropertyWindowObject();

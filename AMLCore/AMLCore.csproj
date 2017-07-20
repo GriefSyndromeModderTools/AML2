@@ -60,6 +60,7 @@
     <Compile Include="Injection\Game\SaveData\SaveDataHelper.cs" />
     <Compile Include="Injection\Native\CalliGenerator.cs" />
     <Compile Include="Internal\ArgumentHelper.cs" />
+    <Compile Include="Internal\CommonArguments.cs" />
     <Compile Include="Internal\OnlineUpdateCheck.cs" />
     <Compile Include="Internal\UpdateWaitingWindow.cs">
       <SubType>Form</SubType>

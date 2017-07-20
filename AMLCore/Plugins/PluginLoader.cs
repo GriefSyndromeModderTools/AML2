@@ -88,6 +88,7 @@ namespace AMLCore.Plugins
                         p, e.ToString());
                 }
             }
+            args.SetPluginOptions(_Plugins.Values.ToArray());
             RunEntryPoints();
             CoreLoggers.Loader.Info("finished");
         }
