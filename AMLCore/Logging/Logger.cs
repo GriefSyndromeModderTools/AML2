@@ -15,9 +15,19 @@ namespace AMLCore.Logging
 
         private static string GetFilenameFromProcess()
         {
-            return Startup.Mode == StartupMode.Launcher ||
-                Startup.Mode == StartupMode.LauncherRestart ?
-                "Launcher" : "Game";
+            switch (Startup.Mode)
+            {
+                case StartupMode.Launcher:
+                case StartupMode.LauncherRestart:
+                    return "Launcher";
+                case StartupMode.Injected:
+                    return "Game";
+                case StartupMode.Standalone:
+                    return "Standalone";
+                case StartupMode.Unknown:
+                default:
+                    return "Unknown";
+            }
         }
 
         private static TextWriter OpenWriter(string path)
@@ -29,7 +39,7 @@ namespace AMLCore.Logging
             }
             catch (IOException)
             {
-                var newPath = Path.ChangeExtension(path, null) + "_" + DateTime.Now.ToString() + ".log";
+                var newPath = Path.ChangeExtension(path, null) + "_" + DateTime.Now.ToString("yyMMddHHmmssfff") + ".log";
                 try
                 {
                     file = File.Open(newPath, FileMode.Append, FileAccess.Write, FileShare.Read);
@@ -46,6 +56,7 @@ namespace AMLCore.Logging
         {
             var filename = GetFilenameFromProcess();
             TextWriter w;
+            bool printInitial = false;
             lock (_WriterCache)
             {
                 var fullPath = PathHelper.GetPath("aml/log/" + filename);
@@ -54,28 +65,35 @@ namespace AMLCore.Logging
                 {
                     w = OpenWriter(fullPath);
                     _WriterCache.Add(fullPath, w);
-
-                    w.WriteLine();
-                    w.WriteLine("{0} [I][Core]{1}",
-                        DateTime.Now.ToString(),
-                        "process start");
-                    w.Flush();
+                    printInitial = true;
                 }
             }
             Writer = w;
             Name = loggerName;
+            if (printInitial)
+            {
+                w.WriteLine();
+                Print("I", "Core", "process start");
+            }
         }
 
         public TextWriter Writer { get; private set; }
         public string Name { get; private set; }
 
-        public void Info(string text)
+        private void Print(string type, string module, string text)
         {
-            Writer.WriteLine("{0} [I][{1}]{2}",
-                DateTime.Now.ToString(),
-                Name,
+            Writer.WriteLine("{0} [{1}|{2}|{3}] {4}",
+                DateTime.Now.ToString("yy-MM-dd HH:mm:ss.fff"),
+                type,
+                ThreadHelper.GetCurrentThreadName(),
+                module,
                 text);
             Writer.Flush();
+        }
+
+        public void Info(string text)
+        {
+            Print("I", Name, text);
         }
 
         public void Info(string fmt, params object[] args)
@@ -85,11 +103,7 @@ namespace AMLCore.Logging
 
         public void Error(string text)
         {
-            Writer.WriteLine("{0} [E][{1}]{2}",
-                DateTime.Now.ToString(),
-                Name,
-                text);
-            Writer.Flush();
+            Print("E", Name, text);
         }
 
         public void Error(string fmt, params object[] args)

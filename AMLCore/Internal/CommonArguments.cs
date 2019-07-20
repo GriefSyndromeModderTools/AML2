@@ -131,11 +131,11 @@ namespace AMLCore.Internal
 
         private void ParseArgument(string arg)
         {
-            if (arg.Contains('"') || arg.Contains('\\'))
-            {
-                CoreLoggers.Loader.Error("invalid launcher argument {0}", arg);
-                return;
-            }
+            //if (arg.Contains('"') || arg.Contains('\\'))
+            //{
+            //    CoreLoggers.Loader.Error("invalid launcher argument {0}", arg);
+            //    return;
+            //}
             if (!arg.Contains('='))
             {
                 ParseKeyValuePair(arg, null);

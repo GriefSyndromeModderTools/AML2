@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace AMLInjected
 {
@@ -13,11 +14,12 @@ namespace AMLInjected
         {
             try
             {
-                Startup.Initialize(data);
+                Startup.InitializeInjected(data);
                 return 0;
             }
-            catch
+            catch (Exception e)
             {
+                MessageBox.Show(e.ToString());
                 return 1;
             }
         }

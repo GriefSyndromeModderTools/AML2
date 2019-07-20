@@ -19,13 +19,13 @@ namespace AMLCore.Injection.Engine.Input
 
         public static void Redirect()
         {
-            if (_FileInjected)
-            {
-                throw new InvalidOperationException("try to redirect input after initialization");
-            }
             if (Redirected)
             {
                 return;
+            }
+            if (_FileInjected)
+            {
+                throw new InvalidOperationException("try to redirect input after initialization");
             }
             Redirected = true;
             CoreLoggers.Input.Info("key redirected requested by {0}",

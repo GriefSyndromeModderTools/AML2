@@ -37,7 +37,17 @@ namespace AMLCore.Plugins
             button4.Enabled = allowLoad;
             
             this.InitPresetList();
-            this.tabControl1.SelectTab(this.tabPage2);
+
+            DisableUnfinished();
+            this.tabControl1.SelectTab(0); //TODO
+        }
+
+        private void DisableUnfinished()
+        {
+            //button3.Enabled = false;
+            button4.Enabled = false;
+            tabControl1.TabPages.RemoveAt(1);
+            tabControl1.TabPages.RemoveAt(0);
         }
 
         public PluginContainer[] Options { get; private set; }

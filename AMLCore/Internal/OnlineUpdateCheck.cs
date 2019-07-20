@@ -195,9 +195,8 @@ namespace AMLCore.Internal
             }
         }
 
-        internal static void DoRestart(string[] args)
+        internal static void DoRestart()
         {
-            WindowsHelper.MessageBox("re");
             Thread.Sleep(500);
             try
             {

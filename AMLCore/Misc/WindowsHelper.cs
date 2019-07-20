@@ -20,10 +20,13 @@ namespace AMLCore.Misc
         {
             if (Startup.Mode == StartupMode.Injected)
             {
-                _WindowsThread = new Thread(WindowsThreadStart);
-                _WindowsThread.SetApartmentState(ApartmentState.STA);
-                _WindowsThread.Start();
+                _WindowsThread = ThreadHelper.StartThread(WindowsThreadStart);
             }
+        }
+
+        //run cctor before any windows starts to solve "invalid window class name"
+        public static void Init()
+        {
         }
 
         public static void MessageBox(string text)
@@ -33,6 +36,8 @@ namespace AMLCore.Misc
 
         private static volatile bool _Stopped;
         
+        [STAThread]
+        [AMLThread(Name = "WinMsg")]
         private static void WindowsThreadStart()
         {
             if (Startup.Mode != StartupMode.Injected)
@@ -45,15 +50,22 @@ namespace AMLCore.Misc
             _Stopped = false;
             while (!_Stopped)
             {
-                while (_Queue.TryDequeue(out var a))
+                try
                 {
+                    while (_Queue.TryDequeue(out var a))
+                    {
+                        DoEvents();
+                        a();
+                    }
+                    Thread.Sleep(10);
                     DoEvents();
-                    a();
                 }
-                Thread.Sleep(10);
-                DoEvents();
+                catch (Exception e)
+                {
+                    CoreLoggers.Main.Error("exception in windows callback: {0}", e.ToString());
+                }
             }
-            CoreLoggers.Main.Info("windows thread exits normally");
+            CoreLoggers.Main.Info("windows thread exits");
         }
 
         public static void StopThread()
@@ -63,11 +75,18 @@ namespace AMLCore.Misc
                 return;
             }
             _Stopped = true;
-            Thread.Sleep(250);
-            if (_WindowsThread.IsAlive)
+            if (Thread.CurrentThread == _WindowsThread)
             {
-                CoreLoggers.Main.Info("abort windows thread on demand");
-                _WindowsThread.Abort();
+                throw new Exception("abort thread");
+            }
+            else
+            {
+                Thread.Sleep(250);
+                if (_WindowsThread.IsAlive)
+                {
+                    CoreLoggers.Main.Info("abort windows thread on demand");
+                    _WindowsThread.Abort();
+                }
             }
         }
 

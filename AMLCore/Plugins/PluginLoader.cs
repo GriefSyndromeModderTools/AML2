@@ -74,7 +74,6 @@ namespace AMLCore.Plugins
 
         public static void Load(InjectedArguments args)
         {
-            DebugPoint.Trigger("LoadPlugins");
             InitCorePlugin();
             foreach (var p in args.GetPluginFiles())
             {
@@ -95,7 +94,6 @@ namespace AMLCore.Plugins
 
         public static PluginContainer[] LoadInLauncher(string[] plugins)
         {
-            DebugPoint.Trigger("LoadPlugins");
             foreach (var p in plugins)
             {
                 try

@@ -14,6 +14,7 @@ namespace AMLCore.Injection.Native
         {
             EAX,
             EBP,
+            ECX,
         }
 
         public class NativeEnvironment
@@ -30,11 +31,6 @@ namespace AMLCore.Injection.Native
             internal IntPtr GetRegister(Register r)
             {
                 return (IntPtr)Marshal.ReadInt32(_Data, _Parent._RegisterIndex[(int)r] * 4);
-            }
-
-            internal void SetRegister(Register r, IntPtr val)
-            {
-                throw new InvalidOperationException();
             }
 
             public void SetReturnValue(IntPtr val)
@@ -83,7 +79,7 @@ namespace AMLCore.Injection.Native
             var ir = (int)r;
             if (_RegisterIndex[ir] != -1)
             {
-                throw new ArgumentException("register already added");
+                return;
             }
             _RegisterIndex[ir] = _Count++;
         }
@@ -98,6 +94,7 @@ namespace AMLCore.Injection.Native
             var index = NativeEntrance.NextIndex();
             NativeEntrance.Register(index, WrappedNativeCallback);
             /*
+             * push ecx
              * push eax
              * 
              * sub esp, 4/8/12/...
@@ -116,8 +113,14 @@ namespace AMLCore.Injection.Native
              * add esp, 4/8/12/...
              * 
              * pop eax
+             * pop ecx
              * 
              */
+            
+            //push ecx
+            //Sometimes the native function pointer returned by .NET modifies
+            //ECX register. To avoid this, we protect ecx ourselves.
+            bw.Write((byte)0x51);
 
             if (_ReturnValueIndex == -1)
             {
@@ -149,6 +152,15 @@ namespace AMLCore.Injection.Native
                 var offset = _RegisterIndex[(int)Register.EBP] * 4;
                 bw.Write((byte)0x89);
                 bw.Write((byte)0x6C);
+                bw.Write((byte)0x24);
+                bw.Write((byte)offset);
+            }
+            if (_RegisterIndex[(int)Register.ECX] != -1)
+            {
+                //mov [esp+?], eax
+                var offset = _RegisterIndex[(int)Register.ECX] * 4;
+                bw.Write((byte)0x89);
+                bw.Write((byte)0x4C);
                 bw.Write((byte)0x24);
                 bw.Write((byte)offset);
             }
@@ -190,6 +202,9 @@ namespace AMLCore.Injection.Native
                 //pop eax
                 bw.Write((byte)0x58);
             }
+
+            //pop ecx
+            bw.Write((byte)0x59);
         }
 
         private void WrappedNativeCallback(IntPtr env)

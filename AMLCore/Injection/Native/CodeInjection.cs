@@ -10,7 +10,17 @@ namespace AMLCore.Injection.Native
 {
     public abstract class CodeInjection : AbstractNativeInjection
     {
+        public CodeInjection(uint offset, int len)
+        {
+            Init(AddressHelper.Code(offset), len);
+        }
+
         public CodeInjection(IntPtr addr, int len)
+        {
+            Init(addr, len);
+        }
+
+        private void Init(IntPtr addr, int len)
         {
             if (len < 6)
             {
@@ -22,6 +32,7 @@ namespace AMLCore.Injection.Native
 
             this.AddRegisterRead(Register.EAX);
             this.AddRegisterRead(Register.EBP);
+            this.AddRegisterRead(Register.ECX);
 
             using (new ReadWriteProtect(addr, len))
             {
@@ -59,6 +70,12 @@ namespace AMLCore.Injection.Native
                 AssemblyCodeStorage.WriteIndirect(pJumpForward, pCode);
                 AssemblyCodeStorage.WriteIndirect(pJumpBackward, IntPtr.Add(addr, len));
             }
+        }
+
+        //TODO make a better api for other registers
+        public IntPtr GetECX(NativeEnvironment env)
+        {
+            return env.GetRegister(Register.ECX);
         }
     }
 }

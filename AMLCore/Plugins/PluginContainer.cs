@@ -60,7 +60,9 @@ namespace AMLCore.Plugins
                     t => t != null &&
                         t.IsClass &&
                         !t.IsAbstract &&
-                        b.IsAssignableFrom(t));
+                        //b.IsAssignableFrom(t)
+                        t.GetInterface(b.FullName) != null
+                        );
         }
 
         private static T[] CreateInstances<T>(IEnumerable<Type> types) where T : class
@@ -71,7 +73,7 @@ namespace AMLCore.Plugins
                 try
                 {
                     var obj = Activator.CreateInstance(t);
-                    var cobj = obj as T;
+                    var cobj = (T)obj;
                     if (cobj != null)
                     {
                         ret.Add(cobj);

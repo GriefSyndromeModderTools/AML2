@@ -13,21 +13,15 @@ namespace AMLCore.Internal
 {
     public class LauncherArguments : CommonArguments
     {
-        public bool RequiresGui { get; private set; }
-        public string ProcessName { get; private set; }
-        public int WaitLength { get; private set; }
-        public string DllName { get; private set; }
-        public string ExportName { get; private set; }
-        public bool WaitProcess { get; private set; }
+        public bool RequiresGui { get; private set; } = true;
+        public string ProcessName { get; private set; } = "griefsyndrome.exe";
+        public int WaitLength { get; private set; } = 250;
+        public string DllName { get; private set; } = "AMLInjected.dll";
+        public string ExportName { get; private set; } = "LoadCore";
+        public bool WaitProcess { get; private set; } = false;
 
         private LauncherArguments()
         {
-            RequiresGui = true;
-            ProcessName = "griefsyndrome.exe";
-            WaitLength = 250;
-            DllName = "AMLInjected.dll";
-            ExportName = "LoadCore";
-            WaitProcess = false;
         }
 
         #region Parse
@@ -53,6 +47,17 @@ namespace AMLCore.Internal
                     RequiresGui = false;
                 }
             }
+            else if (key == "WaitProcess")
+            {
+                if (value != null || WaitProcess)
+                {
+                    CoreLoggers.Loader.Error("invalid WaitProcess argument");
+                }
+                else
+                {
+                    WaitProcess = true;
+                }
+            }
             else
             {
                 base.ParseKeyValuePair(key, value);
@@ -72,8 +77,11 @@ namespace AMLCore.Internal
                 bw.Write(Options.Count);
                 foreach (var o in Options)
                 {
-                    bw.Write(o.Item1);
-                    bw.Write(o.Item2);
+                    if (o.Item1 != null && o.Item2 != null)
+                    {
+                        bw.Write(o.Item1);
+                        bw.Write(o.Item2);
+                    }
                 }
                 ms.Position = 0;
                 ms.Write(BitConverter.GetBytes(ms.Length - 4), 0, 4);
@@ -109,7 +117,14 @@ namespace AMLCore.Internal
 
             CoreLoggers.Loader.Info("config finished from option form");
             GetPluginOptions(dialog.Options);
-
+            switch (dialog.LauncherMode)
+            {
+                case LaunchMode.NewGame:
+                    break;
+                case LaunchMode.NewOnline:
+                    ProcessName = "griefsyndrome_online.exe";
+                    break;
+            }
             return true;
         }
     }

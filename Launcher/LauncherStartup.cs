@@ -13,8 +13,15 @@ namespace Launcher
         [STAThread]
         internal static void Main(string[] args)
         {
-            SetupDependencyDllLocation();
-            Program.Run(args);
+            try
+            {
+                SetupDependencyDllLocation();
+                Program.Run(args);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.ToString());
+            }
         }
 
         private static void SetupDependencyDllLocation()
@@ -22,26 +29,39 @@ namespace Launcher
             AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(LoadCoreDll);
         }
 
+        private static readonly Dictionary<string, Assembly> _LoadedAssemblies =
+            new Dictionary<string, Assembly>();
+
         private static Assembly LoadCoreDll(object sender, ResolveEventArgs args)
         {
-            string folderPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string assemblyPath = Path.Combine(folderPath,
-                "aml/core", new AssemblyName(args.Name).Name + ".dll");
-            if (!File.Exists(assemblyPath))
+            lock (_LoadedAssemblies)
             {
-                return null;
-            }
+                if (_LoadedAssemblies.TryGetValue(args.Name, out var ret))
+                {
+                    return ret;
+                }
 
-            try
-            {
-                //Read the bytes instead of directly load from file.
-                //This allows update functions to be implemented in the core dll.
-                byte[] data = File.ReadAllBytes(assemblyPath);
-                return Assembly.Load(data);
-            }
-            catch
-            {
-                return null;
+                string folderPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                string assemblyPath = Path.Combine(folderPath,
+                    "aml/core", new AssemblyName(args.Name).Name + ".dll");
+                if (!File.Exists(assemblyPath))
+                {
+                    return null;
+                }
+
+                try
+                {
+                    //Read the bytes instead of directly load from file.
+                    //This allows update functions to be implemented in the core dll.
+                    byte[] data = File.ReadAllBytes(assemblyPath);
+                    ret = Assembly.Load(data);
+                    _LoadedAssemblies.Add(args.Name, ret);
+                    return ret;
+                }
+                catch
+                {
+                    return null;
+                }
             }
         }
     }

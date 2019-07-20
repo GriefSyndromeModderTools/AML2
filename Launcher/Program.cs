@@ -23,8 +23,8 @@ namespace Launcher
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-
-            Startup.Initialize(cliArgs);
+            
+            Startup.InitializeLauncher(cliArgs);
             _Logger = new Logger("Launcher");
             _Logger.Info("launcher starts with arguments: {0}", String.Join(" ", cliArgs));
 
@@ -181,13 +181,13 @@ namespace Launcher
             }
 
             Natives.ResumeThread(pInfo.hThread);
+            _Logger.Info("new process started");
 
             if (args.WaitProcess)
             {
                 _Logger.Info("waiting for the game process");
                 Natives.WaitForSingleObject(pInfo.hProcess, Natives.INFINITE);
             }
-            _Logger.Info("new process started");
         }
 
         private static byte[] StringToByteArray(string str)
