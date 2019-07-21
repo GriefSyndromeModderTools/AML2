@@ -172,6 +172,7 @@ namespace AMLCore.Injection.Game.Scene
 
     public class SceneEnvironment
     {
+        //TODO Resources can be shared across Act. We may need to keep the created resource cache.
         private readonly Dictionary<string, SceneElement> _cachedElement = new Dictionary<string, SceneElement>();
         private readonly Dictionary<string, Resource> _cachedResource = new Dictionary<string, Resource>();
         private readonly Dictionary<string, Resource> _createdResource = new Dictionary<string, Resource>();

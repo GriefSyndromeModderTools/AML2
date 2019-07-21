@@ -23,6 +23,12 @@ namespace AMLCore.Injection.Engine.Script
             public SquirrelHelper.SQObjectType Type;
             public SQObjectValue Value;
 
+            public static readonly SQObject Null = new SQObject
+            {
+                Type = SquirrelHelper.SQObjectType.OT_NULL,
+                Value = new SQObjectValue { Integer = 0 },
+            };
+
             public override string ToString()
             {
                 switch (Type)

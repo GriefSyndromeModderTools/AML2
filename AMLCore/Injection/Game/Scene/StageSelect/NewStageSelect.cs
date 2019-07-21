@@ -1,6 +1,8 @@
-﻿using AMLCore.Injection.Engine.Script;
+﻿using AMLCore.Injection.Engine.Input;
+using AMLCore.Injection.Engine.Script;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -331,6 +333,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
             public Selector CharacterSelector { get; private set; }
             public TransitionList TransitionList { get; private set; }
             public int SelectedCharacterIndex => Entered ? CharacterSelector.Current : -1;
+            public ICharacterSelectionComponent CurrentComponent;
 
             private SelectorRange _range;
             private int _preferredIndex;
@@ -361,6 +364,55 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
             }
         }
 
+        private class DataProvider : ICharacterSelectionDataProvider
+        {
+            public NewStageSelect Parent;
+
+            public SceneEnvironment SceneEnvironment => Parent._env;
+            public ReadOnlyInputHandler Input => _input;
+            public int PlayerCount => 3;
+
+            public string GetCharacterNameSelected(int p)
+            {
+                var selIndex = Parent._playerSelection[p].SelectedCharacterIndex;
+                if (selIndex == -1) return null;
+                return Parent._characterInfo[selIndex].PlayerDataName;
+            }
+
+            public int GetConfigIndexSelected(int p)
+            {
+                var selIndex = Parent._playerSelection[p].SelectedCharacterIndex;
+                if (selIndex == -1) return -1;
+                return Parent._characterInfo[selIndex].PlayerSelectors[p].Current;
+            }
+
+            public float GetCharacterPanelAlpha(int p)
+            {
+                return 1 + Parent._characterPanel[p].OffsetY / 300.0f;
+            }
+
+            public PointF GetCharacterPanelPosition(int p)
+            {
+                var panel = Parent._characterPanel[p];
+                return new PointF(panel.Left, panel.Top + panel.OffsetY);
+            }
+
+            public float GetFlashAlpha()
+            {
+                return 0.8f + 0.2f * (float)Math.Sin(Parent._frame / 120.0 * 6.28);
+            }
+
+            public float GetUIAlpha()
+            {
+                return Parent._characterSelectAlpha;
+            }
+
+            public bool IsComponentActive(ICharacterSelectionComponent component, int p)
+            {
+                return Parent._playerSelection[p].CurrentComponent == component;
+            }
+        }
+
         private enum UpdateFunction
         {
             None,
@@ -371,16 +423,17 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
             StartGame,
         }
 
-        private static Engine.Input.ReadOnlyInputHandler _input;
+        private static ReadOnlyInputHandler _input;
         private static IntPtr _emptyFunc;
         private static IntPtr _exitToTitleFunction;
         private static IntPtr _prepStartStageFunction;
         private static IntPtr _loopStartStageFunction;
 
         private static bool _handlerRegistered = false;
-        private static bool _noAvailableChooseDeadAsQB = true;
-        private static bool _allowSameChar = false;
-        private static bool _allowQBOnlyGame = false;
+        internal static bool _alwaysChooseDeadAsQB = false;
+        internal static bool _noAvailableChooseDeadAsQB = true;
+        internal static bool _allowSameChar = false;
+        internal static bool _allowQBOnlyGame = false;
 
         private static int[] _stageState;
 
@@ -389,6 +442,9 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
 
         private static int[] _playerTypeForQB = new int[3];
 
+        internal readonly static List<ICharacterSelectionComponent> _componentList = new List<ICharacterSelectionComponent>();
+
+        private DataProvider _provider;
         private SceneEnvironment _env;
         private Resource _blankCharacterImage;
 
@@ -420,6 +476,8 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
         private Resource[] _playerCursorImage;
         private Resource[] _playerCursorImageG;
 
+        private int[] _startGamePlayerTypes;
+
         static NewStageSelect()
         {
             _input = Engine.Input.ReadOnlyInputHandler.Get();
@@ -445,8 +503,10 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                             local i1 = this.thisAct.SelectCharactor[1] == -1 ? null : thisAct.SelectCharactor[1];
                             local i2 = this.thisAct.SelectCharactor[2] == -1 ? null : thisAct.SelectCharactor[2];
 			                this.StartStage(this.thisAct.lastStage, i0, i1, i2);
+                            return true;
 		                }
-	                }", "NewStageSelectPrepStartStage");
+	                }
+                    return false;", "NewStageSelectPrepStartStage");
             });
         }
 
@@ -459,13 +519,9 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
             }
         }
 
-        public static void AllowSameCharacter()
-        {
-            _allowSameChar = true;
-        }
-
         internal NewStageSelect()
         {
+            _provider = new DataProvider { Parent = this };
         }
 
         public void PostInit(SceneEnvironment env)
@@ -553,7 +609,6 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                 new CharacterInfo(_env, "madoka"),
                 new CharacterInfo(_env, "mami"),
                 new CharacterInfo(_env, "sayaka"),
-                //TODO allow qb at the beginning (global option)
             };
             ReadCharacterConditions(_characterInfo);
             _totalAvailableChar = _characterInfo.Count(cc => cc.Available);
@@ -609,6 +664,11 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                 _env.GetResource("c2pG"),
                 _env.GetResource("c3pG"),
             };
+
+            foreach (var cc in _componentList)
+            {
+                cc.Init(_provider);
+            }
         }
 
         private void ClearOriginalUpdate()
@@ -724,10 +784,12 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                 var panel = _characterPanel[i];
                 var alpha = 1 + panel.OffsetY / 300.0f;
                 var charSel = _playerSelection[i].SelectedCharacterIndex;
-                if (charSel == -1)
                 {
                     var img = _blankCharacterImage;
                     _env.BitBlt(img, panel.Left, panel.Top + panel.OffsetY, img.ImageWidth, img.ImageHeight, 0, 0, Blend.Alpha, alpha);
+                }
+                if (charSel == -1)
+                {
                 }
                 else if (!_characterInfo[charSel].Available)
                 {
@@ -739,10 +801,11 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                 {
                     var charInfo = _characterInfo[charSel];
                     var tr = _playerSelection[i].TransitionList.Entries;
+                    var panelAlpha = alpha * (_playerSelection[i].CurrentComponent == null ? _provider.GetFlashAlpha() : 1.0f);
                     if (tr.Count == 2)
                     {
                         var img = charInfo.Selected[tr[0].Index];
-                        _env.BitBlt(img, panel.Left, panel.Top + panel.OffsetY, img.ImageWidth, img.ImageHeight, 0, 0, Blend.Alpha, alpha);
+                        _env.BitBlt(img, panel.Left, panel.Top + panel.OffsetY, img.ImageWidth, img.ImageHeight, 0, 0, Blend.Alpha, panelAlpha);
                     }
                     else
                     {
@@ -754,7 +817,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                             for (int k = x; k < x + w; ++k)
                             {
                                 var realX = _randomLines[k];
-                                _env.BitBlt(img, panel.Left + realX, panel.Top + panel.OffsetY, 1, img.ImageHeight, realX, 0, Blend.Alpha, alpha);
+                                _env.BitBlt(img, panel.Left + realX, panel.Top + panel.OffsetY, 1, img.ImageHeight, realX, 0, Blend.Alpha, panelAlpha);
                             }
                         }
                     }
@@ -765,6 +828,11 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                     var imgs = _playerSelection[i].Confirmed ? _playerCursorImage[i] : _playerCursorImageG[i];
                     _env.BitBlt(imgs, panel.Left + 56, panel.Top + panel.OffsetY + 360, imgs.ImageWidth, imgs.ImageHeight, 0, 0, Blend.Alpha, alpha);
                 }
+            }
+
+            foreach (var cc in _componentList)
+            {
+                cc.Draw(_provider);
             }
 
             {
@@ -848,6 +916,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                         {
                             _playerSelection[j].TransitionList.Reset(_characterInfo[_playerSelection[j].SelectedCharacterIndex].PlayerSelectors[j]);
                         }
+                        _playerSelection[j].CurrentComponent = null;
                     }
                     break;
                 }
@@ -909,7 +978,12 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                 }
             }
 
-            int seId = 0;
+            foreach (var cc in _componentList)
+            {
+                cc.UpdateAll(_provider);
+            }
+
+            int seId = -1;
             bool selectorMoved = false;
             bool specialMoved = false;
             for (int i = 0; i < _playerSelection.Length; ++i)
@@ -923,6 +997,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                         sel.Confirmed = false;
                         seId = 2;
                         confirmedCount -= 1;
+                        sel.CurrentComponent = null;
                     }
                 }
                 else if (sel.Entered)
@@ -935,6 +1010,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                     if (input.B0 == 1)
                     {
                         if (_characterInfo[sel.SelectedCharacterIndex].Available ||
+                            _alwaysChooseDeadAsQB ||
                             _noAvailableChooseDeadAsQB && enteredCount > _totalAvailableChar)
                         {
                             sel.Confirmed = true;
@@ -954,14 +1030,36 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                     }
                     else
                     {
-                        //TODO handle A key and input.x events for other components (remember to set selectorMoved)
-                        if (_characterInfo[sel.SelectedCharacterIndex].Available)
+                        bool switchComponent = false;
+                        if (sel.CurrentComponent == null)
                         {
-                            if (_characterInfo[sel.SelectedCharacterIndex].PlayerSelectors[i].Update(input.X))
+                            if (_characterInfo[sel.SelectedCharacterIndex].Available)
                             {
-                                selectorMoved = true;
-                                specialMoved = true;
+                                if (_characterInfo[sel.SelectedCharacterIndex].PlayerSelectors[i].Update(input.X))
+                                {
+                                    selectorMoved = true;
+                                    specialMoved = true;
+                                }
+                                else if (input.X == 1 || input.X == -1)
+                                {
+                                    seId = 61;
+                                }
                             }
+                        }
+                        else
+                        {
+                            switchComponent = !sel.CurrentComponent.IsAvailableForPlayer(_provider, i);
+                            if (!switchComponent)
+                            {
+                                sel.CurrentComponent.UpdatePlayer(_provider, i);
+                            }
+                        }
+                        if (input.B3 == 1 || switchComponent)
+                        {
+                            var index = _componentList.IndexOf(sel.CurrentComponent) + 1;
+                            if (index >= _componentList.Count) index = -1;
+                            sel.CurrentComponent = index == -1 ? null : _componentList[index];
+                            seId = 0;
                         }
                     }
                 }
@@ -973,6 +1071,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                         sel.TransitionList.Reset(_characterInfo[sel.SelectedCharacterIndex].PlayerSelectors[i]);
                         seId = 1;
                         enteredCount += 1;
+                        sel.CurrentComponent = null;
                     }
                 }
                 sel.TransitionList.Update();
@@ -987,17 +1086,20 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                 }
                 else
                 {
-                    var i0 = GetCharacterGameType(0);
-                    var i1 = GetCharacterGameType(1);
-                    var i2 = GetCharacterGameType(2);
-                    var qbCount = (i0 == 6 ? 1 : 0) + (i1 == 6 ? 1 : 0) + (i2 == 6 ? 1 : 0);
+                    var types = new[] { GetCharacterGameType(0), GetCharacterGameType(1), GetCharacterGameType(2) };
+                    _startGamePlayerTypes = types;
+                    foreach (var cc in _componentList)
+                    {
+                        cc.ModifyPlayerType(_provider, types);
+                    }
+
+                    var qbCount = (types[0] == 6 ? 1 : 0) + (types[1] == 6 ? 1 : 0) + (types[2] == 6 ? 1 : 0);
                     if (_allowQBOnlyGame || qbCount < confirmedCount)
                     {
                         seId = 52;
                         _currentUpdateType = UpdateFunction.StartGame;
 
-                        WriteSelectedIndexArray(GetCharacterGameType(0), GetCharacterGameType(1), GetCharacterGameType(2),
-                            _stageIndexMap[_stageSelector.Current] + 1);
+                        WriteSelectedIndexArray(types[0], types[1], types[2], _stageIndexMap[_stageSelector.Current] + 1);
 
                         var vm = SquirrelHelper.SquirrelVM;
                         SquirrelFunctions.pushobject(vm, _prepStartStageFunction);
@@ -1008,7 +1110,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                 }
             }
 
-            if (seId != 0)
+            if (seId != -1)
             {
                 _env.PlaySE(seId);
             }
@@ -1057,8 +1159,17 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
 
             SquirrelFunctions.pushobject(vm, _loopStartStageFunction);
             SquirrelFunctions.push(vm, 1);
-            SquirrelFunctions.call(vm, 1, 0, 0);
-            SquirrelFunctions.pop(vm, 1);
+            SquirrelFunctions.call(vm, 1, 1, 0);
+            SquirrelFunctions.getbool(vm, -1, out var allFinished);
+            if (allFinished != 0)
+            {
+                foreach (var cc in _componentList)
+                {
+                    cc.ModifyPlayerActor(_provider, _startGamePlayerTypes);
+                }
+            }
+
+            SquirrelFunctions.pop(vm, 2);
         }
 
         private void ExitToTitle()

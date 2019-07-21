@@ -1,9 +1,11 @@
 ﻿using AMLCore.Injection.Engine.Input;
+using AMLCore.Injection.Game.Scene.StageSelect;
 using AMLCore.Plugins;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Windows.Forms;
 
 namespace AMLCore.Injection.Game.Scene
 {
@@ -11,8 +13,9 @@ namespace AMLCore.Injection.Game.Scene
     {
         public void Run()
         {
-            System.Windows.Forms.MessageBox.Show("Start");
-            StageSelect.NewStageSelect.UseNewStageSelect();
+            MessageBox.Show("Start");
+            NewStageSelect.UseNewStageSelect();
+            NewStageSelect._componentList.Add(new LevelSelectionComponent());
         }
     }
 }

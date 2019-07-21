@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AMLCore.Internal;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -79,7 +80,6 @@ namespace AMLCore.Injection.Engine.Script
             }
         }
 
-        //Note that we currently can't dispose it. Be sure don't allocate too much.
         public static IntPtr GetNewClosure(SquirrelFuncDelegate func)
         {
             _DelegateRef.Add(func);
@@ -141,5 +141,35 @@ namespace AMLCore.Injection.Engine.Script
 
             return ret;
         }
+
+        public static void GetMemberChainThis(params string[] names)
+        {
+            SquirrelFunctions.push(SquirrelVM, 1);
+            GetMemberChainTop(names);
+        }
+
+        public static void GetMemberChainRoot(params string[] names)
+        {
+            SquirrelFunctions.pushroottable(SquirrelVM);
+            GetMemberChainTop(names);
+        }
+
+        public static void GetMemberChainTop(params string[] names)
+        {
+            foreach (var nn in names)
+            {
+                SquirrelFunctions.pushstring(SquirrelVM, nn, -1);
+                if (SquirrelFunctions.get(SquirrelVM, -1) != 0)
+                {
+                    CoreLoggers.Script.Error("sq_get error for {0} with name {1}", SquirrelFunctions.gettype(SquirrelVM, -1), nn);
+                    SquirrelFunctions.pop(SquirrelVM, 2);
+                    SquirrelFunctions.pushnull(SquirrelVM);
+                    return;
+                }
+                SquirrelFunctions.remove(SquirrelVM, -2);
+            }
+        }
+
+        
     }
 }
