@@ -80,20 +80,14 @@ namespace AMLCore.Injection.Engine.Script
             }
         }
 
-        public static IntPtr GetNewClosure(SquirrelFuncDelegate func)
+        public static ReferencedScriptObject GetNewClosure(SquirrelFuncDelegate func)
         {
             _DelegateRef.Add(func);
             IntPtr pFunc = Marshal.GetFunctionPointerForDelegate(func);
             SquirrelFunctions.newclosure(SquirrelVM, pFunc, 0);
 
-            var ret = Marshal.AllocHGlobal(8);
-            Marshal.WriteInt32(ret, 0x01000001);
-            Marshal.WriteInt32(ret, 4, 0);
-
-            SquirrelFunctions.getstackobj_(SquirrelVM, -1, ret);
-            SquirrelFunctions.addref(SquirrelVM, ret);
-            SquirrelFunctions.pop(SquirrelVM, 1);
-
+            var ret = new ReferencedScriptObject();
+            ret.PopFromStack();
             return ret;
         }
 
@@ -121,21 +115,15 @@ namespace AMLCore.Injection.Engine.Script
             return CompileFileInjectionManager.InjectCompileFileMain(script);
         }
 
-        public static IntPtr CompileScriptFunction(string code, string name)
+        public static ReferencedScriptObject CompileScriptFunction(string code, string name)
         {
-            var ret = Marshal.AllocHGlobal(8);
-
-            //write null
-            Marshal.WriteInt32(ret, 0x01000001);
-            Marshal.WriteInt32(ret, 4, 0);
+            var ret = new ReferencedScriptObject();
 
             Run(vm =>
             {
                 if (SquirrelFunctions.compilebuffer(vm, code, name, 0) == 0)
                 {
-                    SquirrelFunctions.getstackobj_(vm, -1, ret);
-                    SquirrelFunctions.addref(vm, ret);
-                    SquirrelFunctions.pop(vm, 1);
+                    ret.PopFromStack();
                 }
             });
 
@@ -154,12 +142,18 @@ namespace AMLCore.Injection.Engine.Script
             GetMemberChainTop(names);
         }
 
+        public static void GetMemberChainStack(int id, params string[] names)
+        {
+            SquirrelFunctions.push(SquirrelVM, id);
+            GetMemberChainTop(names);
+        }
+
         public static void GetMemberChainTop(params string[] names)
         {
             foreach (var nn in names)
             {
                 SquirrelFunctions.pushstring(SquirrelVM, nn, -1);
-                if (SquirrelFunctions.get(SquirrelVM, -1) != 0)
+                if (SquirrelFunctions.get(SquirrelVM, -2) != 0)
                 {
                     CoreLoggers.Script.Error("sq_get error for {0} with name {1}", SquirrelFunctions.gettype(SquirrelVM, -1), nn);
                     SquirrelFunctions.pop(SquirrelVM, 2);
@@ -169,7 +163,5 @@ namespace AMLCore.Injection.Engine.Script
                 SquirrelFunctions.remove(SquirrelVM, -2);
             }
         }
-
-        
     }
 }

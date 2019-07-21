@@ -308,6 +308,10 @@ namespace AMLCore.Injection.Engine.Script
 
         public static void pushobject(IntPtr vm, SQObject obj)
         {
+            if (obj.Type == SquirrelHelper.SQObjectType.OT_NULL)
+            {
+
+            }
             pushobject_(vm, obj.Type, obj.Value);
         }
 

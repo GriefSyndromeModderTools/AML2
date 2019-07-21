@@ -18,6 +18,13 @@ namespace AMLCore.Injection.Engine.Script
             SquirrelFunctions.addref_(SquirrelHelper.SquirrelVM, ref SQObject);
         }
 
+        public void PopFromStack()
+        {
+            SquirrelFunctions.getstackobj(SquirrelHelper.SquirrelVM, -1, out SQObject);
+            SquirrelFunctions.addref_(SquirrelHelper.SquirrelVM, ref SQObject);
+            SquirrelFunctions.pop(SquirrelHelper.SquirrelVM, 1);
+        }
+
         public void ReleaseRef()
         {
             SquirrelFunctions.release_(SquirrelHelper.SquirrelVM, ref SQObject);

@@ -424,10 +424,10 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
         }
 
         private static ReadOnlyInputHandler _input;
-        private static IntPtr _emptyFunc;
-        private static IntPtr _exitToTitleFunction;
-        private static IntPtr _prepStartStageFunction;
-        private static IntPtr _loopStartStageFunction;
+        private static ReferencedScriptObject _emptyFunc;
+        private static ReferencedScriptObject _exitToTitleFunction;
+        private static ReferencedScriptObject _prepStartStageFunction;
+        private static ReferencedScriptObject _loopStartStageFunction;
 
         private static bool _handlerRegistered = false;
         internal static bool _alwaysChooseDeadAsQB = false;
@@ -676,11 +676,11 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
             var vm = SquirrelHelper.SquirrelVM;
 
             SquirrelFunctions.pushstring(vm, "funcUpdate", -1);
-            SquirrelFunctions.pushobject(vm, _emptyFunc);
+            SquirrelFunctions.pushobject(vm, _emptyFunc.SQObject);
             SquirrelFunctions.newslot(vm, 1, 0);
 
             SquirrelFunctions.pushstring(vm, "PreUpdate", -1);
-            SquirrelFunctions.pushobject(vm, _emptyFunc);
+            SquirrelFunctions.pushobject(vm, _emptyFunc.SQObject);
             SquirrelFunctions.newslot(vm, 1, 0);
         }
 
@@ -1102,7 +1102,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                         WriteSelectedIndexArray(types[0], types[1], types[2], _stageIndexMap[_stageSelector.Current] + 1);
 
                         var vm = SquirrelHelper.SquirrelVM;
-                        SquirrelFunctions.pushobject(vm, _prepStartStageFunction);
+                        SquirrelFunctions.pushobject(vm, _prepStartStageFunction.SQObject);
                         SquirrelFunctions.push(vm, 1);
                         SquirrelFunctions.call(vm, 1, 0, 0);
                         SquirrelFunctions.pop(vm, 1);
@@ -1157,7 +1157,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
 
             var vm = SquirrelHelper.SquirrelVM;
 
-            SquirrelFunctions.pushobject(vm, _loopStartStageFunction);
+            SquirrelFunctions.pushobject(vm, _loopStartStageFunction.SQObject);
             SquirrelFunctions.push(vm, 1);
             SquirrelFunctions.call(vm, 1, 1, 0);
             SquirrelFunctions.getbool(vm, -1, out var allFinished);
@@ -1175,7 +1175,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
         private void ExitToTitle()
         {
             var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushobject(vm, _exitToTitleFunction);
+            SquirrelFunctions.pushobject(vm, _exitToTitleFunction.SQObject);
             SquirrelFunctions.push(vm, 1);
             SquirrelFunctions.call(vm, 1, 0, 0);
             SquirrelFunctions.pop(vm, 1);

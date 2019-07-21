@@ -32,7 +32,6 @@ namespace AMLCore.Injection.Game.Resource
             protected override void Triggered(NativeEnvironment env)
             {
                 var str = Marshal.PtrToStringAnsi(env.GetRegister(Register.ECX));
-                CoreLoggers.Injection.Info("Resource " + str);
                 var id = ResourceInjection.GetResourceId(str);
                 _lastId.Value = id;
             }

@@ -10,7 +10,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
     public class LevelSelectionComponent : ICharacterSelectionComponent
     {
         private int[] _level;
-        private static IntPtr _findPlayerFunction;
+        private static ReferencedScriptObject _findPlayerFunction;
 
         static LevelSelectionComponent()
         {
@@ -86,7 +86,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
         {
 
             var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushobject(vm, _findPlayerFunction);
+            SquirrelFunctions.pushobject(vm, _findPlayerFunction.SQObject);
             SquirrelFunctions.pushroottable(vm);
             SquirrelFunctions.call(vm, 1, 1, 0);
 
