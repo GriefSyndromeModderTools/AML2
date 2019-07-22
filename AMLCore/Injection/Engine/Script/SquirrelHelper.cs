@@ -130,6 +130,30 @@ namespace AMLCore.Injection.Engine.Script
             return ret;
         }
 
+        public static ReferencedScriptObject CompileScriptChildFunction(string code, string name)
+        {
+            var ret = new ReferencedScriptObject();
+
+            Run(vm =>
+            {
+                SquirrelFunctions.newtable(vm);
+                if (SquirrelFunctions.compilebuffer(vm, code, name, 0) == 0)
+                {
+                    SquirrelFunctions.push(vm, -2); //table func table
+                    SquirrelFunctions.call(vm, 1, 0, 0); //table func
+                    SquirrelFunctions.pop(vm, 1); //table
+                    SquirrelFunctions.pushstring(vm, name, -1); //table name
+                    if (SquirrelFunctions.get(vm, -2) == 0) //table (func?)
+                    {
+                        ret.PopFromStack(); //table
+                    } //table
+                } //table
+                SquirrelFunctions.pop(vm, 1);
+            });
+
+            return ret;
+        }
+
         public static void GetMemberChainThis(params string[] names)
         {
             SquirrelFunctions.push(SquirrelVM, 1);
@@ -156,7 +180,7 @@ namespace AMLCore.Injection.Engine.Script
                 if (SquirrelFunctions.get(SquirrelVM, -2) != 0)
                 {
                     CoreLoggers.Script.Error("sq_get error for {0} with name {1}", SquirrelFunctions.gettype(SquirrelVM, -1), nn);
-                    SquirrelFunctions.pop(SquirrelVM, 2);
+                    SquirrelFunctions.pop(SquirrelVM, 1);
                     SquirrelFunctions.pushnull(SquirrelVM);
                     return;
                 }

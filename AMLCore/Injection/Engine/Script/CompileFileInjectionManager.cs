@@ -107,7 +107,7 @@ namespace AMLCore.Injection.Engine.Script
             {
                 index = _FunctionList.Count;
                 s.Add(func, index);
-                var ret = new InjectedScriptFunction();
+                var ret = new InjectedScriptFunction(script, func);
                 _FunctionList.Add(ret);
                 return ret;
             }
@@ -121,7 +121,7 @@ namespace AMLCore.Injection.Engine.Script
             {
                 index = _FunctionList.Count;
                 _FunctionMainDict.Add(script, index);
-                var ret = new InjectedScriptFunction();
+                var ret = new InjectedScriptFunction(script, "<main>");
                 _FunctionList.Add(ret);
                 return ret;
             }

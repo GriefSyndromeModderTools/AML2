@@ -47,5 +47,10 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
         {
             NewStageSelect._allowQBOnlyGame = val;
         }
+
+        public static void AddComponent(ICharacterSelectionComponent comp)
+        {
+            NewStageSelect._componentList.Add(comp);
+        }
     }
 }

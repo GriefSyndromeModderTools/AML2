@@ -586,7 +586,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
             }
             else
             {
-                var initialSelected = 0;
+                var initialSelected = _stageIndexMap.Length - 1;
                 for (int i = 1; i < _stageIndexMap.Length; ++i)
                 {
                     var index = _stageIndexMap[i];
@@ -1056,10 +1056,14 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                         }
                         if (input.B3 == 1 || switchComponent)
                         {
+                            var lastComp = sel.CurrentComponent;
                             var index = _componentList.IndexOf(sel.CurrentComponent) + 1;
                             if (index >= _componentList.Count) index = -1;
                             sel.CurrentComponent = index == -1 ? null : _componentList[index];
-                            seId = 0;
+                            if (lastComp != sel.CurrentComponent)
+                            {
+                                seId = 0;
+                            }
                         }
                     }
                 }

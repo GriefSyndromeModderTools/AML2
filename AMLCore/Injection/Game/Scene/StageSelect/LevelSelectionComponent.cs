@@ -10,15 +10,13 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
     public class LevelSelectionComponent : ICharacterSelectionComponent
     {
         private int[] _level;
-        private static ReferencedScriptObject _findPlayerFunction;
+        private static ReferencedScriptObject _modifyPlayerFunction;
 
         static LevelSelectionComponent()
         {
-            //TODO in LevelInjectEntry, replace ADD_Exp to consider new characters
-            //TODO in LevelInjectEntry, replace ADD_Level with an implementation that level up
-            //     the actor and gameData separately (work both with and without LevelSelection).
-            _findPlayerFunction = SquirrelHelper.CompileScriptFunction(@"
-                return function (playerID, dataName, requiredLevel) {
+            CharacterRegistry.ReplaceLevelUpFunction();
+            _modifyPlayerFunction = SquirrelHelper.CompileScriptChildFunction(@"
+                function ModifyPlayer (playerID, dataName, requiredLevel) {
                     try
                     {
                     foreach( idx, aa in ::actor )
@@ -29,14 +27,16 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                             if (::playerData[dataName].level != 1) return;
                             while (aa.level < requiredLevel)
                             {
-                                aa.Add_Level();
+                                aa.u.LevelUpNoEffect <- true;
+                                aa.ADD_Level(dataName);
+                                delete aa.u.LevelUpNoEffect;
                             }
+                            ::MessageBox(dataName);::MessageBox(::playerData[dataName].level);
                         }
                     }
                     }
                     catch (ex_) { ::MessageBox(ex_); }
-                };
-            ", "LevelSelectionFindPlayers");
+                }", "ModifyPlayer");
         }
 
         public LevelSelectionComponent()
@@ -86,22 +86,23 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
         {
 
             var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushobject(vm, _findPlayerFunction.SQObject);
-            SquirrelFunctions.pushroottable(vm);
-            SquirrelFunctions.call(vm, 1, 1, 0);
+            SquirrelFunctions.pushobject(vm, _modifyPlayerFunction.SQObject);
 
             for (int i = 0; i < types.Length; ++i)
             {
+                if (types[i] == -1) continue;
+
                 SquirrelFunctions.pushroottable(vm);
                 SquirrelFunctions.pushinteger(vm, i);
                 SquirrelFunctions.pushstring(vm, CharacterRegistry.GetCharacterConfigInfo(types[i]).Character.PlayerDataName, -1);
                 SquirrelFunctions.pushinteger(vm, _level[i]);
                 SquirrelFunctions.call(vm, 4, 0, 0);
 
-                //TODO force reset level in playerData here (get playerData back to level 1 to process next player)
+                //Get playerData back to level 1 to process next player
+                CharacterRegistry.ResetAllPlayerGlobalData();
             }
 
-            SquirrelFunctions.pop(vm, 2);
+            SquirrelFunctions.pop(vm, 1);
         }
         /*
         private void ModifyPlayerActor(int index, int type, string name)
@@ -190,7 +191,8 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
         */
         public void ModifyPlayerType(ICharacterSelectionDataProvider p, int[] types)
         {
-            //TODO force reset level in playerData here (ensure all actors created as level 1)
+            //Ensure all players created as level 1
+            CharacterRegistry.ResetAllPlayerGlobalData();
         }
 
         public void UpdateAll(ICharacterSelectionDataProvider p)

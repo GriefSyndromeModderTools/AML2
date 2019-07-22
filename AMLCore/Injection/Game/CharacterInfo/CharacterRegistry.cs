@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AMLCore.Injection.Engine.Script;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -60,7 +61,7 @@ namespace AMLCore.Injection.Game.CharacterInfo
         private static readonly Dictionary<string, CharacterInfo> _characters = new Dictionary<string, CharacterInfo>();
         private static readonly Dictionary<int, CharacterConfigInfo> _configs = new Dictionary<int, CharacterConfigInfo>();
 
-        private static bool _levelUpInjected = false;
+        internal static bool LevelUpInjected = false;
 
         static CharacterRegistry()
         {
@@ -130,7 +131,7 @@ namespace AMLCore.Injection.Game.CharacterInfo
                 AttackOffset = 0.1f,
             });
             RegisterCharacterConfig("sayaka", 4);
-            RegisterCharacter("qb", 6, new CharacterData
+            RegisterCharacter("QB", 6, new CharacterData
             {
                 Life = 1,
                 LifeUp = 0,
@@ -142,12 +143,51 @@ namespace AMLCore.Injection.Game.CharacterInfo
                 RegainRate = 2,
                 AttackOffset = 0.1f,
             });
-            RegisterCharacterConfig("qb", 6);
+            RegisterCharacterConfig("QB", 6);
         }
 
         public static void ReplaceLevelUpFunction()
         {
+            //TODO log
+            LevelUpInjected = true;
+        }
 
+        public static void ResetAllPlayerGlobalData()
+        {
+            //TODO we don't check for existance of new characters. there may be error
+            SquirrelHelper.GetMemberChainRoot("playerData");
+            foreach (var ch in _characters)
+            {
+                WritePlayerGlobalData(ch.Key, ch.Value.CharacterData);
+            }
+            SquirrelFunctions.pop(SquirrelHelper.SquirrelVM, 1);
+        }
+
+        private static void WritePlayerGlobalData(string name, CharacterData data)
+        {
+            var vm = SquirrelHelper.SquirrelVM;
+            SquirrelFunctions.pushstring(vm, name, -1);
+            if (SquirrelFunctions.get(vm, -2) == 0)
+            {
+                WriteIntField("lifeMax", data.Life);
+                WriteIntField("lifeUP", data.LifeUp);
+                WriteIntField("soulMax", data.Soul);
+                WriteIntField("soulUp", data.SoulUp);
+                WriteIntField("baseAtk", data.Attack);
+                WriteIntField("atkUP", data.AttackUp);
+                SquirrelFunctions.pop(vm, 1);
+            }
+        }
+
+        private static void WriteIntField(string name, int val)
+        {
+            var vm = SquirrelHelper.SquirrelVM;
+            SquirrelFunctions.pushstring(vm, name, -1);
+            SquirrelFunctions.pushinteger(vm, val);
+            if (SquirrelFunctions.set(vm, -3) != 0)
+            {
+                SquirrelFunctions.pop(vm, 2);
+            }
         }
 
         public static int GetNextFreeType()
@@ -155,6 +195,7 @@ namespace AMLCore.Injection.Game.CharacterInfo
             return _nextType++;
         }
 
+        //TODO someone need to inject into SetGameData(game.nut) to add new data there
         public static void RegisterCharacter(string name, int displayOrder, CharacterData data, ICharacterDataAlgorithm algorithm = null)
         {
             //internally assign a actor.type

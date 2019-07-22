@@ -13,9 +13,9 @@ namespace AMLCore.Injection.Game.Scene
     {
         public void Run()
         {
-            MessageBox.Show("Start");
+            //MessageBox.Show("Start");
             NewStageSelect.UseNewStageSelect();
-            NewStageSelect._componentList.Add(new LevelSelectionComponent());
+            //NewStageSelect._componentList.Add(new LevelSelectionComponent());
         }
     }
 }
