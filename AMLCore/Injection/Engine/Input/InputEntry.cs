@@ -1,4 +1,5 @@
-﻿using AMLCore.Injection.Native;
+﻿using AMLCore.Injection.GSO;
+using AMLCore.Injection.Native;
 using AMLCore.Logging;
 using AMLCore.Plugins;
 using System;
@@ -14,8 +15,28 @@ namespace AMLCore.Injection.Engine.Input
         public void Run()
         {
             CodeModification.FillNop(0xC5FF8, 5);
-            new InjectCoCreateInstance();
-            KeyConfigRedirect.Inject();
+            if (PostGSOInjection.IsGSO)
+            {
+                new GSOInputInjection();
+            }
+            else
+            {
+                KeyConfigRedirect.Inject();
+                new InjectCoCreateInstance();
+            }
+        }
+
+        private class GSOInputInjection : CodeInjection
+        {
+            public GSOInputInjection() : base(0xC6000, 7)
+            {
+            }
+
+            protected override void Triggered(NativeEnvironment env)
+            {
+                IntPtr data = AddressHelper.Code(0x2AB6F0);
+                InputManager.HandleAll(data);
+            }
         }
 
         private delegate int CoCreateInstanceDelegate(

@@ -83,6 +83,8 @@
     <Compile Include="Injection\Game\Scene\StageSelect\NewStageSelect.cs" />
     <Compile Include="Injection\Game\Scene\StageSelect\NewStageSelectOptions.cs" />
     <Compile Include="Injection\Game\Scene\TestSceneInjection.cs" />
+    <Compile Include="Injection\GSO\GSOReadyInjectEntry.cs" />
+    <Compile Include="Injection\GSO\PostGSOInjection.cs" />
     <Compile Include="Injection\Native\CalliGenerator.cs" />
     <Compile Include="Internal\ArgumentHelper.cs" />
     <Compile Include="Internal\CommonArguments.cs" />

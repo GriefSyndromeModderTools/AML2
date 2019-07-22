@@ -1,4 +1,6 @@
 ﻿using AMLCore.Injection.Engine.File;
+using AMLCore.Injection.GSO;
+using AMLCore.Injection.Native;
 using AMLCore.Internal;
 using AMLCore.Misc;
 using System;
@@ -15,6 +17,7 @@ namespace AMLCore.Injection.Engine.Input
 
         private static int[] _KeyConfig = new int[9 * 3];
         private static int[] _KeyConfigOriginal = new int[9 * 3];
+        private static int[] _KeyConfigGSO = Enumerable.Range(2, 9 * 3).ToArray();
         private static bool _FileInjected = false;
 
         public static void Redirect()
@@ -53,19 +56,26 @@ namespace AMLCore.Injection.Engine.Input
 
         public static int GetKeyIndex(int key)
         {
+            if (PostGSOInjection.IsGSO)
+            {
+                return _KeyConfigGSO[key];
+            }
             return Redirected ? _KeyConfig[key] : _KeyConfigOriginal[key];
         }
 
         private static bool[] _RedirectBuffer = new bool[9 * 3];
         internal static void Preprocess(IntPtr data)
         {
-            for (int i = 0; i < _KeyConfig.Length; ++i)
+            if (Redirected && !PostGSOInjection.IsGSO)
             {
-                _RedirectBuffer[i] = Marshal.ReadByte(data, _KeyConfigOriginal[i]) == 0x80;
-            }
-            for (int i = 0; i < _KeyConfig.Length; ++i)
-            {
-                Marshal.WriteByte(data, _KeyConfig[i], (byte)(_RedirectBuffer[i] ? 0x80 : 0));
+                for (int i = 0; i < _KeyConfig.Length; ++i)
+                {
+                    _RedirectBuffer[i] = Marshal.ReadByte(data, _KeyConfigOriginal[i]) == 0x80;
+                }
+                for (int i = 0; i < _KeyConfig.Length; ++i)
+                {
+                    Marshal.WriteByte(data, _KeyConfig[i], (byte)(_RedirectBuffer[i] ? 0x80 : 0));
+                }
             }
         }
 

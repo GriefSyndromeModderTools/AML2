@@ -60,6 +60,8 @@ namespace AMLCore.Injection.Game.CharacterInfo
         private static readonly Dictionary<string, CharacterInfo> _characters = new Dictionary<string, CharacterInfo>();
         private static readonly Dictionary<int, CharacterConfigInfo> _configs = new Dictionary<int, CharacterConfigInfo>();
 
+        private static bool _levelUpInjected = false;
+
         static CharacterRegistry()
         {
             RegisterCharacter("homura", 0, new CharacterData
@@ -141,6 +143,11 @@ namespace AMLCore.Injection.Game.CharacterInfo
                 AttackOffset = 0.1f,
             });
             RegisterCharacterConfig("qb", 6);
+        }
+
+        public static void ReplaceLevelUpFunction()
+        {
+
         }
 
         public static int GetNextFreeType()
