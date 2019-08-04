@@ -135,7 +135,7 @@ namespace AMLCore.Injection.Engine.Input
             InputAll = new MultiInput { Single = _single };
 
             KeyConfigRedirect.Redirect();
-            InputManager.RegisterHandler(this);
+            InputManager.RegisterHandler(this, InputHandlerType.GameInput);
         }
 
         public static ReadOnlyInputHandler Get()

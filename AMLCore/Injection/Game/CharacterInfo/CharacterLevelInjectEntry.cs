@@ -13,6 +13,8 @@ namespace AMLCore.Injection.Game.CharacterInfo
 
         public void Run()
         {
+            if (!CharacterRegistry.LevelUpInjected) return;
+
             var expFunc = SquirrelHelper.InjectCompileFile("data/actor/characterCommon.nut", "ADD_Exp");
             var levelFunc = SquirrelHelper.InjectCompileFile("data/actor/characterCommon.nut", "ADD_Level");
             expFunc.AddBefore(BeforeExp);
@@ -67,7 +69,6 @@ namespace AMLCore.Injection.Game.CharacterInfo
 
         private static void BeforeExp(IntPtr vm)
         {
-            if (!CharacterRegistry.LevelUpInjected) return;
             if (SquirrelFunctions.gettop(vm) != 3) return;
             SquirrelFunctions.pop(vm, 1);
             SquirrelFunctions.pushinteger(vm, -1);
@@ -75,7 +76,6 @@ namespace AMLCore.Injection.Game.CharacterInfo
 
         private static void AfterExp(IntPtr vm)
         {
-            if (!CharacterRegistry.LevelUpInjected) return;
             SquirrelHelper.GetMemberChainThis("type");
             SquirrelFunctions.getinteger(vm, -1, out var type);
             SquirrelFunctions.pop(vm, 1);
@@ -91,7 +91,6 @@ namespace AMLCore.Injection.Game.CharacterInfo
 
         private static void BeforeLevel(IntPtr vm)
         {
-            if (!CharacterRegistry.LevelUpInjected) return;
             if (SquirrelFunctions.gettop(vm) != 2) return;
             SquirrelHelper.GetMemberChainRoot("playerData");
             SquirrelFunctions.pushstring(vm, "level0_player", -1);
@@ -108,7 +107,6 @@ namespace AMLCore.Injection.Game.CharacterInfo
 
         private static void AfterLevel(IntPtr vm)
         {
-            if (!CharacterRegistry.LevelUpInjected) return;
             SquirrelHelper.GetMemberChainThis("type");
             SquirrelFunctions.getinteger(vm, -1, out var type);
             SquirrelFunctions.pop(vm, 1);

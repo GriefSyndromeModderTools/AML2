@@ -7,14 +7,22 @@ using System.Threading;
 
 namespace AMLCore.Injection.Engine.Input
 {
+    public enum InputHandlerType
+    {
+        RawInput,
+        Modify,
+        GameInput,
+    }
+
     public static class InputManager
     {
         private class InputHandlerInfo
         {
             public IInputHandler Handler;
-            public bool ReceiveHandled;
+            public InputHandlerType Type;
         }
 
+        private static IInputHandler _ModifyHandler = null;
         private static List<InputHandlerInfo> _Hanlders = new List<InputHandlerInfo>();
         private static object _Mutex = new object();
         private static bool _RunFP;
@@ -46,12 +54,12 @@ namespace AMLCore.Injection.Engine.Input
                 {
                     KeyConfigRedirect.Preprocess(ptr);
                 }
-                bool handled = false;
+                bool handled = _ModifyHandler?.HandleInput(ptr) ?? false;
                 foreach (var h in _Hanlders)
                 {
                     if (handled)
                     {
-                        if (h.ReceiveHandled)
+                        if (h.Type != InputHandlerType.RawInput)
                         {
                             h.Handler.HandleInput(ptr);
                         }
@@ -65,19 +73,22 @@ namespace AMLCore.Injection.Engine.Input
             return false;
         }
 
-        public static void RegisterHandler(IInputHandler h, bool receiveHandled)
+        public static void RegisterHandler(IInputHandler h, InputHandlerType type)
         {
             lock (_Mutex)
             {
-                _Hanlders.Add(new InputHandlerInfo { Handler = h, ReceiveHandled = receiveHandled });
-            }
-        }
-
-        public static void RegisterHandler(IInputHandler h)
-        {
-            lock (_Mutex)
-            {
-                _Hanlders.Add(new InputHandlerInfo { Handler = h });
+                if (type == InputHandlerType.Modify)
+                {
+                    if (_ModifyHandler != null)
+                    {
+                        throw new InvalidOperationException("Another modify handler is already registered.");
+                    }
+                    _ModifyHandler = h;
+                }
+                else
+                {
+                    _Hanlders.Add(new InputHandlerInfo { Handler = h, Type = type });
+                }
             }
         }
 

@@ -15,6 +15,7 @@ namespace AMLCore.Injection.Engine.Script
     {
         private List<InjectedScriptDelegate> _Before = new List<InjectedScriptDelegate>();
         private List<InjectedScriptDelegate> _After = new List<InjectedScriptDelegate>();
+
         private readonly string _scriptName, _funcName;
 
         internal InjectedScriptFunction(string s, string f)
@@ -59,10 +60,17 @@ namespace AMLCore.Injection.Engine.Script
             }
 
             //call
+            int originalRet = 1;
             if (SquirrelFunctions.call(vm, nargs, 1, 0) != 0)
             {
-                return -1;
+                originalRet = -1;
+
+                //Still call _After, but with null as return value.
+                SquirrelFunctions.pushnull(vm);
+
+                CoreLoggers.Script.Error("original script fails when calling {0} ({1})", _funcName, _scriptName);
             }
+
             //remove original
             SquirrelFunctions.remove(vm, -2);
 
@@ -89,8 +97,8 @@ namespace AMLCore.Injection.Engine.Script
             {
                 CoreLoggers.Script.Error("stack size changed when calling postrun functions for {0} ({1})", _funcName, _scriptName);
             }
-            //always (try to) return a value
-            return 1;
+
+            return originalRet;
         }
 
         public void AddBefore(InjectedScriptDelegate d)

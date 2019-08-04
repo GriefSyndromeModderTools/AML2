@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 
-namespace AMLCore.Injection.Game.Resource
+namespace AMLCore.Injection.Game.ResourcePack
 {
-    public class ResourceInjectEntry : IEntryPointLoad
+    internal class ResourceInjectEntry : IEntryPointLoad
     {
         public void Run()
         {

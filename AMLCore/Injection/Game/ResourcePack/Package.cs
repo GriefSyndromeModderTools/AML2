@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace AMLCore.Injection.Game.Resource
+namespace AMLCore.Injection.Game.ResourcePack
 {
     interface IFileContentProvider
     {

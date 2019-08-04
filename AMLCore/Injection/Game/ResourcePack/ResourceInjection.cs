@@ -3,13 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace AMLCore.Injection.Game.Resource
+namespace AMLCore.Injection.Game.ResourcePack
 {
-    public interface IResourceContentProvider
-    {
-        byte[] GetResourceContent(string path);
-    }
-
     public class ResourceInjection
     {
         private static Dictionary<string, int> _pathMap = new Dictionary<string, int>();

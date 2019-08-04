@@ -1,5 +1,6 @@
 ﻿using AMLCore.Injection.Engine.Input;
 using AMLCore.Injection.Engine.Script;
+using AMLCore.Injection.Game.CharacterInfo;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -197,30 +198,15 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
         private class CharacterInfo
         {
             public readonly string PlayerDataName;
-            public Resource[] Selected, Dead;
+            //public Resource[] Selected, Dead;
             public SelectorRange ConfigRange;
             public Selector[] PlayerSelectors;
             public bool Available = true;
 
-            public CharacterInfo(SceneEnvironment env, string resName, string playerDataName = null)
+            public CharacterInfo(SceneEnvironment env, string dataName, int configNum)
             {
-                PlayerDataName = playerDataName ?? resName;
-                Selected = new[] { GetResource(env, resName + "_B") };
-                Dead = new[] { GetResource(env, resName + "_C") };
-                ConfigRange = new SelectorRange(1, false, true, true);
-                PlayerSelectors = new[] {
-                    new Selector(ConfigRange, 0),
-                    new Selector(ConfigRange, 0),
-                    new Selector(ConfigRange, 0),
-                };
-            }
-
-            public CharacterInfo(SceneEnvironment env, string[] resNames, string playerDataName)
-            {
-                PlayerDataName = playerDataName;
-                Selected = resNames.Select(nn => GetResource(env, nn + "_B")).ToArray();
-                Dead = resNames.Select(nn => GetResource(env, nn + "_C")).ToArray();
-                ConfigRange = new SelectorRange(resNames.Length, false, true, true);
+                PlayerDataName = dataName;
+                ConfigRange = new SelectorRange(configNum, false, true, true);
                 PlayerSelectors = new[] {
                     new Selector(ConfigRange, 0),
                     new Selector(ConfigRange, 0),
@@ -411,6 +397,13 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
             {
                 return Parent._playerSelection[p].CurrentComponent == component;
             }
+
+            public bool IsSelectedCharacterAvailable(int p)
+            {
+                var index = Parent._playerSelection[p].SelectedCharacterIndex;
+                if (index == -1) return true;
+                return Parent._characterInfo[index].Available;
+            }
         }
 
         private enum UpdateFunction
@@ -434,6 +427,9 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
         internal static bool _noAvailableChooseDeadAsQB = true;
         internal static bool _allowSameChar = false;
         internal static bool _allowQBOnlyGame = false;
+        internal static bool _unlockAllStages = false;
+        internal static bool _includeQB = false;
+        internal static int? _initialSelected = null;
 
         private static int[] _stageState;
 
@@ -443,6 +439,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
         private static int[] _playerTypeForQB = new int[3];
 
         internal readonly static List<ICharacterSelectionComponent> _componentList = new List<ICharacterSelectionComponent>();
+        internal readonly static Dictionary<int, ICharacterPictureRenderer> _characterRenderer = new Dictionary<int, ICharacterPictureRenderer>();
 
         private DataProvider _provider;
         private SceneEnvironment _env;
@@ -481,18 +478,17 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
         static NewStageSelect()
         {
             _input = Engine.Input.ReadOnlyInputHandler.Get();
-            SquirrelHelper.Run(vm =>
-            {
-                _emptyFunc = SquirrelHelper.GetNewClosure(vm_ => 0);
-                _exitToTitleFunction = SquirrelHelper.CompileScriptFunction(@"
+
+            _emptyFunc = SquirrelHelper.GetNewClosure(vm_ => 0);
+            _exitToTitleFunction = SquirrelHelper.CompileScriptFunction(@"
                     this.FaderAct.FadeOut(60, 0, function () {
                         this.pl.EndStage();
                         this.TitleAct.pl.BeginStage(0);
                     }.bindenv(this));", "NewStageSelectExitToTitle");
-                _prepStartStageFunction = SquirrelHelper.CompileScriptFunction(@"
+            _prepStartStageFunction = SquirrelHelper.CompileScriptFunction(@"
                     this.FaderAct.FadeOut(60, 0, null);
                     this.StopBgm(3000);", "NewStageSelectPrepStartStage");
-                _loopStartStageFunction = SquirrelHelper.CompileScriptFunction(@"
+            _loopStartStageFunction = SquirrelHelper.CompileScriptFunction(@"
 	                if (!this.FaderAct.IsFading())
 	                {
 		                this.NowLoadingAct.Show(true);
@@ -507,7 +503,13 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
 		                }
 	                }
                     return false;", "NewStageSelectPrepStartStage");
-            });
+
+            _characterRenderer.Add(0, new VanillaCharacterPictureRenderer("homura"));
+            _characterRenderer.Add(1, new VanillaCharacterPictureRenderer("kyouko"));
+            _characterRenderer.Add(2, new VanillaCharacterPictureRenderer("madoka"));
+            _characterRenderer.Add(3, new VanillaCharacterPictureRenderer("mami"));
+            _characterRenderer.Add(4, new VanillaCharacterPictureRenderer("sayaka"));
+            _characterRenderer.Add(5, new VanillaCharacterPictureRenderer("M_homura"));
         }
 
         public static void UseNewStageSelect()
@@ -567,7 +569,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
             var newStageState = ReadStageResults();
             _stageIndexMap = Enumerable.Range(0, newStageState.Length)
                 .Select(ii => new { Index = ii, State = newStageState[ii] })
-                .Where(ss => ss.State >= 1 || ss.Index == 0)
+                .Where(ss => ss.State >= 1 || ss.Index == 0 || _unlockAllStages)
                 .Select(ss => ss.Index)
                 .ToArray();
 
@@ -597,30 +599,21 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                 }
                 _stageSelector = new Selector(_stageSelectorRange, initialSelected);
             }
+            if (_initialSelected.HasValue && _stageIndexMap.Contains(_initialSelected.Value))
+            {
+                _stageSelector.TryMoveTo(Array.FindIndex(_stageIndexMap, ii => ii == _initialSelected.Value));
+            }
             _stageState = newStageState;
 
 
             _blankCharacterImage = _env.CreateResource("data/system/StageSelect/blank.bmp");
 
-            _characterInfo = new[]
-            {
-                new CharacterInfo(_env, new[] { "homura", "M_homura" }, "homura"),
-                new CharacterInfo(_env, "kyouko"),
-                new CharacterInfo(_env, "madoka"),
-                new CharacterInfo(_env, "mami"),
-                new CharacterInfo(_env, "sayaka"),
-            };
+            var registeredCharacters = CharacterRegistry.GetCharacterMapping(!_includeQB);
+            _characterInfo = registeredCharacters.Select(cc => new CharacterInfo(_env, cc.Item1, cc.Item2.Length)).ToArray();
             ReadCharacterConditions(_characterInfo);
             _totalAvailableChar = _characterInfo.Count(cc => cc.Available);
 
-            _characterIndexMap = new[]
-            {
-                new[] { 0, 5 },
-                new[] { 1 },
-                new[] { 2 },
-                new[] { 3 },
-                new[] { 4 },
-            };
+            _characterIndexMap = registeredCharacters.Select(cc => cc.Item2).ToArray();
             _characterRange = new SelectorRange(_characterInfo.Length, !_allowSameChar, false, false);
             _characterRange.MaxSelection = Enumerable.Repeat(1, _characterInfo.Length).ToArray();
             _characterPanel = new[]
@@ -793,9 +786,9 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                 }
                 else if (!_characterInfo[charSel].Available)
                 {
-                    var charInfo = _characterInfo[charSel];
-                    var img = charInfo.Dead[charInfo.PlayerSelectors[i].Current];
-                    _env.BitBlt(img, panel.Left, panel.Top + panel.OffsetY, img.ImageWidth, img.ImageHeight, 0, 0, Blend.Alpha, alpha);
+                    var configIndex = _characterInfo[charSel].PlayerSelectors[i].Current;
+                    var renderer = GetCharacterPictureRenderer(_characterIndexMap[charSel][configIndex]);
+                    renderer.DrawDead(_env, panel.Left, panel.Top + panel.OffsetY, 0, TransitionList.Max, alpha);
                 }
                 else
                 {
@@ -804,20 +797,21 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                     var panelAlpha = alpha * (_playerSelection[i].CurrentComponent == null ? _provider.GetFlashAlpha() : 1.0f);
                     if (tr.Count == 2)
                     {
-                        var img = charInfo.Selected[tr[0].Index];
-                        _env.BitBlt(img, panel.Left, panel.Top + panel.OffsetY, img.ImageWidth, img.ImageHeight, 0, 0, Blend.Alpha, panelAlpha);
+                        var configIndex = charInfo.PlayerSelectors[i].Current;
+                        var renderer = GetCharacterPictureRenderer(_characterIndexMap[charSel][configIndex]);
+                        renderer.DrawSelected(_env, panel.Left, panel.Top + panel.OffsetY, 0, TransitionList.Max, panelAlpha);
                     }
                     else
                     {
                         for (int j = 0; j < tr.Count - 1; ++j)
                         {
-                            var img = charInfo.Selected[tr[j].Index];
                             var x = tr[j].Start;
                             var w = tr[j + 1].Start - tr[j].Start;
+                            var renderer = GetCharacterPictureRenderer(_characterIndexMap[charSel][tr[j].Index]);
                             for (int k = x; k < x + w; ++k)
                             {
                                 var realX = _randomLines[k];
-                                _env.BitBlt(img, panel.Left + realX, panel.Top + panel.OffsetY, 1, img.ImageHeight, realX, 0, Blend.Alpha, panelAlpha);
+                                renderer.DrawSelected(_env, panel.Left, panel.Top + panel.OffsetY, realX, 1, panelAlpha);
                             }
                         }
                     }
@@ -1058,6 +1052,10 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                         {
                             var lastComp = sel.CurrentComponent;
                             var index = _componentList.IndexOf(sel.CurrentComponent) + 1;
+                            while (index < _componentList.Count && !_componentList[index].IsAvailableForPlayer(_provider, i))
+                            {
+                                index += 1;
+                            }
                             if (index >= _componentList.Count) index = -1;
                             sel.CurrentComponent = index == -1 ? null : _componentList[index];
                             if (lastComp != sel.CurrentComponent)
@@ -1325,6 +1323,15 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                 .OrderBy(gg => gg.Rand)
                 .Select(gg => gg.Index)
                 .ToArray();
+        }
+
+        private ICharacterPictureRenderer GetCharacterPictureRenderer(int type)
+        {
+            if (_characterRenderer.TryGetValue(type, out var ret))
+            {
+                return ret;
+            }
+            return EmptyCharacterPictureRenderer.Instance;
         }
     }
 }

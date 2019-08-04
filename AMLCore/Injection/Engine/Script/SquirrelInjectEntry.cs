@@ -48,6 +48,10 @@ namespace AMLCore.Injection.Engine.Script
             CodeModification.Modify(0x560F, 0xF7, 0x00, 0x00, 0x03, 0x00, 0x00, 0x74);
             CodeModification.Modify(0x2D9D, 0xF7, 0x00, 0x00, 0x03, 0x00, 0x00, 0x74);
 
+            //similar fix related to CreateEventFromMap
+            CodeModification.Modify(0x6304D, 0xF7, 0x00, 0x00, 0x03, 0x00, 0x00, 0x0F, 0x84);
+
+
             //add API functions
             SquirrelAPINewFunctions.Write_set();
             SquirrelAPINewFunctions.Write_rset();

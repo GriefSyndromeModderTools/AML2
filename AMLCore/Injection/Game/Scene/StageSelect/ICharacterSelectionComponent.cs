@@ -13,6 +13,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
         ReadOnlyInputHandler Input { get; }
         int PlayerCount { get; }
         string GetCharacterNameSelected(int p);
+        bool IsSelectedCharacterAvailable(int p);
         int GetConfigIndexSelected(int p);
         PointF GetCharacterPanelPosition(int p);
         float GetUIAlpha();

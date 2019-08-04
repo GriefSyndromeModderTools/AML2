@@ -269,8 +269,8 @@ namespace AMLCore.Injection.Engine.Script
         public static Delegate_PIP_I setinstanceup = GetFunction<Delegate_PIP_I>(0x12DAB0);
         public static Delegate_PIPP_I getinstanceup = GetFunction<Delegate_PIPP_I>(0x12DB00);
         public static Delegate_PI_I bindenv = GetFunction<Delegate_PI_I>(0x12F110);
+        public static Delegate_PI_I arrayappend = GetFunction<Delegate_PI_I>(0x12E9A0);
 
-        //arrayappend = 0x12E9A0
         //tobool = 0x12BA50
 
         internal static readonly uint Addr_sq_set = 0x12E264;
@@ -282,6 +282,14 @@ namespace AMLCore.Injection.Engine.Script
         private static T GetFunction<T>(uint offset)
         {
             return (T)(object)Marshal.GetDelegateForFunctionPointer(AddressHelper.Code(offset), typeof(T));
+        }
+
+        public static void get_check(IntPtr vm, int stack)
+        {
+            if (get(vm, stack) != 0)
+            {
+                throw new Exception("sq_get failed");
+            }
         }
 
         public static int getstring(IntPtr vm, int stack, out string str)

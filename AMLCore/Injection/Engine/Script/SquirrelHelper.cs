@@ -84,10 +84,15 @@ namespace AMLCore.Injection.Engine.Script
         {
             _DelegateRef.Add(func);
             IntPtr pFunc = Marshal.GetFunctionPointerForDelegate(func);
-            SquirrelFunctions.newclosure(SquirrelVM, pFunc, 0);
 
             var ret = new ReferencedScriptObject();
-            ret.PopFromStack();
+
+            Run(vm =>
+            {
+                SquirrelFunctions.newclosure(SquirrelVM, pFunc, 0);
+                ret.PopFromStack();
+            });
+
             return ret;
         }
 

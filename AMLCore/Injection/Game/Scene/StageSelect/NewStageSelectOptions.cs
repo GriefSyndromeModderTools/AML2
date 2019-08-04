@@ -52,5 +52,20 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
         {
             NewStageSelect._componentList.Add(comp);
         }
+
+        public static void UnlockAllStages()
+        {
+            NewStageSelect._unlockAllStages = true;
+        }
+
+        public static void AddQB()
+        {
+            NewStageSelect._includeQB = true;
+        }
+
+        public static void AddCharacterRenderer(int type, ICharacterPictureRenderer renderer)
+        {
+            NewStageSelect._characterRenderer.Add(type, renderer);
+        }
     }
 }

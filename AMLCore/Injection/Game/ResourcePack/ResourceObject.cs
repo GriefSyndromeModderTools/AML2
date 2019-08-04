@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace AMLCore.Injection.Game.Resource
+namespace AMLCore.Injection.Game.ResourcePack
 {
     class ResourceObject
     {
@@ -47,6 +47,8 @@ namespace AMLCore.Injection.Game.Resource
         //[5]: current position
         //[6]: zero
 
+        public static Dictionary<int, List<Tuple<int, int>>> ReadRequest = new Dictionary<int, List<Tuple<int, int>>>();
+
         //functions:
         private static void CloseAndFreeImpl(IntPtr pthis, bool free)
         {
@@ -69,6 +71,10 @@ namespace AMLCore.Injection.Game.Resource
 
             var pos = Marshal.ReadInt32(pthis, 4 * 5);
             var totalLen = Marshal.ReadInt32(pthis, 4 * 3);
+            if (ReadRequest.TryGetValue(id, out var rl))
+            {
+                rl.Add(new Tuple<int, int>(pos, len));
+            }
             if (pos + len > totalLen)
             {
                 len = totalLen - pos;

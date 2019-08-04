@@ -360,5 +360,20 @@ namespace AMLCore.Injection.Game.Scene
             }
             return false;
         }
+
+        public void DrawNumber(string font, int x, int y, int num, int digits, float alpha)
+        {
+            var vm = SquirrelHelper.SquirrelVM;
+            SquirrelHelper.GetMemberChainThis("DrawNumber");
+            SquirrelFunctions.push(vm, 1);
+            SquirrelFunctions.pushstring(vm, font, -1);
+            SquirrelFunctions.pushinteger(vm, x);
+            SquirrelFunctions.pushinteger(vm, y);
+            SquirrelFunctions.pushinteger(vm, num);
+            SquirrelFunctions.pushinteger(vm, digits);
+            SquirrelFunctions.pushfloat(vm, alpha);
+            SquirrelFunctions.call(vm, 7, 0, 0);
+            SquirrelFunctions.pop(vm, 1);
+        }
     }
 }

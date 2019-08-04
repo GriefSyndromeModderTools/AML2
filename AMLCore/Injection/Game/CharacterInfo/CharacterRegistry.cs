@@ -1,6 +1,7 @@
 ﻿using AMLCore.Injection.Engine.Script;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 
@@ -62,6 +63,7 @@ namespace AMLCore.Injection.Game.CharacterInfo
         private static readonly Dictionary<int, CharacterConfigInfo> _configs = new Dictionary<int, CharacterConfigInfo>();
 
         internal static bool LevelUpInjected = false;
+        internal static bool NewCharacterInjected = false;
 
         static CharacterRegistry()
         {
@@ -154,7 +156,6 @@ namespace AMLCore.Injection.Game.CharacterInfo
 
         public static void ResetAllPlayerGlobalData()
         {
-            //TODO we don't check for existance of new characters. there may be error
             SquirrelHelper.GetMemberChainRoot("playerData");
             foreach (var ch in _characters)
             {
@@ -163,20 +164,62 @@ namespace AMLCore.Injection.Game.CharacterInfo
             SquirrelFunctions.pop(SquirrelHelper.SquirrelVM, 1);
         }
 
+        public static void ResetAllPlayerSoul()
+        {
+            var vm = SquirrelHelper.SquirrelVM;
+            SquirrelHelper.GetMemberChainRoot("playerData");
+            foreach (var ch in _characters)
+            {
+                SquirrelFunctions.pushstring(vm, ch.Key, -1);
+                if (SquirrelFunctions.get(vm, -2) != 0)
+                {
+                    continue;
+                }
+
+                SquirrelFunctions.pushstring(vm, "soulMax", -1);
+                SquirrelFunctions.get(vm, -2);
+                SquirrelFunctions.getinteger(vm, -1, out var soul);
+                SquirrelFunctions.pop(vm, 1);
+
+                SquirrelFunctions.pushstring(vm, "soul", -1);
+                SquirrelFunctions.pushinteger(vm, soul);
+                SquirrelFunctions.set(vm, -3);
+
+                SquirrelFunctions.pop(vm, 1);
+            }
+            SquirrelFunctions.pop(SquirrelHelper.SquirrelVM, 1);
+        }
+
         private static void WritePlayerGlobalData(string name, CharacterData data)
         {
             var vm = SquirrelHelper.SquirrelVM;
+
             SquirrelFunctions.pushstring(vm, name, -1);
-            if (SquirrelFunctions.get(vm, -2) == 0)
+
+            //create a new instance
+            SquirrelFunctions.pushroottable(vm);
+            SquirrelFunctions.pushstring(vm, "PlayerData", -1);
+            if (SquirrelFunctions.get(vm, -2) != 0)
             {
-                WriteIntField("lifeMax", data.Life);
-                WriteIntField("lifeUP", data.LifeUp);
-                WriteIntField("soulMax", data.Soul);
-                WriteIntField("soulUp", data.SoulUp);
-                WriteIntField("baseAtk", data.Attack);
-                WriteIntField("atkUP", data.AttackUp);
-                SquirrelFunctions.pop(vm, 1);
+                //TODO log
+                SquirrelFunctions.pop(vm, 2);
+                return;
             }
+            SquirrelFunctions.remove(vm, -2);
+            SquirrelFunctions.pushroottable(vm);
+            SquirrelFunctions.call(vm, 1, 1, 0);
+            SquirrelFunctions.remove(vm, -2);
+
+            WriteIntField("level", 1);
+            WriteIntField("lifeMax", data.Life);
+            WriteIntField("lifeUP", data.LifeUp);
+            WriteIntField("soulMax", data.Soul);
+            WriteIntField("soul", data.Soul);
+            WriteIntField("soulUp", data.SoulUp);
+            WriteIntField("baseAtk", data.Attack);
+            WriteIntField("atkUP", data.AttackUp);
+
+            SquirrelFunctions.newslot(vm, -3, 0);
         }
 
         private static void WriteIntField(string name, int val)
@@ -192,10 +235,10 @@ namespace AMLCore.Injection.Game.CharacterInfo
 
         public static int GetNextFreeType()
         {
+            NewCharacterInjected = true;
             return _nextType++;
         }
 
-        //TODO someone need to inject into SetGameData(game.nut) to add new data there
         public static void RegisterCharacter(string name, int displayOrder, CharacterData data, ICharacterDataAlgorithm algorithm = null)
         {
             //internally assign a actor.type
@@ -218,6 +261,25 @@ namespace AMLCore.Injection.Game.CharacterInfo
                 return cc;
             }
             return null;
+        }
+
+        public static Tuple<string, int[]>[] GetCharacterMapping(bool excludeQB)
+        {
+            return _configs
+                .GroupBy(cc => cc.Value.Character)
+                .Where(cc => !excludeQB || cc.Key.PlayerDataName != "QB")
+                .OrderBy(cc => cc.Key.DisplayOrder)
+                .Select(cc => new Tuple<string, int[]>(cc.Key.PlayerDataName, cc.Select(kk => kk.Key).OrderBy(ii => ii).ToArray())).ToArray();
+        }
+
+        public static CharacterConfigInfo[] GetAllConfigs()
+        {
+            return _configs.Values.ToArray();
+        }
+
+        public static CharacterInfo[] GetAllCharacters()
+        {
+            return _characters.Values.ToArray();
         }
     }
 }

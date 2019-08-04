@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace AMLCore.Injection.Game.Resource
+namespace AMLCore.Injection.Game.ResourcePack
 {
     public class GS0XResourceReader
     {

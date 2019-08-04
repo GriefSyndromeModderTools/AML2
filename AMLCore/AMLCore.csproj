@@ -58,6 +58,7 @@
     <Compile Include="Injection\Engine\Input\ReadOnlyInputHandler.cs" />
     <Compile Include="Injection\Engine\Script\CompileFileInjectionManager.cs" />
     <Compile Include="Injection\Engine\Script\InjectedScriptFunction.cs" />
+    <Compile Include="Injection\Engine\Script\MetaMethodInjectEntry.cs" />
     <Compile Include="Injection\Engine\Script\ReferencedScriptObject.cs" />
     <Compile Include="Injection\Engine\Script\SquirrelAPINewFunctions.cs" />
     <Compile Include="Injection\Engine\Script\SquirrelFunctions.cs" />
@@ -67,22 +68,42 @@
     <Compile Include="Injection\Engine\Window\MainWindowMessageEntry.cs" />
     <Compile Include="Injection\Game\CharacterInfo\CharacterLevelInjectEntry.cs" />
     <Compile Include="Injection\Game\CharacterInfo\CharacterRegistry.cs" />
-    <Compile Include="Injection\Game\Resource\GS0XResourceReader.cs" />
-    <Compile Include="Injection\Game\Resource\Package.cs" />
-    <Compile Include="Injection\Game\Resource\ResourceInjectEntry.cs" />
-    <Compile Include="Injection\Game\Resource\ResourceInjection.cs" />
-    <Compile Include="Injection\Game\Resource\ResourceObject.cs" />
+    <Compile Include="Injection\Game\CharacterInfo\SimpleInitFunction.cs" />
+    <Compile Include="Injection\Game\CharacterInfo\NewCharacterDataInjectEntry.cs" />
+    <Compile Include="Injection\Game\CharacterInfo\NewCharacterInitFunctionHelper.cs" />
+    <Compile Include="Injection\Game\CharacterInfo\TestPatchouliMod.cs" />
+    <Compile Include="Injection\Game\ResourcePack\GS0XResourceReader.cs" />
+    <Compile Include="Injection\Game\ResourcePack\IResourceContentProvider.cs" />
+    <Compile Include="Injection\Game\ResourcePack\Package.cs" />
+    <Compile Include="Injection\Game\ResourcePack\ResourceInjectEntry.cs" />
+    <Compile Include="Injection\Game\ResourcePack\ResourceInjection.cs" />
+    <Compile Include="Injection\Game\ResourcePack\ResourceObject.cs" />
     <Compile Include="Injection\Game\SaveData\GSDataFile.cs" />
     <Compile Include="Injection\Game\SaveData\SaveDataEntry.cs" />
     <Compile Include="Injection\Game\SaveData\SaveDataHelper.cs" />
+    <Compile Include="Injection\Game\Scene\Caocao\CaocaoHelper.cs" />
+    <Compile Include="Injection\Game\Scene\Caocao\CaocaoPlayerLocation.cs" />
+    <Compile Include="Injection\Game\Scene\Caocao\CaocaoStageHandler.cs" />
+    <Compile Include="Injection\Game\Scene\Caocao\CaocaoStageHelper.cs" />
+    <Compile Include="Injection\Game\Scene\Caocao\CaocaoTitleHandler.cs" />
+    <Compile Include="Injection\Game\Scene\Caocao\Stage1.cs" />
+    <Compile Include="Injection\Game\Scene\Caocao\Stage2.cs" />
+    <Compile Include="Injection\Game\Scene\Caocao\Stage3.cs" />
+    <Compile Include="Injection\Game\Scene\Caocao\Stage4.cs" />
+    <Compile Include="Injection\Game\Scene\Caocao\Stage6.cs" />
     <Compile Include="Injection\Game\Scene\SceneEnvironment.cs" />
     <Compile Include="Injection\Game\Scene\SceneInjectionManager.cs" />
     <Compile Include="Injection\Game\Scene\SceneInjectEntry.cs" />
+    <Compile Include="Injection\Game\Scene\StageMain\ICharacterStageMainHandler.cs" />
+    <Compile Include="Injection\Game\Scene\StageMain\NewCharacterStageMainRenderer.cs" />
+    <Compile Include="Injection\Game\Scene\StageMain\StageMainHandler.cs" />
+    <Compile Include="Injection\Game\Scene\StagePause\ICharacterStagePauseHandler.cs" />
+    <Compile Include="Injection\Game\Scene\StagePause\NewCharacterStagePauseRenderer.cs" />
+    <Compile Include="Injection\Game\Scene\StagePause\StagePauseHandler.cs" />
+    <Compile Include="Injection\Game\Scene\StageSelect\ICharacterPictureRenderer.cs" />
     <Compile Include="Injection\Game\Scene\StageSelect\ICharacterSelectionComponent.cs" />
-    <Compile Include="Injection\Game\Scene\StageSelect\LevelSelectionComponent.cs" />
     <Compile Include="Injection\Game\Scene\StageSelect\NewStageSelect.cs" />
     <Compile Include="Injection\Game\Scene\StageSelect\NewStageSelectOptions.cs" />
-    <Compile Include="Injection\Game\Scene\TestSceneInjection.cs" />
     <Compile Include="Injection\GSO\GSOReadyInjectEntry.cs" />
     <Compile Include="Injection\GSO\PostGSOInjection.cs" />
     <Compile Include="Injection\Native\CalliGenerator.cs" />
@@ -148,6 +169,7 @@
     <Folder Include="Gui\" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Injection\Game\Scene\Caocao\CaocaoRes.dat" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
