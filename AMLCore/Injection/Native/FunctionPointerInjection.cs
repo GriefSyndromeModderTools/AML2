@@ -53,7 +53,7 @@ namespace AMLCore.Injection.Native
             var argSize = _ParamCount * 4;
 
             CoreLoggers.Injection.Info("inject virtual table with {0} at 0x{1}",
-                this.GetType().Name, addrFunctionPointer.ToInt32().ToString("X8"));
+                this.GetType().FullName, addrFunctionPointer.ToInt32().ToString("X8"));
 
             this.AddRegisterRead(Register.EAX);
             this.AddRegisterRead(Register.EBP);

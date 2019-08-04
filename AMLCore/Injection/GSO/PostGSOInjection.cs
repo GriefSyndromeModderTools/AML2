@@ -20,20 +20,32 @@ namespace AMLCore.Injection.GSO
             if (IsGSOLoaded || !IsGSO)
             {
                 CoreLoggers.Injection.Info("post-gso injection action {0}.{1} directly executed because {2}",
-                    action.Method.DeclaringType.ToString(), action.Method.Name,
+                    action.Method.DeclaringType.FullName.ToString(), action.Method.Name,
                     IsGSOLoaded ? "gso.dll already loaded" : "not in griefsyndrome_online.exe");
                 action();
             }
             else
             {
-                CoreLoggers.Injection.Info("add post-gso injection action {0}", action.Method.ToString());
+                CoreLoggers.Injection.Info("add post-gso injection action {0}.{1}",
+                    action.Method.DeclaringType.FullName.ToString(), action.Method.Name);
                 _actionList.Add(action);
             }
         }
 
         internal static void Invoke()
         {
-            CoreLoggers.Injection.Info("gso.dll loaded at 0x{0}", AddressHelper.Code("gso", 0).ToInt32().ToString("X8"));
+            if (AddressHelper.Code("gso", 0) != IntPtr.Zero)
+            {
+                CoreLoggers.Injection.Info("gso.dll loaded at 0x{0}", AddressHelper.Code("gso", 0).ToInt32().ToString("X8"));
+            }
+            else if (!IsGSO)
+            {
+                CoreLoggers.Injection.Info("not in griefsyndrome_online.exe");
+            }
+            else
+            {
+                CoreLoggers.Injection.Error("gso.dll not successfully loaded in griefsyndrome_online.exe");
+            }
             CoreLoggers.Injection.Info("post-gso injection starts");
             _actionList.ForEach(aa => aa());
             _actionList.Clear();

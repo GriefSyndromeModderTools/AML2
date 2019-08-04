@@ -99,8 +99,10 @@ namespace AMLCore.Injection.Engine.Script
 
         public static ReferencedScriptObject GetNewClosure(SquirrelFuncDelegate func)
         {
+            func = Wrap(func);
+
             _DelegateRef.Add(func);
-            IntPtr pFunc = Marshal.GetFunctionPointerForDelegate(Wrap(func));
+            IntPtr pFunc = Marshal.GetFunctionPointerForDelegate(func);
 
             var ret = new ReferencedScriptObject();
 
@@ -115,10 +117,12 @@ namespace AMLCore.Injection.Engine.Script
 
         public static void RegisterGlobalFunction(string name, SquirrelFuncDelegate func)
         {
+            func = Wrap(func);
+            _DelegateRef.Add(func);
+            IntPtr pFunc = Marshal.GetFunctionPointerForDelegate(func);
+
             Run(vm =>
             {
-                _DelegateRef.Add(func);
-                IntPtr pFunc = Marshal.GetFunctionPointerForDelegate(Wrap(func));
                 SquirrelFunctions.pushroottable(vm);
                 SquirrelFunctions.pushstring(vm, name, -1);
                 SquirrelFunctions.newclosure(vm, pFunc, 0);

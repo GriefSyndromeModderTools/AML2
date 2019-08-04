@@ -148,7 +148,7 @@ namespace AMLCore.Injection.Game.Scene.Caocao
 
         private static int StageBegin(IntPtr vm)
         {
-            if ((CaocaoPlayerLocation.Name % 10) == 1)
+            if ((CaocaoPlayerLocation.Name % 10) == 1 || CaocaoPlayerLocation.Name / 100 != 4)
             {
                 MapIn("WalkRight");
             }
