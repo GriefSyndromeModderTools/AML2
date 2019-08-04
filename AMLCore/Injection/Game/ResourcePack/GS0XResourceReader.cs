@@ -30,7 +30,7 @@ namespace AMLCore.Injection.Game.ResourcePack
             for (int i = 0; i < _files.Length; ++i)
             {
                 var fn = _files[i];
-                CoreLoggers.Injection.Info($"Reading package {fn}");
+                CoreLoggers.Resource.Info($"Reading package {fn}");
                 using (var pack = Package.ReadPackageFile(PathHelper.GetPath(fn)))
                 {
                     foreach (var f in pack.FileList)

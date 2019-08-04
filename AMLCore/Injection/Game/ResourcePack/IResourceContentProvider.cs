@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AMLCore.Internal;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -15,10 +16,12 @@ namespace AMLCore.Injection.Game.ResourcePack
     public class DebugFolderContentProvider : IResourceContentProvider
     {
         public readonly string Path;
+        private readonly string RequestMethod;
 
         public DebugFolderContentProvider(string path)
         {
             Path = path;
+            RequestMethod = StackTraceHelper.GetCallerMethodName();
         }
 
         public byte[] GetResourceContent(string path)
@@ -30,6 +33,11 @@ namespace AMLCore.Injection.Game.ResourcePack
             }
             return null;
         }
+
+        public override string ToString()
+        {
+            return $"{{ DebugFolderContentProvider: {RequestMethod} }}";
+        }
     }
 
     public class SimpleZipArchiveProvider : IResourceContentProvider
@@ -40,6 +48,7 @@ namespace AMLCore.Injection.Game.ResourcePack
         private readonly MemoryStream _destStream = new MemoryStream();
         private readonly MemoryStream _srcStream = new MemoryStream();
         private readonly byte[] _copyBuffer = new byte[1024];
+        private readonly string RequestMethod;
 
         public SimpleZipArchiveProvider(Stream archiveStream)
         {
@@ -62,6 +71,8 @@ namespace AMLCore.Injection.Game.ResourcePack
             }
 
             _offset = (int)archiveStream.Position;
+
+            RequestMethod = StackTraceHelper.GetCallerMethodName();
         }
 
         private void CopySection(int start, int len)
@@ -103,6 +114,11 @@ namespace AMLCore.Injection.Game.ResourcePack
                 d.CopyTo(_destStream);
             }
             return _destStream.ToArray();
+        }
+
+        public override string ToString()
+        {
+            return $"{{ SimpleZipArchiveProvider: {RequestMethod} }}";
         }
     }
 }

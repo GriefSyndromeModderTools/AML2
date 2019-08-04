@@ -62,8 +62,8 @@ namespace AMLCore.Injection.Engine.Script
 
             public ReplacedInt()
             {
-                ReplacedGetter = GetterEntry;
-                ReplacedSetter = SetterEntry;
+                ReplacedGetter = SquirrelHelper.Wrap(GetterEntry);
+                ReplacedSetter = SquirrelHelper.Wrap(SetterEntry);
             }
 
             private int GetterEntry(IntPtr vm)

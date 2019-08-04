@@ -163,7 +163,8 @@ namespace AMLCore.Injection.Game.Scene.Caocao
                     SetScrollLock(true, false, true, true);
                     break;
                 default:
-                    throw new Exception("Invalid stage location.");
+                    CaocaoPlayerLocation.ResetLocation();
+                    goto case 111;
             }
             if (CaocaoPlayerLocation.Name != 141) PlayBgm("mdk_s1.ogg");
             SetState();

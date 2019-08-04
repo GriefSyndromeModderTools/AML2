@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AMLCore.Internal;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -44,13 +45,21 @@ namespace AMLCore.Injection.Game.ResourcePack
                 }
                 foreach (var p in _providers)
                 {
-                    var c = p.GetResourceContent(path);
-                    if (c != null)
+                    try
                     {
-                        id = _items.Count;
-                        _items.Add(c);
-                        _pathMap[path] = id;
-                        return c;
+                        var c = p.GetResourceContent(path);
+                        if (c != null)
+                        {
+                            id = _items.Count;
+                            _items.Add(c);
+                            _pathMap[path] = id;
+                            return c;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        CoreLoggers.Resource.Error("exception when processing resource {0} with {1}: {2}",
+                            path, p.ToString(), e.ToString());
                     }
                 }
                 return null;

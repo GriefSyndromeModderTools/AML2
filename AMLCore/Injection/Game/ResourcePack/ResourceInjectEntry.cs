@@ -54,7 +54,6 @@ namespace AMLCore.Injection.Game.ResourcePack
                 {
                     ResourceObject.CloseOriginal(obj);
                     ResourceObject.Init(obj, id, ResourceInjection.GetResource(id).Length);
-                    CoreLoggers.Injection.Info("Resource replaced");
                 }
             }
         }

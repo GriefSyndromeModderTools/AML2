@@ -67,6 +67,23 @@ namespace AMLCore.Injection.Engine.Script
         //prevent GC collecting
         private static List<SquirrelFuncDelegate> _DelegateRef = new List<SquirrelFuncDelegate>();
 
+        public static SquirrelFuncDelegate Wrap(SquirrelFuncDelegate original)
+        {
+            return vm =>
+            {
+                try
+                {
+                    return original(vm);
+                }
+                catch (Exception e)
+                {
+                    CoreLoggers.Script.Error("C# wrapper exception at {0}.{1}: {2}.",
+                        original.Method.DeclaringType.ToString(), original.Method.Name, e.ToString());
+                    return -1;
+                }
+            };
+        }
+
         public static void Run(Action<IntPtr> action)
         {
             var vm = SquirrelVM;
@@ -83,7 +100,7 @@ namespace AMLCore.Injection.Engine.Script
         public static ReferencedScriptObject GetNewClosure(SquirrelFuncDelegate func)
         {
             _DelegateRef.Add(func);
-            IntPtr pFunc = Marshal.GetFunctionPointerForDelegate(func);
+            IntPtr pFunc = Marshal.GetFunctionPointerForDelegate(Wrap(func));
 
             var ret = new ReferencedScriptObject();
 
@@ -101,7 +118,7 @@ namespace AMLCore.Injection.Engine.Script
             Run(vm =>
             {
                 _DelegateRef.Add(func);
-                IntPtr pFunc = Marshal.GetFunctionPointerForDelegate(func);
+                IntPtr pFunc = Marshal.GetFunctionPointerForDelegate(Wrap(func));
                 SquirrelFunctions.pushroottable(vm);
                 SquirrelFunctions.pushstring(vm, name, -1);
                 SquirrelFunctions.newclosure(vm, pFunc, 0);

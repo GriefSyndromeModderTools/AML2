@@ -92,7 +92,7 @@ namespace AMLCore.Injection.Engine.Script
         }
 
         //save the entrance
-        private static SquirrelFuncDelegate _InjectedEntrance = InjectedEntrance;
+        private static SquirrelFuncDelegate _InjectedEntrance = SquirrelHelper.Wrap(InjectedEntrance);
 
         public static InjectedScriptFunction InjectCompileFile(string script, string func)
         {

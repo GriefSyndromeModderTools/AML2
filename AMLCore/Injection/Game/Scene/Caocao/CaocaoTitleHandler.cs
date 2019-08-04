@@ -161,8 +161,7 @@ namespace AMLCore.Injection.Game.Scene.Caocao
 
             SquirrelFunctions.pushstring(vm, "frontFaderAlpha", -1);
             SquirrelFunctions.pushfloat(vm, _faderAlpha);
-            SquirrelFunctions.set(vm, -3);
-            SquirrelFunctions.pop(vm, 1);
+            SquirrelFunctions.set(vm, 1);
             _env.StretchBlt(_env.GetResource("black_dot"), -10, -10, 820, 820, 0, 0, 1, 1, Blend.Alpha, _faderAlpha);
 
             if (cursor == 0 && _input.InputAll.B0 > 0)

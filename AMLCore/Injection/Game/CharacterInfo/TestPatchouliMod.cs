@@ -57,6 +57,7 @@ namespace AMLCore.Injection.Game.CharacterInfo
                 SquirrelFunctions.pushroottable(vm);
                 SquirrelFunctions.pushstring(vm, "data/se/se_patchouli.csv", -1);
                 SquirrelFunctions.call(vm, 2, 0, 0);
+                SquirrelFunctions.pop(vm, 1);
             });
 
             _type1 = CharacterRegistry.GetNextFreeType();

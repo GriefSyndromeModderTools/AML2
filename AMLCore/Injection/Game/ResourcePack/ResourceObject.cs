@@ -1,4 +1,5 @@
 ﻿using AMLCore.Injection.Native;
+using AMLCore.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Text;
 
 namespace AMLCore.Injection.Game.ResourcePack
 {
-    class ResourceObject
+    internal class ResourceObject
     {
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         public delegate void CloseAndFree(IntPtr pthis, bool free);
@@ -47,8 +48,6 @@ namespace AMLCore.Injection.Game.ResourcePack
         //[5]: current position
         //[6]: zero
 
-        public static Dictionary<int, List<Tuple<int, int>>> ReadRequest = new Dictionary<int, List<Tuple<int, int>>>();
-
         //functions:
         private static void CloseAndFreeImpl(IntPtr pthis, bool free)
         {
@@ -71,10 +70,6 @@ namespace AMLCore.Injection.Game.ResourcePack
 
             var pos = Marshal.ReadInt32(pthis, 4 * 5);
             var totalLen = Marshal.ReadInt32(pthis, 4 * 3);
-            if (ReadRequest.TryGetValue(id, out var rl))
-            {
-                rl.Add(new Tuple<int, int>(pos, len));
-            }
             if (pos + len > totalLen)
             {
                 len = totalLen - pos;
