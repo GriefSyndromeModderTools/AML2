@@ -10,6 +10,7 @@ namespace AMLCore.Injection.Native
     public class AddressHelper
     {
         private static readonly IntPtr _ExeModule = Natives.GetModuleHandle(null);
+
         public static IntPtr Code(uint offset)
         {
             return _ExeModule + (int)offset;
@@ -29,6 +30,14 @@ namespace AMLCore.Injection.Native
         {
             IntPtr pTable = Marshal.ReadIntPtr(obj);
             return IntPtr.Add(pTable, 4 * index);
+        }
+
+        public static IntPtr Proc(string module, string name)
+        {
+            var m = Natives.GetModuleHandle(module);
+            if (m == IntPtr.Zero) return m;
+            var p = Natives.GetProcAddress(m, name);
+            return p;
         }
     }
 }

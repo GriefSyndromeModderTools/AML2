@@ -237,7 +237,7 @@ namespace AMLCore.Injection.Engine.Script
         public static Delegate_PI_P newthread = GetFunction<Delegate_PI_P>(0x12B4F0);
         public static Delegate_P_V seterrorhandler = GetFunction<Delegate_P_V>(0x12B5C0);
         public static Delegate_PI_V tostring = GetFunction<Delegate_PI_V>(0x12B9E0);
-        public static Delegate_PIP_I getthread = GetFunction<Delegate_PIP_I>(0x12BBE0);
+        public static Delegate_PIP_I getuserdata = GetFunction<Delegate_PIP_I>(0x12BBE0);
         public static Delegate_P_V poptop = GetFunction<Delegate_P_V>(0x12BCB0);
         public static Delegate_P_V resetobject = GetFunction<Delegate_P_V>(0x12BE40);
         public static Delegate_PS_I throwerror = GetFunction<Delegate_PS_I>(0x12BE60);

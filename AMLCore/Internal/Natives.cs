@@ -19,6 +19,9 @@ namespace AMLCore.Internal
         public static extern IntPtr VirtualAlloc(IntPtr lpAddress, IntPtr dwSize,
            AllocationType flAllocationType, Protection flProtect);
 
+        [DllImport("kernel32", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
+        public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+
         [Flags]
         public enum AllocationType : uint
         {

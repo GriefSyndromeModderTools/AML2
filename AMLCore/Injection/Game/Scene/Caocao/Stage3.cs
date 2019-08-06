@@ -53,6 +53,7 @@ namespace AMLCore.Injection.Game.Scene.Caocao
 
         private static int StageInit(IntPtr vm)
         {
+            ResetGs03CaocaoPos();
             switch (CaocaoPlayerLocation.Name)
             {
                 case 311:

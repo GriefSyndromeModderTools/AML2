@@ -15,5 +15,6 @@ namespace AMLCore.Internal
         public static readonly Logger Update = new Logger("Core/Update");
         public static readonly Logger Script = new Logger("Core/Script");
         public static readonly Logger Resource = new Logger("Core/Resource");
+        public static readonly Logger Rendering = new Logger("Core/Rendering");
     }
 }

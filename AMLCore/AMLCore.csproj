@@ -53,6 +53,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Injection\Engine\DirectX\ActorTransform\ActorObject.cs" />
+    <Compile Include="Injection\Engine\DirectX\ActorTransform\ActorTransformEntry.cs" />
+    <Compile Include="Injection\Engine\DirectX\ActorTransform\ActorTransformManager.cs" />
+    <Compile Include="Injection\Engine\DirectX\ActorTransform\ActorTransformMatrix.cs" />
+    <Compile Include="Injection\Engine\DirectX\ActorTransform\IActorTransformHandler.cs" />
+    <Compile Include="Injection\Engine\DirectX\ActorTransform\TestTransformHandler.cs" />
     <Compile Include="Injection\Engine\DirectX\Direct3DEntry.cs" />
     <Compile Include="Injection\Engine\DirectX\Direct3DHelper.cs" />
     <Compile Include="Injection\Engine\Input\ReadOnlyInputHandler.cs" />

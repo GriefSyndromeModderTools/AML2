@@ -139,5 +139,18 @@ namespace AMLCore.Injection.Game.Scene.Caocao
                 SquirrelFunctions.pop(vm, 1);
             }
         }
+
+        public static void ResetGs03CaocaoPos()
+        {
+            var vm = SquirrelHelper.SquirrelVM;
+            SquirrelFunctions.pushroottable(vm);
+            SquirrelFunctions.pushstring(vm, "stage_x_poi", -1);
+            SquirrelFunctions.pushinteger(vm, 0);
+            SquirrelFunctions.newslot(vm, -3, 0);
+            SquirrelFunctions.pushstring(vm, "stage_y_poi", -1);
+            SquirrelFunctions.pushinteger(vm, 0);
+            SquirrelFunctions.newslot(vm, -3, 0);
+            SquirrelFunctions.pop(vm, 2);
+        }
     }
 }
