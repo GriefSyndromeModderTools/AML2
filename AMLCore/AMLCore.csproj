@@ -115,6 +115,7 @@
     <Compile Include="Injection\Native\CalliGenerator.cs" />
     <Compile Include="Internal\ArgumentHelper.cs" />
     <Compile Include="Internal\CommonArguments.cs" />
+    <Compile Include="Internal\GSOLoadingInjection.cs" />
     <Compile Include="Internal\NativeThreadIdentifyEntry.cs" />
     <Compile Include="Internal\OnlineUpdateCheck.cs" />
     <Compile Include="Internal\UpdateWaitingWindow.cs">
@@ -158,6 +159,7 @@
     <Compile Include="Misc\PathHelper.cs" />
     <Compile Include="Internal\Startup.cs" />
     <Compile Include="Plugins\IPluginOption.cs" />
+    <Compile Include="Plugins\IPresetProvider.cs" />
     <Compile Include="Plugins\IStandaloneEntryPoint.cs" />
     <Compile Include="Plugins\LauncherOptionForm.cs">
       <SubType>Form</SubType>
@@ -169,6 +171,7 @@
     <Compile Include="Plugins\PluginContainer.cs" />
     <Compile Include="Plugins\PluginLoader.cs" />
     <Compile Include="Misc\StandaloneLauncher.cs" />
+    <Compile Include="Plugins\Preset.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

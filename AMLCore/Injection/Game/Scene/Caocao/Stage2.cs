@@ -130,7 +130,7 @@ namespace AMLCore.Injection.Game.Scene.Caocao
                     break;
                 case 225:
                     CreateMap("stage2H", "map7");
-                    StageSetting("StageBaseSetting", "map6", "2_4D");
+                    StageSetting("StageBaseSetting", "map7", "2_4D");
                     CreateEventFromMap("map7", "start");
                     CreateEventFromMap("map7", "warpPoint1");
                     CreateEventFromMap("map7", "stopPoint1");
@@ -175,7 +175,7 @@ namespace AMLCore.Injection.Game.Scene.Caocao
 
         private static int StageBegin(IntPtr vm)
         {
-            if (CaocaoPlayerLocation.Name == 232)
+            if (CaocaoPlayerLocation.Name == 232 || CaocaoPlayerLocation.Name == 225)
             {
                 MapIn("Fall");
             }

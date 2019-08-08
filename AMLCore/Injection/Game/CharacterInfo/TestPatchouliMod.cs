@@ -1,4 +1,5 @@
-﻿using AMLCore.Injection.Engine.Script;
+﻿using AMLCore.Injection.Engine.DirectX.ActorTransform;
+using AMLCore.Injection.Engine.Script;
 using AMLCore.Injection.Game.ResourcePack;
 using AMLCore.Injection.Game.Scene;
 using AMLCore.Injection.Game.Scene.StageMain;
@@ -9,11 +10,12 @@ using AMLCore.Plugins;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace AMLCore.Injection.Game.CharacterInfo
 {
-    internal class TestPatchouliMod : IEntryPointLoad
+    internal class TestPatchouliMod //: IEntryPointLoad
     {
         private static int _type5, _type2, _type1;
 
@@ -46,9 +48,9 @@ namespace AMLCore.Injection.Game.CharacterInfo
         {
             CharacterRegistry.ReplaceLevelUpFunction();
 
-            //ResourceInjection.AddProvider(new DebugFolderContentProvider(@"E:\Library\Projects\PatchouliMod\pack_aml"));
+            ResourceInjection.AddProvider(new DebugFolderContentProvider(@"E:\Library\Projects\PatchouliMod\pack_aml"));
             //ResourceInjection.AddProvider(new DebugFolderContentProvider(@"E:\Library\Projects\PatchouliMod\pack_aml_static"));
-            ResourceInjection.AddProvider(new SimpleZipArchiveProvider(System.IO.File.OpenRead(PathHelper.GetPath("patchouli/1.dat"))));
+            //ResourceInjection.AddProvider(new SimpleZipArchiveProvider(System.IO.File.OpenRead(PathHelper.GetPath("patchouli/1.dat"))));
             ResourceInjection.AddProvider(new SimpleZipArchiveProvider(System.IO.File.OpenRead(PathHelper.GetPath("patchouli/0.dat"))));
 
             SquirrelHelper.InjectCompileFileMain("data/script/boot.nut").AddAfter(vm =>
@@ -133,10 +135,6 @@ namespace AMLCore.Injection.Game.CharacterInfo
                 "data/actor/patchouli/patchouli.pat",
                 SimpleInitFunction.Create(_type5, 0, compileFileList, 10000, PostInitPatchouli));
 
-            //Temporary solution for drawing StageMain things
-            //SquirrelHelper.InjectCompileFile("data/system/StageMain/StageMain.global.nut", "CreateGuage")
-            //    .AddAfter(CreateGuage_After);
-
             MetaMethodHelper.RegisterIntSetter("collisionMask", (obj, val) =>
             {
                 var vm = SquirrelHelper.SquirrelVM;
@@ -151,20 +149,6 @@ namespace AMLCore.Injection.Game.CharacterInfo
                 }
                 return val;
             });
-        }
-
-        private void CreateGuage_After(IntPtr vm)
-        {
-            SquirrelFunctions.pushstring(vm, "charactorType", -1);
-            SquirrelFunctions.get(vm, -2);
-            SquirrelFunctions.getinteger(vm, -1, out var type);
-            SquirrelFunctions.pop(vm, 1);
-            if (type == _type1 || type == _type2 || type == _type5)
-            {
-                SquirrelFunctions.pushstring(vm, "charactorType", -1);
-                SquirrelFunctions.pushinteger(vm, 2);
-                SquirrelFunctions.set(vm, -3);
-            }
         }
 
         private static void PostInitPatchouli(IntPtr vm)
@@ -296,16 +280,18 @@ namespace AMLCore.Injection.Game.CharacterInfo
                     function PatchouliModifyPlayer(playerID, elementList) {
                         try
                         {
-                        foreach( idx, aa in ::actor )
-                        {
-                            if (""playerID"" in aa.u)
+                            foreach( idx, aa in ::actor )
                             {
-                                if (aa.u.playerID != playerID) continue;
-                                aa.u.elementList <- elementList;
-                                aa.u.elementListPointer <- 0;
-                                aa.u.config <- elementList[0];
+                                if (""playerID"" in aa.u)
+                                {
+                                    if (aa.u.playerID != playerID) continue;
+                                    aa.u.elementList <- elementList;
+                                    aa.u.elementListPointer <- 0;
+                                    aa.u.config <- elementList[0];
+                                    return aa.u;
+                                }
                             }
-                        }
+                            return {};
                         }
                         catch (ex_) { ::MessageBox(ex_); }
                     }", "PatchouliModifyPlayer");
@@ -387,8 +373,16 @@ namespace AMLCore.Injection.Game.CharacterInfo
                     SquirrelFunctions.pushinteger(vm, ee);
                     SquirrelFunctions.arrayappend(vm, -2);
                 }
-                SquirrelFunctions.call(vm, 3, 0, 0);
-                SquirrelFunctions.pop(vm, 1);
+                SquirrelFunctions.call(vm, 3, 1, 0);
+                SetupPatchouliUTable(vm);
+                SquirrelFunctions.pop(vm, 2);
+            }
+
+            private static void SetupPatchouliUTable(IntPtr vm)
+            {
+                SquirrelFunctions.pushstring(vm, "SetMoonSpellEffect", -1);
+                SquirrelFunctions.pushobject(vm, MoonSpellDrawTransformer.AddHandlerFunc.SQObject);
+                SquirrelFunctions.newslot(vm, -3, 0);
             }
 
             public void ModifyPlayerType(ICharacterSelectionDataProvider p, int[] types)
@@ -441,6 +435,53 @@ namespace AMLCore.Injection.Game.CharacterInfo
                     default:
                         break;
                 }
+            }
+        }
+
+        private class MoonSpellDrawTransformer : IActorTransformHandler
+        {
+            private const float Ratio = 0.4f;
+
+            private static IntPtr _src = Marshal.AllocHGlobal(4 * 3);
+            private static IntPtr _dest = Marshal.AllocHGlobal(4 * 4);
+            private static float[] _marshal = new float[1];
+            private static MoonSpellDrawTransformer _instance = new MoonSpellDrawTransformer();
+            public static ReferencedScriptObject AddHandlerFunc;
+            private static HashSet<int> _handledMotion = new HashSet<int>();
+
+            static MoonSpellDrawTransformer()
+            {
+                Marshal.WriteInt32(_src, 0, 0);
+                Marshal.WriteInt32(_src, 4, 0);
+                Marshal.WriteInt32(_src, 8, 0);
+                AddHandlerFunc = SquirrelHelper.GetNewClosure(AddHandler);
+            }
+
+            public void Handle(IActorRenderer renderer, ActorObject actor, ActorTransformMatrix matrix)
+            {
+                matrix.TransformBuffer(_dest, 4 * 4, _src, 4 * 3, 1);
+                Marshal.Copy(_dest + 4, _marshal, 0, 1);
+                var y0 = _marshal[0];
+                var buffer = actor.DestBuffer;
+
+                for (int i = 0; i < 4; ++i)
+                {
+                    Marshal.Copy(buffer + 0x1C * i + 4, _marshal, 0, 1);
+                    _marshal[0] = _marshal[0] * Ratio + y0 * (1 - Ratio);
+                    Marshal.Copy(_marshal, 0, buffer + 0x1C * i + 4, 1);
+                }
+            }
+
+            public static int AddHandler(IntPtr vm)
+            {
+                if (SquirrelFunctions.getinteger(vm, 2, out var motion) == 0 && motion != 0)
+                {
+                    if (_handledMotion.Add(motion))
+                    {
+                        ActorTransformManager.RegisterHandler(motion, _instance);
+                    }
+                }
+                return 0;
             }
         }
     }

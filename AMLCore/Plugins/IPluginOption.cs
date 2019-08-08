@@ -6,8 +6,21 @@ using System.Windows.Forms;
 
 namespace AMLCore.Plugins
 {
+    public enum PluginType
+    {
+        //GSO (no) control: whether GSO loader will try to ensure clients load the same plugins and with same arguments
+        //Disable/endable by default: whether the (Default) preset will include it when launcher starts
+        //(Not) recorded: whether the use of this plugin should be recorded in the replay
+
+        Debug, //GSO no control, disabled by default, not recorded -- this will be default type if unknown
+        Optimization, //GSO no control, enabled by default, not recorded
+        EffectOnly, //GSO no control, disabled by default, recorded
+        Functional, //GSO control, disabled by default, recorded
+    }
+
     public interface IPluginOption
     {
+        PluginType PluginType { get; }
         void ResetOptions();
         void GetOptions(Action<string, string> list);
         void AddOption(string key, string value);

@@ -34,7 +34,7 @@ namespace AMLCore.Plugins
                     _EditControls.Add(ctrl);
                 }
             }
-            button4.Enabled = allowLoad;
+            button4.Enabled = allowLoad && false;
             
             this.InitPresetList();
 
@@ -46,7 +46,7 @@ namespace AMLCore.Plugins
         {
             //button3.Enabled = false;
             button4.Enabled = false;
-            tabControl1.TabPages.RemoveAt(1);
+            //tabControl1.TabPages.RemoveAt(1);
             tabControl1.TabPages.RemoveAt(0);
         }
 
@@ -56,6 +56,9 @@ namespace AMLCore.Plugins
 
         private PluginContainer[] GetOptions()
         {
+            _Editing = -1;
+            RefreshControls();
+
             return listView1.Items.OfType<ListViewItem>()
                 .Where(i => i.Checked)
                 .Select(i => (PluginContainer)i.Tag)
@@ -116,21 +119,8 @@ namespace AMLCore.Plugins
 
         #region preset
 
-        private class Preset : CommonArguments
-        {
-            public string Name;
-
-            public Preset(string name)
-            {
-                Name = name;
-            }
-            public Preset(string name, IEnumerable<Preset> p) : base(p)
-            {
-                Name = name;
-            }
-        }
-
         private List<Preset> _Presets = new List<Preset>();
+        private int _Editing = 0; //initially on default
 
         private void InitPresetList()
         {
@@ -141,12 +131,25 @@ namespace AMLCore.Plugins
             }
             listView2.Items[0].Selected = true;
             listView2.Items[0].Checked = true;
-            SwitchEditMode(true, 0);
+            //SwitchEditMode(true, 0);
+            RefreshControls();
         }
 
         private void ReadPresets()
         {
-            _Presets.Add(new Preset("(默认)"));
+            _Presets.Add(new Preset("(默认)", true));
+            _Presets[0].Mods = string.Join(",",
+                Options.Where(oo => oo.Type == PluginType.Optimization).Select(oo => oo.AssemblyName));
+
+            foreach (var c in Options)
+            {
+                c.CollectPresets(_Presets);
+            }
+
+            //var p1 = new Preset("草草", false);
+            //p1.Mods = "StageSelectControl";
+            //p1.Options.Add(new Tuple<string, string>("StageSelectControl.SelectStagePosition", "true"));
+            //_Presets.Add(p1);
         }
 
         private void SavePresets()
@@ -161,18 +164,21 @@ namespace AMLCore.Plugins
             {
                 item.Checked = mods.Contains(((PluginContainer)item.Tag).AssemblyName);
             }
+            foreach (var ctrl in _EditControls)
+            {
+                ctrl.Refresh();
+            }
         }
 
         private void LoadPresets()
         {
-            LoadPreset(new Preset(null,
-                GetCheckedPresetIds().Select(id => _Presets[id]).Reverse()));
+            LoadPreset(new Preset(GetCheckedPresetIds().Select(id => _Presets[id]).Reverse()));
         }
 
-        private void FinishEditPreset(Preset p)
-        {
-            p.GetPluginOptions(Options);
-        }
+        //private void FinishEditPreset(Preset p)
+        //{
+        //    p.GetPluginOptions(Options);
+        //}
 
         private int GetCurrentSelectedPresetId()
         {
@@ -186,61 +192,172 @@ namespace AMLCore.Plugins
                 .Where(t => t.Checked).Select(t => t.Index).ToArray();
         }
 
-        private void SwitchEditMode(bool editPreset, int edit)
+        private void RefreshControls()
         {
-            if (editPreset)
+            if (_Editing == -1)
             {
-                button7.Enabled = true;
-                button12.Enabled = false;
-                listView2.Enabled = false;
-                foreach (var ctrl in _EditControls)
-                {
-                    ctrl.Enabled = true;
-                }
-                listView1.Enabled = true;
-                LoadPreset(_Presets[edit]);
-            }
-            else
-            {
+                //Show combined preset, disable all editing functions
+                LoadPresets();
+                textBox1.Text = "";
+                textBox1.Enabled = false;
+                var sel = GetCurrentSelectedPresetId();
+                button12.Enabled = sel != -1;
                 button7.Enabled = false;
-                button12.Enabled = true;
-                listView2.Enabled = true;
                 foreach (var ctrl in _EditControls)
                 {
                     ctrl.Enabled = false;
                 }
+                listView1.SelectedIndices.Clear();
                 listView1.Enabled = false;
-                LoadPresets();
+
+                //Allow adding new presets/removing presets
+                button8.Enabled = true;
+                button9.Enabled = sel > 0 && _Presets[sel].Editable;
+            }
+            else if (_Editing == 0)
+            {
+                //Can't edit name
+                //Allow editing preset
+                LoadPreset(_Presets[0]);
+
+                textBox1.Text = "";
+                textBox1.Enabled = false;
+                button12.Enabled = false;
+                button7.Enabled = true;
+                foreach (var ctrl in _EditControls)
+                {
+                    ctrl.Enabled = true;
+                }
+                listView1.SelectedIndices.Clear();
+                listView1.Enabled = true;
+
+                button8.Enabled = false;
+                button9.Enabled = false;
+            }
+            else if (_Presets[_Editing].Editable)
+            {
+                //Allow all editing
+                LoadPreset(_Presets[_Editing]);
+
+                textBox1.Text = _Presets[_Editing].Name;
+                textBox1.Enabled = true;
+                button12.Enabled = false;
+                button7.Enabled = true;
+                foreach (var ctrl in _EditControls)
+                {
+                    ctrl.Enabled = true;
+                }
+                listView1.SelectedIndices.Clear();
+                listView1.Enabled = true;
+
+                button8.Enabled = false;
+                button9.Enabled = false;
+            }
+            else
+            {
+                //Disallow all editing
+                LoadPreset(_Presets[_Editing]);
+
+                textBox1.Text = _Presets[_Editing].Name;
+                textBox1.Enabled = false;
+                button12.Enabled = false;
+                button7.Enabled = true;
+                foreach (var ctrl in _EditControls)
+                {
+                    ctrl.Enabled = false;
+                }
+                listView1.SelectedIndices.Clear();
+                listView1.Enabled = false;
+
+                button8.Enabled = false;
+                button9.Enabled = false;
+            }
+
+            for (int i = 0; i < _Presets.Count; ++i)
+            {
+                if (i == _Editing)
+                {
+                    listView2.Items[i].Text = _Presets[i].Name + " (正在编辑)";
+                }
+                else
+                {
+                    listView2.Items[i].Text = _Presets[i].Name;
+                }
             }
         }
 
-        private int _Editing = 0; //initially on default
+        //private void SwitchEditMode(bool editPreset, int edit)
+        //{
+        //    if (editPreset)
+        //    {
+        //        button7.Enabled = true;
+        //        listView2.Enabled = false;
+        //        foreach (var ctrl in _EditControls)
+        //        {
+        //            ctrl.Enabled = true;
+        //        }
+        //        listView1.Enabled = true;
+        //        LoadPreset(_Presets[edit]);
+        //    }
+        //    else
+        //    {
+        //        button7.Enabled = false;
+        //        listView2.Enabled = true;
+        //        foreach (var ctrl in _EditControls)
+        //        {
+        //            ctrl.Enabled = false;
+        //        }
+        //        listView1.Enabled = false;
+        //        LoadPresets();
+        //    }
+        //    listView2_ItemSelectionChanged(listView2, null);
+        //}
+
         private void button12_Click(object sender, EventArgs e)
         {
-            var id = GetCurrentSelectedPresetId();
-            if (id == -1)
-            {
-                return;
-            }
-            _Editing = id;
-            SwitchEditMode(true, id);
+            //var id = GetCurrentSelectedPresetId();
+            //if (id == -1)
+            //{
+            //    return;
+            //}
+            //_Editing = id;
+            //SwitchEditMode(true, id);
+            var sel = GetCurrentSelectedPresetId();
+            if (sel == -1) return;
+            _Editing = sel;
+            RefreshControls();
         }
 
         private void button7_Click(object sender, EventArgs e)
         {
-            if (_Editing != -1)
+            //if (_Editing != -1)
+            //{
+            //    _Presets[_Editing].GetPluginOptions(Options);
+            //    _Presets[_Editing].Mods = String.Join(",",
+            //        listView1.Items.OfType<ListViewItem>()
+            //        .Where(i => i.Checked)
+            //        .Select(i => ((PluginContainer)i.Tag).AssemblyName));
+            //}
+            //SwitchEditMode(false, -1);
+            var sel = _Editing;
+            _Editing = -1;
+            if (sel == -1 || !_Presets[sel].Editable)
             {
-                _Presets[_Editing].GetPluginOptions(Options);
-                _Presets[_Editing].Mods = String.Join(",",
-                    listView1.Items.OfType<ListViewItem>()
-                    .Where(i => i.Checked)
-                    .Select(i => ((PluginContainer)i.Tag).AssemblyName));
+                RefreshControls();
+                return;
             }
-            SwitchEditMode(false, -1);
+            _Presets[sel].GetPluginOptions(Options);
+            _Presets[sel].Mods = String.Join(",",
+                listView1.Items.OfType<ListViewItem>()
+                .Where(i => i.Checked)
+                .Select(i => ((PluginContainer)i.Tag).AssemblyName));
+            if (sel != 0) _Presets[sel].Name = textBox1.Text;
+            RefreshControls();
         }
 
         private void button8_Click(object sender, EventArgs e)
         {
+            if (_Editing != -1) return;
             string n;
             for (int i = 1; ; ++i)
             {
@@ -250,64 +367,59 @@ namespace AMLCore.Plugins
                     break;
                 }
             }
-            var p = new Preset(n);
+            var p = new Preset(n, true);
             _Presets.Add(p);
             listView2.Items.Add(new ListViewItem(n) { Tag = p });
+            RefreshControls();
         }
 
         private void button9_Click(object sender, EventArgs e)
         {
             var id = GetCurrentSelectedPresetId();
-            if (id == -1)
+            if (id == -1 || id == 0 || _Editing != -1)
             {
                 return;
             }
             _Presets.RemoveAt(id);
             listView2.Items.RemoveAt(id);
+            RefreshControls();
         }
 
         private void listView2_ItemChecked(object sender, ItemCheckedEventArgs e)
         {
-            LoadPresets();
+            //LoadPresets();
+            if (_Editing == -1) RefreshControls();
         }
 
         private void listView2_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
         {
-            if (e.Item.Index == 0)
-            {
-                textBox1.Enabled = false;
-                textBox1.Text = "";
-                button9.Enabled = false;
-                button10.Enabled = false;
-                button11.Enabled = false;
-            }
-            else
-            {
-                textBox1.Enabled = true;
-                textBox1.Text = e.Item.Text;
-                button9.Enabled = true;
-                button10.Enabled = true;
-                button11.Enabled = true;
-            }
-            if (e.Item.Index == 1)
-            {
-                button10.Enabled = false;
-            }
-            if (e.Item.Index == listView2.Items.Count - 1)
-            {
-                button11.Enabled = false;
-            }
+            //var id = GetCurrentSelectedPresetId();
+            //if (id == 0 || id == -1)
+            //{
+            //    textBox1.Enabled = false;
+            //    textBox1.Text = "";
+            //    button9.Enabled = false;
+            //    button12.Enabled = id == 0;
+            //}
+            //else
+            //{
+            //    textBox1.Enabled = _Presets[id].Editable;
+            //    textBox1.Text = e.Item.Text;
+            //    button9.Enabled = true;
+            //    button12.Enabled = true;
+            //}
+            if (_Editing == -1) RefreshControls();
         }
 
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
-            var id = GetCurrentSelectedPresetId();
-            if (id == -1 && id != 0)
+            var id = _Editing;
+            if (id == -1 || id != 0 || !_Presets[id].Editable)
             {
                 return;
             }
             _Presets[id].Name = textBox1.Text;
-            listView2.Items[id].Text = textBox1.Text;
+            //Don't need to refresh
         }
 
         #endregion

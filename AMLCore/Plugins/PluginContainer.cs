@@ -16,6 +16,8 @@ namespace AMLCore.Plugins
         private IEntryPointPreload[] _Pre;
         private IEntryPointLoad[] _Load;
         private IEntryPointPostload[] _Post;
+        private IPresetProvider[] _Presets;
+        private PluginType _Type;
 
         public PluginContainer(Assembly assembly, bool noEntry)
         {
@@ -46,6 +48,8 @@ namespace AMLCore.Plugins
                 _Load = CreateInstances<IEntryPointLoad>(assembly);
                 _Post = CreateInstances<IEntryPointPostload>(assembly);
             }
+            _Presets = CreateInstances<IPresetProvider>(assembly);
+            _Type = _Option?.PluginType ?? PluginType.Debug;
             CoreLoggers.Loader.Info("initialized assembly {0}", _AssemblyName);
         }
 
@@ -108,6 +112,11 @@ namespace AMLCore.Plugins
         public bool HasOptions
         {
             get { return _Option != null; }
+        }
+
+        public PluginType Type
+        {
+            get { return _Type; }
         }
 
         public void GetOptions(Action<string, string> list)
@@ -202,6 +211,29 @@ namespace AMLCore.Plugins
         public void Postload()
         {
             Array.ForEach(_Post, x => { LogEntry("postload", x); x.Run(); });
+        }
+
+        public void CollectPresets(List<Preset> list)
+        {
+            foreach (var provider in _Presets)
+            {
+                try
+                {
+                    var l = provider.GetPresetList();
+                    foreach (var pp in l)
+                    {
+                        var preset = new Preset(pp.Name, false);
+                        preset.Mods = pp.PluginLists;
+                        preset.Options.AddRange(pp.Options);
+                        list.Add(preset);
+                    }
+                }
+                catch (Exception e)
+                {
+                    CoreLoggers.Loader.Error("exception in CollectPresets for {0}: {1}",
+                        _AssemblyName, e.ToString());
+                }
+            }
         }
     }
 }

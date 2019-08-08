@@ -7,7 +7,7 @@ using System.Text;
 
 namespace AMLCore.Injection.Engine.DirectX.ActorTransform
 {
-    internal class TestTransformHandler : IEntryPointLoad
+    internal class TestTransformHandler //: IEntryPointLoad
     {
         public void Run()
         {
