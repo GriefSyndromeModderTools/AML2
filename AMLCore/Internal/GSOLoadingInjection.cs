@@ -12,7 +12,7 @@ namespace AMLCore.Internal
         public static bool IsGSO => Marshal.ReadInt32(AddressHelper.Code(0x286080)) == 0x00730067;
         public static bool IsGSOLoaded => AddressHelper.Code("gso", 0) != IntPtr.Zero;
 
-        public static bool RequireGSOLoading => IsGSO;
+        public static bool RequireGSOLoading => false; //TODO change to true after finished
 
         private static InjectedArguments _arguments;
 

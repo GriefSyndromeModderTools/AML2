@@ -29,6 +29,7 @@ namespace AMLCore.Injection.Native
 
             CoreLoggers.Injection.Info("inject code with {0} at 0x{1}",
                 this.GetType().FullName, addr.ToInt32().ToString("X8"));
+            OverlapCheck.Add(addr, len);
 
             this.AddRegisterRead(Register.EAX);
             this.AddRegisterRead(Register.EBP);

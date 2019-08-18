@@ -56,8 +56,10 @@ namespace AMLCore.Plugins
 
         private PluginContainer[] GetOptions()
         {
-            _Editing = -1;
-            RefreshControls();
+            if (_Editing != -1)
+            {
+                button7_Click(button7, EventArgs.Empty);
+            }
 
             return listView1.Items.OfType<ListViewItem>()
                 .Where(i => i.Checked)

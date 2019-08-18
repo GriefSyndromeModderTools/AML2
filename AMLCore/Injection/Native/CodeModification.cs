@@ -25,6 +25,7 @@ namespace AMLCore.Injection.Native
             var addr = AddressHelper.Code(offset);
             using (new ReadWriteProtect(addr, code.Length))
             {
+                OverlapCheck.Add(addr, code.Length);
                 Marshal.Copy(code, 0, addr, code.Length);
             }
         }
@@ -34,6 +35,7 @@ namespace AMLCore.Injection.Native
             var addr = AddressHelper.Code(module, offset);
             using (new ReadWriteProtect(addr, code.Length))
             {
+                OverlapCheck.Add(addr, code.Length);
                 Marshal.Copy(code, 0, addr, code.Length);
             }
         }
@@ -43,6 +45,7 @@ namespace AMLCore.Injection.Native
             IntPtr addr = AddressHelper.Code(offset);
             using (new ReadWriteProtect(addr, len))
             {
+                OverlapCheck.Add(addr, len);
                 int i;
                 for (i = 0; i + 256 <= len; i += 256, addr += 256)
                 {

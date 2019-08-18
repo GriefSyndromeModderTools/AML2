@@ -19,15 +19,16 @@ namespace AMLCore.Plugins
             InitAssembly(typeof(PluginLoader).Assembly, false);
         }
 
-        private static void InitAssembly(Assembly a, bool noEntry)
+        private static PluginContainer InitAssembly(Assembly a, bool noEntry)
         {
             lock (_Plugins)
             {
-                if (_Plugins.ContainsKey(a))
+                if (!_Plugins.TryGetValue(a, out var ret))
                 {
-                    return;
+                    ret = new PluginContainer(a, noEntry);
+                    _Plugins.Add(a, ret);
                 }
-                _Plugins[a] = new PluginContainer(a, noEntry);
+                return ret;
             }
         }
 
@@ -75,11 +76,22 @@ namespace AMLCore.Plugins
         public static void Load(InjectedArguments args)
         {
             InitCorePlugin();
-            foreach (var p in args.GetPluginFiles())
+            Queue<string> loadList = new Queue<string>(args.GetPluginFiles());
+            HashSet<string> allPlanned = new HashSet<string>(loadList);
+            while (loadList.Count > 0)
             {
+                var p = loadList.Dequeue();
                 try
                 {
-                    InitAssembly(Assembly.LoadFile(p), false);
+                    var c = InitAssembly(Assembly.LoadFile(p), false);
+                    foreach (var dep in c.Dependencies ?? new string[0])
+                    {
+                        if (allPlanned.Add(dep))
+                        {
+                            CoreLoggers.Loader.Info("load plugin {1} requested by {0}", p, dep);
+                            loadList.Enqueue(dep);
+                        }
+                    }
                 }
                 catch (Exception e)
                 {

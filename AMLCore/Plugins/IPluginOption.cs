@@ -20,7 +20,6 @@ namespace AMLCore.Plugins
 
     public interface IPluginOption
     {
-        PluginType PluginType { get; }
         void ResetOptions();
         void GetOptions(Action<string, string> list);
         void AddOption(string key, string value);

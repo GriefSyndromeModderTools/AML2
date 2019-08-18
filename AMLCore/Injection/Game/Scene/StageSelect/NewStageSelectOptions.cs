@@ -38,9 +38,10 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
             }
         }
 
-        public static void AllowSameCharacter(bool val)
+        public static bool IsSameCharacterAllowed
         {
-            NewStageSelect._allowSameChar = val;
+            get => NewStageSelect._allowSameChar;
+            set => NewStageSelect._allowSameChar = value;
         }
 
         public static void AllowQBOnlyGame(bool val)

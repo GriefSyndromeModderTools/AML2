@@ -76,9 +76,7 @@ namespace AMLCore.Injection.Game.CharacterInfo
 
         private static void AfterExp(IntPtr vm)
         {
-            SquirrelHelper.GetMemberChainThis("type");
-            SquirrelFunctions.getinteger(vm, -1, out var type);
-            SquirrelFunctions.pop(vm, 1);
+            var type = SquirrelHelper.PushMemberChainThis("type").PopInt32();
             var charName = CharacterRegistry.GetCharacterConfigInfo(type).Character.PlayerDataName;
 
             SquirrelFunctions.pushobject(vm, _newExpFunc.SQObject);

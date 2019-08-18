@@ -10,7 +10,7 @@ namespace AMLCore.Injection.Native
 {
     public abstract class AbstractNativeInjection
     {
-        internal enum Register
+        public enum Register
         {
             EAX,
             EBP,
@@ -28,7 +28,7 @@ namespace AMLCore.Injection.Native
                 _Data = data;
             }
 
-            internal IntPtr GetRegister(Register r)
+            public IntPtr GetRegister(Register r)
             {
                 return (IntPtr)Marshal.ReadInt32(_Data, _Parent._RegisterIndex[(int)r] * 4);
             }

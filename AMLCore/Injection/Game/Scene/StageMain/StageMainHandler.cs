@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using SQObject = AMLCore.Injection.Engine.Script.SquirrelFunctions.SQObject;
 
 namespace AMLCore.Injection.Game.Scene.StageMain
 {
@@ -59,7 +58,7 @@ namespace AMLCore.Injection.Game.Scene.StageMain
                     SquirrelFunctions.getstackobj(vm, -1, out var info);
                     SquirrelFunctions.pop(vm, 1);
 
-                    if (info.Type == SquirrelHelper.SQObjectType.OT_NULL)
+                    if (info.Type == SQObject.SQObjectType.OT_NULL)
                     {
                         //This should only happen at first frame we leave game.
                         //Wait for the original script to remove unused gauge.

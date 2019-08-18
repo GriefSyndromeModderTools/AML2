@@ -49,7 +49,7 @@ namespace AMLCore.Plugins
                 _Post = CreateInstances<IEntryPointPostload>(assembly);
             }
             _Presets = CreateInstances<IPresetProvider>(assembly);
-            _Type = _Option?.PluginType ?? PluginType.Debug;
+            _Type = _Desc?.PluginType ?? PluginType.Debug;
             CoreLoggers.Loader.Info("initialized assembly {0}", _AssemblyName);
         }
 
@@ -117,6 +117,11 @@ namespace AMLCore.Plugins
         public PluginType Type
         {
             get { return _Type; }
+        }
+
+        public string[] Dependencies
+        {
+            get { return _Desc?.Dependencies; }
         }
 
         public void GetOptions(Action<string, string> list)

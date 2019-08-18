@@ -20,13 +20,15 @@ namespace AMLCore.Injection.Engine.Script
         //compile
         private struct CompileFileCall
         {
-            public SquirrelFunctions.SQObject Table;
+            public SQObject Table;
             public string FileName;
         }
         private static Stack<CompileFileCall> _CallStack = new Stack<CompileFileCall>();
 
         public void Run()
         {
+            //increase initial stack size to 2MB hopefully to reduce possibly stack realloc during sq_get -> CallNative
+            //CodeModification.Modify(0xB69A1, 0x00, 0x00, 0x04, 0x00);
             //init
             new InjectSquirrelVM();
             //compile

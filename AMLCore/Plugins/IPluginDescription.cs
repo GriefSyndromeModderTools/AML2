@@ -14,5 +14,7 @@ namespace AMLCore.Plugins
         string Description { get; }
 
         int LoadPriority { get; }
+        PluginType PluginType { get; }
+        string[] Dependencies { get; }
     }
 }

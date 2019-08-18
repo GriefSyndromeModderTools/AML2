@@ -24,7 +24,7 @@ namespace AMLCore.Injection.Engine.Script
             _funcName = f;
         }
 
-        internal int Invoke(IntPtr vm, int nargs, SquirrelHelper.SQObjectType original1, SquirrelFunctions.SQObjectValue original2)
+        internal int Invoke(IntPtr vm, int nargs, SQObject.SQObjectType original1, SQObject.SQObjectValue original2)
         {
             bool stackTopChanged = false;
             foreach (var d in _Before)

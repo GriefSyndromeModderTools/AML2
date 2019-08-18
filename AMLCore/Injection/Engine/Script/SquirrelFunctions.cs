@@ -10,58 +10,6 @@ namespace AMLCore.Injection.Engine.Script
 {
     public static class SquirrelFunctions
     {
-        [StructLayout(LayoutKind.Explicit)]
-        public struct SQObjectValue
-        {
-            [FieldOffset(0)] public IntPtr Pointer;
-            [FieldOffset(0)] public int Integer;
-            [FieldOffset(0)] public float Float;
-        }
-
-        public struct SQObject
-        {
-            public SquirrelHelper.SQObjectType Type;
-            public SQObjectValue Value;
-
-            public static readonly SQObject Null = new SQObject
-            {
-                Type = SquirrelHelper.SQObjectType.OT_NULL,
-                Value = new SQObjectValue { Integer = 0 },
-            };
-
-            public override string ToString()
-            {
-                switch (Type)
-                {
-                    case SquirrelHelper.SQObjectType.OT_NULL:
-                        return "null";
-                    case SquirrelHelper.SQObjectType.OT_INTEGER:
-                        return Value.Integer.ToString();
-                    case SquirrelHelper.SQObjectType.OT_FLOAT:
-                        return Value.Float.ToString(CultureInfo.InvariantCulture);
-                    case SquirrelHelper.SQObjectType.OT_BOOL:
-                        return Value.Integer == 0 ? "false" : "true";
-                    case SquirrelHelper.SQObjectType.OT_STRING:
-                        return String.Format("\"{0}\"", Marshal.PtrToStringAnsi(Value.Pointer + 28));
-                    case SquirrelHelper.SQObjectType.OT_TABLE:
-                    case SquirrelHelper.SQObjectType.OT_ARRAY:
-                    case SquirrelHelper.SQObjectType.OT_USERDATA:
-                    case SquirrelHelper.SQObjectType.OT_CLOSURE:
-                    case SquirrelHelper.SQObjectType.OT_NATIVECLOSURE:
-                    case SquirrelHelper.SQObjectType.OT_GENERATOR:
-                    case SquirrelHelper.SQObjectType.OT_USERPOINTER:
-                    case SquirrelHelper.SQObjectType.OT_THREAD:
-                    case SquirrelHelper.SQObjectType.OT_FUNCPROTO:
-                    case SquirrelHelper.SQObjectType.OT_CLASS:
-                    case SquirrelHelper.SQObjectType.OT_INSTANCE:
-                    case SquirrelHelper.SQObjectType.OT_WEAKREF:
-                        return string.Empty;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-        }
-
         public struct RawSQStackInfos
         {
             public IntPtr FuncName;
@@ -143,7 +91,7 @@ namespace AMLCore.Injection.Engine.Script
         public delegate void Delegate_PII_V(IntPtr arg1, int arg2, int arg3);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void Delegate_PushObject(IntPtr arg1, SquirrelHelper.SQObjectType arg2, SQObjectValue arg3);
+        public delegate void Delegate_PushObject(IntPtr arg1, SQObject.SQObjectType arg2, SQObject.SQObjectValue arg3);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void Delegate_PPI_V(IntPtr arg1, IntPtr arg2, int arg3);
@@ -185,6 +133,9 @@ namespace AMLCore.Injection.Engine.Script
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int Delegate_PIPP_I(IntPtr arg1, int arg2, IntPtr arg3, IntPtr arg4);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int Delegate_PIoPP_I(IntPtr arg1, int arg2, out IntPtr arg3, IntPtr arg4);
 
         public static Delegate_P_V setdebughook = GetFunction<Delegate_P_V>(0x12B630);
 
@@ -267,7 +218,7 @@ namespace AMLCore.Injection.Engine.Script
         public static Delegate_P_I getlasterror = GetFunction<Delegate_P_I>(0x12BED0);
         public static Delegate_PI_P newuserdata = GetFunction<Delegate_PI_P>(0x12B8C0);
         public static Delegate_PIP_I setinstanceup = GetFunction<Delegate_PIP_I>(0x12DAB0);
-        public static Delegate_PIPP_I getinstanceup = GetFunction<Delegate_PIPP_I>(0x12DB00);
+        public static Delegate_PIoPP_I getinstanceup = GetFunction<Delegate_PIoPP_I>(0x12DB00);
         public static Delegate_PI_I bindenv = GetFunction<Delegate_PI_I>(0x12F110);
         public static Delegate_PI_I arrayappend = GetFunction<Delegate_PI_I>(0x12E9A0);
 
@@ -316,7 +267,7 @@ namespace AMLCore.Injection.Engine.Script
 
         public static void pushobject(IntPtr vm, SQObject obj)
         {
-            if (obj.Type == SquirrelHelper.SQObjectType.OT_NULL)
+            if (obj.Type == SQObject.SQObjectType.OT_NULL)
             {
 
             }

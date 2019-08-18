@@ -7,6 +7,8 @@ using System.Text;
 
 namespace AMLCore.Injection.Game.Scene
 {
+    //TODO should print log when resource create/get fails
+
     public enum Blend
     {
         Normal = 0,

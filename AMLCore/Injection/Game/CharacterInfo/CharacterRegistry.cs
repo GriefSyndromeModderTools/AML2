@@ -156,38 +156,32 @@ namespace AMLCore.Injection.Game.CharacterInfo
 
         public static void ResetAllPlayerGlobalData()
         {
-            SquirrelHelper.GetMemberChainRoot("playerData");
-            foreach (var ch in _characters)
+            using (SquirrelHelper.PushMemberChainRoot("playerData"))
             {
-                WritePlayerGlobalData(ch.Key, ch.Value.CharacterData);
+                foreach (var ch in _characters)
+                {
+                    WritePlayerGlobalData(ch.Key, ch.Value.CharacterData);
+                }
             }
-            SquirrelFunctions.pop(SquirrelHelper.SquirrelVM, 1);
         }
 
         public static void ResetAllPlayerSoul()
         {
             var vm = SquirrelHelper.SquirrelVM;
-            SquirrelHelper.GetMemberChainRoot("playerData");
-            foreach (var ch in _characters)
+            using (SquirrelHelper.PushMemberChainRoot("playerData"))
             {
-                SquirrelFunctions.pushstring(vm, ch.Key, -1);
-                if (SquirrelFunctions.get(vm, -2) != 0)
+                foreach (var ch in _characters)
                 {
-                    continue;
+                    using (var characterTable = SquirrelHelper.PushMemberChainStack(-1, ch.Key))
+                    {
+                        if (characterTable.IsSuccess)
+                        {
+                            var soul = SquirrelHelper.GetInt32("soulMax");
+                            SquirrelHelper.Set("soul", soul);
+                        }
+                    }
                 }
-
-                SquirrelFunctions.pushstring(vm, "soulMax", -1);
-                SquirrelFunctions.get(vm, -2);
-                SquirrelFunctions.getinteger(vm, -1, out var soul);
-                SquirrelFunctions.pop(vm, 1);
-
-                SquirrelFunctions.pushstring(vm, "soul", -1);
-                SquirrelFunctions.pushinteger(vm, soul);
-                SquirrelFunctions.set(vm, -3);
-
-                SquirrelFunctions.pop(vm, 1);
             }
-            SquirrelFunctions.pop(SquirrelHelper.SquirrelVM, 1);
         }
 
         private static void WritePlayerGlobalData(string name, CharacterData data)

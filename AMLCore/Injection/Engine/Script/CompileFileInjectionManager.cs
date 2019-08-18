@@ -25,7 +25,7 @@ namespace AMLCore.Injection.Engine.Script
         }
 
         //called by plugin, after calling the compiled script
-        public static void AfterCompileFile(string file, ref SquirrelFunctions.SQObject table)
+        public static void AfterCompileFile(string file, ref SQObject table)
         {
             var vm = SquirrelInjectEntry.SquirrelVM;
             Dictionary<string, int> script;
@@ -141,8 +141,7 @@ namespace AMLCore.Injection.Engine.Script
                 return -1;
             }
 
-            SquirrelFunctions.SQObject obj;
-            SquirrelFunctions.getstackobj(vm, -1, out obj);
+            SquirrelFunctions.getstackobj(vm, -1, out var obj);
 
             //pop the two free vars
             SquirrelFunctions.pop(vm, 2);

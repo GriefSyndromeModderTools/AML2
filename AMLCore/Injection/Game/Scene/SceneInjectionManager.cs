@@ -1,4 +1,5 @@
 ﻿using AMLCore.Injection.Game.Scene.StageSelect;
+using AMLCore.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -96,6 +97,8 @@ namespace AMLCore.Injection.Game.Scene
         public static void RegisterSceneHandler(SystemScene scene, ISceneEventHandler handler)
         {
             _handlerLists[scene].Add(handler);
+            CoreLoggers.Scene.Info("new scene handler registered for {0} with {1}",
+                scene.ToString(), handler.GetType().FullName);
         }
     }
 }

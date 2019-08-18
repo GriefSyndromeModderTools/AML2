@@ -7,19 +7,19 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
 {
     public interface ICharacterPictureRenderer
     {
-        void DrawSelected(SceneEnvironment env, float x, float y, int sliceX, int sliceWidth, float alpha);
-        void DrawDead(SceneEnvironment env, float x, float y, int sliceX, int sliceWidth, float alpha);
+        void DrawSelected(ICharacterSelectionDataProvider env, int playerId, int sliceX, int sliceWidth);
+        void DrawDead(ICharacterSelectionDataProvider env, int playerId, int sliceX, int sliceWidth);
     }
 
     internal class EmptyCharacterPictureRenderer : ICharacterPictureRenderer
     {
         public static readonly EmptyCharacterPictureRenderer Instance = new EmptyCharacterPictureRenderer();
 
-        public void DrawDead(SceneEnvironment env, float x, float y, int sliceX, int sliceWidth, float alpha)
+        public void DrawDead(ICharacterSelectionDataProvider env, int playerId, int sliceX, int sliceWidth)
         {
         }
 
-        public void DrawSelected(SceneEnvironment env, float x, float y, int sliceX, int sliceWidth, float alpha)
+        public void DrawSelected(ICharacterSelectionDataProvider env, int playerId, int sliceX, int sliceWidth)
         {
         }
     }
@@ -34,16 +34,21 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
             _resNameC = resName + "_C";
         }
 
-        public void DrawDead(SceneEnvironment env, float x, float y, int sliceX, int sliceWidth, float alpha)
+        public void DrawDead(ICharacterSelectionDataProvider env, int playerId, int sliceX, int sliceWidth)
         {
-            var img = env.GetResource(_resNameC);
-            env.BitBlt(img, x + sliceX, y, sliceWidth, img.ImageHeight, sliceX, 0, Blend.Alpha, alpha);
+            var pos = env.GetCharacterPanelPosition(playerId);
+            var alpha = env.GetCharacterPanelAlpha(playerId);
+            var img = env.SceneEnvironment.GetResource(_resNameC);
+            env.SceneEnvironment.BitBlt(img, pos.X + sliceX, pos.Y, sliceWidth, img.ImageHeight, sliceX, 0, Blend.Alpha, alpha);
         }
 
-        public void DrawSelected(SceneEnvironment env, float x, float y, int sliceX, int sliceWidth, float alpha)
+        public void DrawSelected(ICharacterSelectionDataProvider env, int playerId, int sliceX, int sliceWidth)
         {
-            var img = env.GetResource(_resNameB);
-            env.BitBlt(img, x + sliceX, y, sliceWidth, img.ImageHeight, sliceX, 0, Blend.Alpha, alpha);
+            var pos = env.GetCharacterPanelPosition(playerId);
+            var alpha = env.GetCharacterPanelAlpha(playerId);
+            if (env.IsComponentActive(null, playerId)) alpha *= env.GetFlashAlpha(playerId);
+            var img = env.SceneEnvironment.GetResource(_resNameB);
+            env.SceneEnvironment.BitBlt(img, pos.X + sliceX, pos.Y, sliceWidth, img.ImageHeight, sliceX, 0, Blend.Alpha, alpha);
         }
     }
 
@@ -57,16 +62,21 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
             _dead = dead;
         }
 
-        public void DrawDead(SceneEnvironment env, float x, float y, int sliceX, int sliceWidth, float alpha)
+        public void DrawDead(ICharacterSelectionDataProvider env, int playerId, int sliceX, int sliceWidth)
         {
-            var img = env.CreateResource(_dead);
-            env.BitBlt(img, x + sliceX, y, sliceWidth, img.ImageHeight, sliceX, 0, Blend.Alpha, alpha);
+            var pos = env.GetCharacterPanelPosition(playerId);
+            var alpha = env.GetCharacterPanelAlpha(playerId);
+            var img = env.SceneEnvironment.CreateResource(_dead);
+            env.SceneEnvironment.BitBlt(img, pos.X + sliceX, pos.Y, sliceWidth, img.ImageHeight, sliceX, 0, Blend.Alpha, alpha);
         }
 
-        public void DrawSelected(SceneEnvironment env, float x, float y, int sliceX, int sliceWidth, float alpha)
+        public void DrawSelected(ICharacterSelectionDataProvider env, int playerId, int sliceX, int sliceWidth)
         {
-            var img = env.CreateResource(_sel);
-            env.BitBlt(img, x + sliceX, y, sliceWidth, img.ImageHeight, sliceX, 0, Blend.Alpha, alpha);
+            var pos = env.GetCharacterPanelPosition(playerId);
+            var alpha = env.GetCharacterPanelAlpha(playerId);
+            if (env.IsComponentActive(null, playerId)) alpha *= env.GetFlashAlpha(playerId);
+            var img = env.SceneEnvironment.CreateResource(_sel);
+            env.SceneEnvironment.BitBlt(img, pos.X + sliceX, pos.Y, sliceWidth, img.ImageHeight, sliceX, 0, Blend.Alpha, alpha);
         }
     }
 }

@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using SQObject = AMLCore.Injection.Engine.Script.SquirrelFunctions.SQObject;
 
 namespace AMLCore.Injection.Engine.Script
 {

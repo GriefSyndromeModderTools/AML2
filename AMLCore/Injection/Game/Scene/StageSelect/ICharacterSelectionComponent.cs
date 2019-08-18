@@ -17,7 +17,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
         int GetConfigIndexSelected(int p);
         PointF GetCharacterPanelPosition(int p);
         float GetUIAlpha();
-        float GetFlashAlpha();
+        float GetFlashAlpha(int p);
         float GetCharacterPanelAlpha(int p);
         bool IsComponentActive(ICharacterSelectionComponent component, int p);
     }

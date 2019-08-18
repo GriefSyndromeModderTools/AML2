@@ -119,7 +119,8 @@ namespace AMLCore.Injection.Game.CharacterInfo
             SquirrelHelper.GetMemberChainRoot("Game_PlayerDown");
             SquirrelFunctions.pushroottable(vm);
             SquirrelFunctions.pushinteger(vm, type);
-            SquirrelFunctions.call(vm, 2, 0, 0); //TODO this call fails
+            SquirrelFunctions.call(vm, 2, 0, 0);
+            SquirrelFunctions.pop(vm, 1);
 
             //We are ignoring save data for now (as int type is actually changing).
         }

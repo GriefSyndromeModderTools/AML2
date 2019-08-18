@@ -17,7 +17,10 @@ namespace AMLCore.Injection.Engine.Input
             CodeModification.FillNop(0xC5FF8, 5);
             if (PostGSOInjection.IsGSO)
             {
-                new GSOInputInjection();
+                PostGSOInjection.Run(() =>
+                {
+                    new GSOInputInjection();
+                });
             }
             else
             {
@@ -28,6 +31,8 @@ namespace AMLCore.Injection.Engine.Input
 
         private class GSOInputInjection : CodeInjection
         {
+            private IntPtr status = AddressHelper.Code("gso", 0x28900);
+
             public GSOInputInjection() : base(0xC6000, 7)
             {
             }
@@ -35,7 +40,10 @@ namespace AMLCore.Injection.Engine.Input
             protected override void Triggered(NativeEnvironment env)
             {
                 IntPtr data = AddressHelper.Code(0x2AB6F0);
-                InputManager.HandleAll(data);
+                if (Marshal.ReadInt32(status) != 4)
+                {
+                    InputManager.HandleAll(data);
+                }
             }
         }
 

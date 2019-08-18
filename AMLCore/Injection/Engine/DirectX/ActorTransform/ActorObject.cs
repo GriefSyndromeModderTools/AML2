@@ -13,19 +13,19 @@ namespace AMLCore.Injection.Engine.DirectX.ActorTransform
 
     public struct ActorObject
     {
-        private readonly IntPtr _ptr;
+        public IntPtr RawPointer { get; }
 
         public ActorObject(IntPtr ptr)
         {
-            _ptr = ptr;
+            RawPointer = ptr;
         }
 
-        private IntPtr AnimationManager => Marshal.ReadIntPtr(_ptr, 0xBC);
+        private IntPtr AnimationManager => Marshal.ReadIntPtr(RawPointer, 0xBC);
         private IntPtr CurrentFrameInfo => Marshal.ReadIntPtr(AnimationManager, 0x1C4);
 
         public bool IsActive
         {
-            get => Marshal.ReadByte(_ptr, 0x34) != 0;
+            get => Marshal.ReadByte(RawPointer, 0x34) != 0;
         }
 
         public bool AnimationInfoAvailable
@@ -59,5 +59,31 @@ namespace AMLCore.Injection.Engine.DirectX.ActorTransform
 
         public IntPtr DestBuffer => CurrentFrameInfo + 0x10;
         public IntPtr SrcBuffer => CurrentFrameInfo + 0x88 + 0x38;
+
+        private static readonly float[] _marshalFloat = new float[1];
+
+        public float X
+        {
+            get
+            {
+                lock (_marshalFloat)
+                {
+                    Marshal.Copy(RawPointer + 0xF0, _marshalFloat, 0, 1);
+                    return _marshalFloat[0];
+                }
+            }
+        }
+
+        public float Y
+        {
+            get
+            {
+                lock (_marshalFloat)
+                {
+                    Marshal.Copy(RawPointer + 0xF4, _marshalFloat, 0, 1);
+                    return _marshalFloat[0];
+                }
+            }
+        }
     }
 }

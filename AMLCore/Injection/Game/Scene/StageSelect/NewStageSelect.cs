@@ -383,9 +383,9 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                 return new PointF(panel.Left, panel.Top + panel.OffsetY);
             }
 
-            public float GetFlashAlpha()
+            public float GetFlashAlpha(int p)
             {
-                return 0.8f + 0.2f * (float)Math.Sin(Parent._frame / 120.0 * 6.28);
+                return 0.8f + 0.2f * (float)Math.Cos((Parent._frame - Parent._frameFlashOffset[p]) / 120.0 * 6.28);
             }
 
             public float GetUIAlpha()
@@ -447,7 +447,8 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
 
         private UpdateFunction _currentUpdateType;
 
-        private int _frame;
+        private long _frame;
+        private long[] _frameFlashOffset = new long[3];
         private bool _focusExitItem;
         private SelectorRange _stageSelectorRange;
         private Selector _stageSelector;
@@ -788,18 +789,17 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                 {
                     var configIndex = _characterInfo[charSel].PlayerSelectors[i].Current;
                     var renderer = GetCharacterPictureRenderer(_characterIndexMap[charSel][configIndex]);
-                    renderer.DrawDead(_env, panel.Left, panel.Top + panel.OffsetY, 0, TransitionList.Max, alpha);
+                    renderer.DrawDead(_provider, i, 0, TransitionList.Max);
                 }
                 else
                 {
                     var charInfo = _characterInfo[charSel];
                     var tr = _playerSelection[i].TransitionList.Entries;
-                    var panelAlpha = alpha * (_playerSelection[i].CurrentComponent == null ? _provider.GetFlashAlpha() : 1.0f);
                     if (tr.Count == 2)
                     {
                         var configIndex = charInfo.PlayerSelectors[i].Current;
                         var renderer = GetCharacterPictureRenderer(_characterIndexMap[charSel][configIndex]);
-                        renderer.DrawSelected(_env, panel.Left, panel.Top + panel.OffsetY, 0, TransitionList.Max, panelAlpha);
+                        renderer.DrawSelected(_provider, i, 0, TransitionList.Max);
                     }
                     else
                     {
@@ -811,7 +811,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                             for (int k = x; k < x + w; ++k)
                             {
                                 var realX = _randomLines[k];
-                                renderer.DrawSelected(_env, panel.Left, panel.Top + panel.OffsetY, realX, 1, panelAlpha);
+                                renderer.DrawSelected(_provider, i, realX, 1);
                             }
                         }
                     }
@@ -1061,6 +1061,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                             if (lastComp != sel.CurrentComponent)
                             {
                                 seId = 0;
+                                _frameFlashOffset[i] = _frame;
                             }
                         }
                     }

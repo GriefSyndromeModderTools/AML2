@@ -5,16 +5,29 @@ using AMLCore.Plugins;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace AMLCore.Injection.Engine.Window
 {
     internal class MainWindowMessageEntry : IEntryPointLoad
     {
+        [DllImport("Imm32.dll")]
+        private static extern IntPtr ImmAssociateContext(IntPtr wnd, IntPtr imc);
+
         public void Run()
         {
             new MainWindowMessageInjection();
             MainWindowHelper.RegisterMessageHandler(CheckWindowsClosed);
+            MainWindowHelper.RegisterMessageHandler(DisableIME);
+        }
+
+        private static void DisableIME(IntPtr hWnd, uint uMsg, int wParam, int lParam)
+        {
+            if (uMsg == 1 /* WM_CREATE */)
+            {
+                ImmAssociateContext(hWnd, IntPtr.Zero);
+            }
         }
 
         private static void CheckWindowsClosed(IntPtr hWnd, uint uMsg, int wParam, int lParam)

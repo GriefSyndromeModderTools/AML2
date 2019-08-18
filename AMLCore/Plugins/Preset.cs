@@ -19,7 +19,7 @@ namespace AMLCore.Plugins
 
         public Preset(IEnumerable<Preset> list) : base(list)
         {
-            Name = "(合并)";
+            Name = null;
         }
     }
 }

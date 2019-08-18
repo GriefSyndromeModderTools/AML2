@@ -12,56 +12,6 @@ namespace AMLCore.Injection.Engine.Script
 
     public static class SquirrelHelper
     {
-        public enum SQObjectCategory
-        {
-            SQOBJECT_REF_COUNTED = 0x08000000,
-            SQOBJECT_NUMERIC = 0x04000000,
-            SQOBJECT_DELEGABLE = 0x02000000,
-            SQOBJECT_CANBEFALSE = 0x01000000,
-        }
-
-        public enum RawType
-        {
-            _RT_NULL = 0x00000001,
-            _RT_INTEGER = 0x00000002,
-            _RT_FLOAT = 0x00000004,
-            _RT_BOOL = 0x00000008,
-            _RT_STRING = 0x00000010,
-            _RT_TABLE = 0x00000020,
-            _RT_ARRAY = 0x00000040,
-            _RT_USERDATA = 0x00000080,
-            _RT_CLOSURE = 0x00000100,
-            _RT_NATIVECLOSURE = 0x00000200,
-            _RT_GENERATOR = 0x00000400,
-            _RT_USERPOINTER = 0x00000800,
-            _RT_THREAD = 0x00001000,
-            _RT_FUNCPROTO = 0x00002000,
-            _RT_CLASS = 0x00004000,
-            _RT_INSTANCE = 0x00008000,
-            _RT_WEAKREF = 0x00010000,
-        }
-
-        public enum SQObjectType
-        {
-            OT_NULL = (RawType._RT_NULL | SQObjectCategory.SQOBJECT_CANBEFALSE),
-            OT_INTEGER = (RawType._RT_INTEGER | SQObjectCategory.SQOBJECT_NUMERIC | SQObjectCategory.SQOBJECT_CANBEFALSE),
-            OT_FLOAT = (RawType._RT_FLOAT | SQObjectCategory.SQOBJECT_NUMERIC | SQObjectCategory.SQOBJECT_CANBEFALSE),
-            OT_BOOL = (RawType._RT_BOOL | SQObjectCategory.SQOBJECT_CANBEFALSE),
-            OT_STRING = (RawType._RT_STRING | SQObjectCategory.SQOBJECT_REF_COUNTED),
-            OT_TABLE = (RawType._RT_TABLE | SQObjectCategory.SQOBJECT_REF_COUNTED | SQObjectCategory.SQOBJECT_DELEGABLE),
-            OT_ARRAY = (RawType._RT_ARRAY | SQObjectCategory.SQOBJECT_REF_COUNTED),
-            OT_USERDATA = (RawType._RT_USERDATA | SQObjectCategory.SQOBJECT_REF_COUNTED | SQObjectCategory.SQOBJECT_DELEGABLE),
-            OT_CLOSURE = (RawType._RT_CLOSURE | SQObjectCategory.SQOBJECT_REF_COUNTED),
-            OT_NATIVECLOSURE = (RawType._RT_NATIVECLOSURE | SQObjectCategory.SQOBJECT_REF_COUNTED),
-            OT_GENERATOR = (RawType._RT_GENERATOR | SQObjectCategory.SQOBJECT_REF_COUNTED),
-            OT_USERPOINTER = RawType._RT_USERPOINTER,
-            OT_THREAD = (RawType._RT_THREAD | SQObjectCategory.SQOBJECT_REF_COUNTED),
-            OT_FUNCPROTO = (RawType._RT_FUNCPROTO | SQObjectCategory.SQOBJECT_REF_COUNTED), //internal usage only
-            OT_CLASS = (RawType._RT_CLASS | SQObjectCategory.SQOBJECT_REF_COUNTED),
-            OT_INSTANCE = (RawType._RT_INSTANCE | SQObjectCategory.SQOBJECT_REF_COUNTED | SQObjectCategory.SQOBJECT_DELEGABLE),
-            OT_WEAKREF = (RawType._RT_WEAKREF | SQObjectCategory.SQOBJECT_REF_COUNTED)
-        }
-
         public static IntPtr SquirrelVM => SquirrelInjectEntry.SquirrelVM;
 
         //prevent GC collecting
@@ -180,25 +130,25 @@ namespace AMLCore.Injection.Engine.Script
             return ret;
         }
 
-        public static void GetMemberChainThis(params string[] names)
+        public static PopStackScopeGuard PushMemberChainThis(params string[] names)
         {
             SquirrelFunctions.push(SquirrelVM, 1);
-            GetMemberChainTop(names);
+            return ReplaceMemberChainTop(names);
         }
 
-        public static void GetMemberChainRoot(params string[] names)
+        public static PopStackScopeGuard PushMemberChainRoot(params string[] names)
         {
             SquirrelFunctions.pushroottable(SquirrelVM);
-            GetMemberChainTop(names);
+            return ReplaceMemberChainTop(names);
         }
 
-        public static void GetMemberChainStack(int id, params string[] names)
+        public static PopStackScopeGuard PushMemberChainStack(int id, params string[] names)
         {
             SquirrelFunctions.push(SquirrelVM, id);
-            GetMemberChainTop(names);
+            return ReplaceMemberChainTop(names);
         }
 
-        public static void GetMemberChainTop(params string[] names)
+        private static PopStackScopeGuard ReplaceMemberChainTop(params string[] names)
         {
             foreach (var nn in names)
             {
@@ -208,10 +158,146 @@ namespace AMLCore.Injection.Engine.Script
                     CoreLoggers.Script.Error("sq_get error for {0} with name {1}", SquirrelFunctions.gettype(SquirrelVM, -1), nn);
                     SquirrelFunctions.pop(SquirrelVM, 1);
                     SquirrelFunctions.pushnull(SquirrelVM);
-                    return;
+                    return new PopStackScopeGuard(false);
                 }
                 SquirrelFunctions.remove(SquirrelVM, -2);
             }
+            return new PopStackScopeGuard(true);
+        }
+
+        public class PopStackScopeGuard : IDisposable
+        {
+            private bool _pop = false;
+            public bool IsSuccess { get; }
+
+            public PopStackScopeGuard(bool suc)
+            {
+                IsSuccess = suc;
+            }
+
+            public void Dispose()
+            {
+                if (!_pop)
+                {
+                    _pop = true;
+                    SquirrelFunctions.pop(SquirrelVM, 1);
+                }
+            }
+
+            public int? TryPopInt32()
+            {
+                if (SquirrelFunctions.getinteger(SquirrelVM, -1, out var ret) == 0)
+                {
+                    Dispose();
+                    return ret;
+                }
+                return null;
+            }
+
+            public int PopInt32()
+            {
+                if (SquirrelFunctions.getinteger(SquirrelVM, -1, out var ret) == 0)
+                {
+                    Dispose();
+                    return ret;
+                }
+                throw new Exception("squirrel pop type error");
+            }
+
+            public float? TryPopFloat()
+            {
+                if (SquirrelFunctions.getfloat(SquirrelVM, -1, out var ret) == 0)
+                {
+                    Dispose();
+                    return ret;
+                }
+                return null;
+            }
+
+            public float PopFloat()
+            {
+                if (SquirrelFunctions.getfloat(SquirrelVM, -1, out var ret) == 0)
+                {
+                    Dispose();
+                    return ret;
+                }
+                throw new Exception("squirrel pop type error");
+            }
+
+            public string PopString()
+            {
+                if (SquirrelFunctions.getstring(SquirrelVM, -1, out var ret) == 0)
+                {
+                    Dispose();
+                    return ret;
+                }
+                return null;
+            }
+        }
+
+        public static void NewSlot(ManagedSQObject key, ManagedSQObject value)
+        {
+            if (key.Type == ManagedSQObject.ManagedSQObjectType.Null)
+            {
+                //Special case: sq_newslot won't pop for us.
+                throw new NullReferenceException();
+            }
+            key.Push(SquirrelVM);
+            value.Push(SquirrelVM);
+            if (SquirrelFunctions.newslot(SquirrelVM, -3, 0) != 0)
+            {
+                throw new Exception("newslot error");
+            }
+        }
+
+        public static void Set(ManagedSQObject key, ManagedSQObject value)
+        {
+
+        }
+
+        public static int GetInt32(ManagedSQObject key)
+        {
+            key.Push(SquirrelVM);
+            if (SquirrelFunctions.get(SquirrelVM, -2) != 0)
+            {
+                throw new Exception("sq_get error");
+            }
+            if (SquirrelFunctions.getinteger(SquirrelVM, -1, out var ret) != 0)
+            {
+                throw new Exception("squirrel pop type error");
+            }
+            SquirrelFunctions.pop(SquirrelVM, 1);
+            return ret;
+        }
+
+        public static float GetFloat(ManagedSQObject key)
+        {
+            key.Push(SquirrelVM);
+            if (SquirrelFunctions.get(SquirrelVM, -2) != 0)
+            {
+                throw new Exception("sq_get error");
+            }
+            if (SquirrelFunctions.getfloat(SquirrelVM, -1, out var ret) != 0)
+            {
+                throw new Exception("squirrel pop type error");
+            }
+            SquirrelFunctions.pop(SquirrelVM, 1);
+            return ret;
+        }
+
+        public static string GetString(ManagedSQObject key)
+        {
+            key.Push(SquirrelVM);
+            if (SquirrelFunctions.get(SquirrelVM, -2) != 0)
+            {
+                throw new Exception("sq_get error");
+            }
+            if (SquirrelFunctions.getstring(SquirrelVM, -1, out var ret) != 0)
+            {
+                throw new Exception("squirrel pop type error");
+            }
+            SquirrelFunctions.pop(SquirrelVM, 1);
+            return ret;
         }
     }
 }

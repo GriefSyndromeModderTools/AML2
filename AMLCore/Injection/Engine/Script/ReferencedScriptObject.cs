@@ -10,7 +10,7 @@ namespace AMLCore.Injection.Engine.Script
     //TODO better idea is to inject and release right before vm released.
     public class ReferencedScriptObject
     {
-        public SquirrelFunctions.SQObject SQObject = SquirrelFunctions.SQObject.Null;
+        public SQObject SQObject = SQObject.Null;
 
         public void GetFromStack(int index)
         {
@@ -28,7 +28,7 @@ namespace AMLCore.Injection.Engine.Script
         public void ReleaseRef()
         {
             SquirrelFunctions.release_(SquirrelHelper.SquirrelVM, ref SQObject);
-            SQObject = SquirrelFunctions.SQObject.Null;
+            SQObject = SQObject.Null;
         }
     }
 }
