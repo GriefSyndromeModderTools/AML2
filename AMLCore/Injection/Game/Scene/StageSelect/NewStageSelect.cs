@@ -296,6 +296,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
                     if (Entries[i + 1].Start == Entries[i].Start)
                     {
                         Entries.RemoveAt(i);
+                        if (position == i) position -= 1;
                         i -= 1;
                     }
                 }

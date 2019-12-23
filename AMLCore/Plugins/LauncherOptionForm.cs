@@ -13,7 +13,7 @@ namespace AMLCore.Plugins
 {
     internal partial class LauncherOptionForm : Form
     {
-        public LauncherOptionForm(PluginContainer[] plugins, bool allowLoad)
+        public LauncherOptionForm(PluginContainer[] plugins, bool allowLoad, string presetOptions)
         {
             InitializeComponent();
 
@@ -40,6 +40,8 @@ namespace AMLCore.Plugins
 
             DisableUnfinished();
             this.tabControl1.SelectTab(0); //TODO
+
+            LoadArgPresetOptions(presetOptions);
         }
 
         private void DisableUnfinished()
@@ -48,6 +50,27 @@ namespace AMLCore.Plugins
             button4.Enabled = false;
             //tabControl1.TabPages.RemoveAt(1);
             tabControl1.TabPages.RemoveAt(0);
+        }
+
+        private void LoadArgPresetOptions(string presetOptions)
+        {
+            if (presetOptions == null) return;
+            var seg = presetOptions.Split(';');
+            if (seg.Length < 2) throw new Exception("Invalid preset options");
+
+            var presets = seg[0].Split(',');
+            for (int i = 0; i < _Presets.Count; ++i)
+            {
+                if (presets.Contains(_Presets[i].Name))
+                {
+                    listView2.Items[i].Checked = true;
+                }
+            }
+
+            seg[1] = "Mods=" + seg[1];
+            _Presets[0].ParseModsAndOptions(seg.Skip(1).ToArray());
+
+            RefreshControls();
         }
 
         public PluginContainer[] Options { get; private set; }
@@ -65,6 +88,28 @@ namespace AMLCore.Plugins
                 .Where(i => i.Checked)
                 .Select(i => (PluginContainer)i.Tag)
                 .ToArray();
+        }
+
+        private ShortcutArguments GetShortcutOptions(Internal.ShortcutStartupMode mode)
+        {
+            int e = _Editing;
+            if (e != -1)
+            {
+                button7_Click(button7, EventArgs.Empty);
+            }
+
+            var ret = ShortcutArguments.Create(listView1.Items.OfType<ListViewItem>()
+                .Where(i => i.Checked)
+                .Select(i => (PluginContainer)i.Tag)
+                .ToArray(), mode);
+
+            if (e != -1)
+            {
+                _Editing = e;
+                RefreshControls();
+            }
+
+            return ret;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -425,5 +470,33 @@ namespace AMLCore.Plugins
         }
 
         #endregion
+
+        private void Button10_Click(object sender, EventArgs e)
+        {
+            var dialog = new CreateShortcutDialog();
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                var args = GetShortcutOptions(dialog.Mode);
+                var selectedPresets = string.Join(",", GetCheckedPresetIds().Select(id => _Presets[id].Name));
+                var defaultPresetMods = _Presets[0].Mods;
+                var defaultPresetOptions = _Presets[0].Options;
+                var sb = new StringBuilder();
+                sb.Append(selectedPresets);
+                sb.Append(';');
+                sb.Append(defaultPresetMods);
+                foreach (var oo in defaultPresetOptions)
+                {
+                    if (oo.Item1 == null) continue;
+                    sb.Append(';');
+                    sb.Append(oo.Item1);
+                    if (oo.Item2 != null)
+                    {
+                        sb.Append('=');
+                        sb.Append(oo.Item2);
+                    }
+                }
+                args.Save(dialog.FileName, sb.ToString());
+            }
+        }
     }
 }

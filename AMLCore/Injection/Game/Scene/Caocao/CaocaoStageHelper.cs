@@ -12,145 +12,111 @@ namespace AMLCore.Injection.Game.Scene.Caocao
 
         public static void CreateMap(string file, string name)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelHelper.GetMemberChainRoot("world2d", "CreateMap");
-            SquirrelHelper.GetMemberChainRoot("world2d");
-            SquirrelFunctions.pushstring(vm, $"data/stage/{file}.act", -1);
-            SquirrelFunctions.pushstring(vm, name, -1);
-            SquirrelFunctions.call(vm, 3, 0, 0);
-            SquirrelFunctions.pop(vm, 1);
+            using (var world2d = SquirrelHelper.PushMemberChainRoot("world2d").PopRefObject())
+            {
+                using (SquirrelHelper.PushMemberChainObj(world2d.SQObject, "CreateMap"))
+                {
+                    SquirrelHelper.CallEmpty(world2d.SQObject, $"data/stage/{file}.act", name);
+                }
+            }
         }
 
         public static void StageSetting(string method, string map, string stageName)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelHelper.GetMemberChainRoot(method);
-            SquirrelFunctions.pushroottable(vm);
-            SquirrelHelper.GetMemberChainRoot(map);
-            SquirrelFunctions.call(vm, 2, 0, 0);
-            SquirrelFunctions.pop(vm, 1);
-
-            SquirrelHelper.GetMemberChainRoot("SetStageFlag");
-            SquirrelFunctions.pushroottable(vm);
-            SquirrelFunctions.call(vm, 1, 0, 0);
-            SquirrelFunctions.pop(vm, 1);
-
-            SquirrelHelper.GetMemberChainRoot("stage");
-            SquirrelFunctions.pushstring(vm, "name", -1);
-            SquirrelFunctions.pushstring(vm, stageName, -1);
-            SquirrelFunctions.set(vm, -3);
-            SquirrelFunctions.pushstring(vm, "beginScript", -1);
-            //SquirrelFunctions.pushstring(vm, "Stage1A_Begin", -1);
-            SquirrelFunctions.pushnull(vm); //This is actually never used.
-            SquirrelFunctions.set(vm, -3);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainRoot(method))
+            {
+                using (var mapObj = SquirrelHelper.PushMemberChainRoot(map).PopRefObject())
+                {
+                    SquirrelHelper.CallEmpty(ManagedSQObject.Root, mapObj.SQObject);
+                }
+            }
+            using (SquirrelHelper.PushMemberChainRoot("SetStageFlag"))
+            {
+                SquirrelHelper.CallEmpty(ManagedSQObject.Root);
+            }
+            using (SquirrelHelper.PushMemberChainRoot("stage"))
+            {
+                SquirrelHelper.NewSlot("name", stageName);
+                SquirrelHelper.NewSlot("beginScript", ManagedSQObject.Null);
+            }
         }
 
         public static void CreateEventFromMap(string map, string group)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelHelper.GetMemberChainRoot("world2d", "CreateEventFromMap");
-            SquirrelHelper.GetMemberChainRoot("world2d");
-            SquirrelHelper.GetMemberChainRoot(map, group, "layout");
-            SquirrelHelper.GetMemberChainRoot("stage", "ChipObjectSet");
-            SquirrelFunctions.pushroottable(vm);
-            SquirrelFunctions.call(vm, 4, 0, 0);
-            SquirrelFunctions.pop(vm, 1);
+            var world2d = SquirrelHelper.PushMemberChainRoot("world2d").PopObject();
+            using (SquirrelHelper.PushMemberChainObj(world2d, "CreateEventFromMap"))
+            {
+                SquirrelHelper.CallEmpty(world2d,
+                    SquirrelHelper.PushMemberChainRoot(map, group, "layout").PopObject(),
+                    SquirrelHelper.PushMemberChainRoot("stage", "ChipObjectSet").PopObject(),
+                    ManagedSQObject.Root);
+            }
         }
 
         public static void StartFadeIn(int color = 0, bool noCallback = false)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelHelper.GetMemberChainRoot("FaderAct", "FadeIn");
-            SquirrelHelper.GetMemberChainRoot("FaderAct");
-            SquirrelFunctions.pushinteger(vm, 60);
-            SquirrelFunctions.pushinteger(vm, color);
-            if (noCallback)
+            var faderAct = SquirrelHelper.PushMemberChainRoot("FaderAct").PopObject();
+            using (SquirrelHelper.PushMemberChainObj(faderAct, "FadeIn"))
             {
-                SquirrelFunctions.pushnull(vm);
+                SquirrelHelper.CallEmpty(faderAct, 60, color,
+                    noCallback ? ManagedSQObject.Null : SquirrelHelper.PushMemberChainRoot("Game_CountStart").PopObject());
             }
-            else
-            {
-                SquirrelHelper.GetMemberChainRoot("Game_CountStart");
-            }
-            SquirrelFunctions.call(vm, 4, 0, 0);
-            SquirrelFunctions.pop(vm, 1);
         }
 
         public static void SetScrollLock(bool l, bool r, bool u, bool d)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelHelper.GetMemberChainRoot("stage");
-
-            SquirrelFunctions.pushstring(vm, "scrollLeftLock", -1);
-            SquirrelFunctions.pushbool(vm, l ? 1 : 0);
-            SquirrelFunctions.set(vm, -3);
-            SquirrelFunctions.pushstring(vm, "scrollRightLock", -1);
-            SquirrelFunctions.pushbool(vm, r ? 1 : 0);
-            SquirrelFunctions.set(vm, -3);
-            SquirrelFunctions.pushstring(vm, "scrollUpLock", -1);
-            SquirrelFunctions.pushbool(vm, u ? 1 : 0);
-            SquirrelFunctions.set(vm, -3);
-            SquirrelFunctions.pushstring(vm, "scrollDownLock", -1);
-            SquirrelFunctions.pushbool(vm, d ? 1 : 0);
-            SquirrelFunctions.set(vm, -3);
-
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainRoot("stage"))
+            {
+                SquirrelHelper.Set("scrollLeftLock", l);
+                SquirrelHelper.Set("scrollRightLock", r);
+                SquirrelHelper.Set("scrollUpLock", u);
+                SquirrelHelper.Set("scrollDownLock", d);
+            }
         }
 
         public static void PlayBgm(string name)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelHelper.GetMemberChainRoot("PlayBgm");
-            SquirrelFunctions.pushroottable(vm);
-            SquirrelFunctions.pushstring(vm, $"data/bgm/{name}", -1);
-            SquirrelFunctions.pushinteger(vm, 0);
-            SquirrelFunctions.pushinteger(vm, 100);
-            SquirrelFunctions.call(vm, 4, 0, 0);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainRoot("PlayBgm"))
+            {
+                SquirrelHelper.CallEmpty(ManagedSQObject.Root, $"data/bgm/{name}", 0, 100);
+            }
         }
 
         public static void SetState()
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelHelper.GetMemberChainRoot("world2d", "SetState");
-            SquirrelHelper.GetMemberChainRoot("world2d");
-            SquirrelFunctions.pushinteger(vm, 0);
-            SquirrelFunctions.call(vm, 2, 0, 0);
-            SquirrelFunctions.pop(vm, 1);
+            var world2d = SquirrelHelper.PushMemberChainRoot("world2d").PopObject();
+            using (SquirrelHelper.PushMemberChainObj(world2d, "SetState"))
+            {
+                SquirrelHelper.CallEmpty(world2d, 0);
+            }
         }
 
         public static void MapIn(string method)
         {
             if (method == null)
             {
-                var vm = SquirrelHelper.SquirrelVM;
-                SquirrelHelper.GetMemberChainRoot("Game_CountStop");
-                SquirrelFunctions.pushroottable(vm);
-                SquirrelFunctions.call(vm, 1, 0, 0);
-                SquirrelFunctions.pop(vm, 1);
+                using (SquirrelHelper.PushMemberChainRoot("Game_CountStop"))
+                {
+                    SquirrelHelper.CallEmpty(ManagedSQObject.Root);
+                }
             }
             else
             {
-                var vm = SquirrelHelper.SquirrelVM;
-                SquirrelHelper.GetMemberChainRoot("stage", $"MapIn_{method}");
-                SquirrelHelper.GetMemberChainRoot("stage");
-                SquirrelFunctions.call(vm, 1, 0, 0);
-                SquirrelFunctions.pop(vm, 1);
+                var stage = SquirrelHelper.PushMemberChainRoot("stage").PopObject();
+                using (SquirrelHelper.PushMemberChainObj(stage, $"MapIn_{method}"))
+                {
+                    SquirrelHelper.CallEmpty(stage);
+                }
             }
         }
 
         public static void ResetGs03CaocaoPos()
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushroottable(vm);
-            SquirrelFunctions.pushstring(vm, "stage_x_poi", -1);
-            SquirrelFunctions.pushinteger(vm, 0);
-            SquirrelFunctions.newslot(vm, -3, 0);
-            SquirrelFunctions.pushstring(vm, "stage_y_poi", -1);
-            SquirrelFunctions.pushinteger(vm, 0);
-            SquirrelFunctions.newslot(vm, -3, 0);
-            SquirrelFunctions.pop(vm, 2);
+            using (SquirrelHelper.PushMemberChainRoot())
+            {
+                SquirrelHelper.NewSlot("stage_x_poi", 0);
+                SquirrelHelper.NewSlot("stage_y_poi", 0);
+            }
         }
     }
 }

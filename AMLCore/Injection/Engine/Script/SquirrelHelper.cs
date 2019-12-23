@@ -130,32 +130,37 @@ namespace AMLCore.Injection.Engine.Script
             return ret;
         }
 
-        public static PopStackScopeGuard PushMemberChainThis(params string[] names)
+        public static PopStackScopeGuard PushMemberChainThis(params ManagedSQObject[] names)
         {
             SquirrelFunctions.push(SquirrelVM, 1);
             return ReplaceMemberChainTop(names);
         }
 
-        public static PopStackScopeGuard PushMemberChainRoot(params string[] names)
+        public static PopStackScopeGuard PushMemberChainRoot(params ManagedSQObject[] names)
         {
             SquirrelFunctions.pushroottable(SquirrelVM);
             return ReplaceMemberChainTop(names);
         }
 
-        public static PopStackScopeGuard PushMemberChainStack(int id, params string[] names)
+        public static PopStackScopeGuard PushMemberChainStack(int id, params ManagedSQObject[] names)
         {
             SquirrelFunctions.push(SquirrelVM, id);
             return ReplaceMemberChainTop(names);
         }
 
-        private static PopStackScopeGuard ReplaceMemberChainTop(params string[] names)
+        public static PopStackScopeGuard PushMemberChainObj(SQObject obj, params ManagedSQObject[] names)
+        {
+            SquirrelFunctions.pushobject(SquirrelVM, obj);
+            return ReplaceMemberChainTop(names);
+        }
+
+        private static PopStackScopeGuard ReplaceMemberChainTop(params ManagedSQObject[] names)
         {
             foreach (var nn in names)
             {
-                SquirrelFunctions.pushstring(SquirrelVM, nn, -1);
+                nn.Push(SquirrelVM);
                 if (SquirrelFunctions.get(SquirrelVM, -2) != 0)
                 {
-                    CoreLoggers.Script.Error("sq_get error for {0} with name {1}", SquirrelFunctions.gettype(SquirrelVM, -1), nn);
                     SquirrelFunctions.pop(SquirrelVM, 1);
                     SquirrelFunctions.pushnull(SquirrelVM);
                     return new PopStackScopeGuard(false);
@@ -182,6 +187,11 @@ namespace AMLCore.Injection.Engine.Script
                     _pop = true;
                     SquirrelFunctions.pop(SquirrelVM, 1);
                 }
+            }
+
+            private void Clear()
+            {
+                _pop = true;
             }
 
             public int? TryPopInt32()
@@ -226,12 +236,44 @@ namespace AMLCore.Injection.Engine.Script
 
             public string PopString()
             {
+                //need to consider null
+                if (SquirrelFunctions.gettype(SquirrelVM, -1) == (int)SQObject.SQObjectType.OT_NULL)
+                {
+                    Dispose();
+                    return null;
+                }
                 if (SquirrelFunctions.getstring(SquirrelVM, -1, out var ret) == 0)
                 {
                     Dispose();
                     return ret;
                 }
-                return null;
+                throw new Exception("squirrel pop type error");
+            }
+
+            public ReferencedScriptObject PopRefObject()
+            {
+                var ret = new ReferencedScriptObject();
+                ret.PopFromStack();
+                Clear();
+                return ret;
+            }
+
+            public SQObject PopObject()
+            {
+                SquirrelFunctions.getstackobj(SquirrelVM, -1, out var ret);
+                SquirrelFunctions.pop(SquirrelVM, 1);
+                Clear();
+                return ret;
+            }
+
+            public bool PopBool()
+            {
+                if (SquirrelFunctions.getbool(SquirrelVM, -1, out var ret) == 0)
+                {
+                    Dispose();
+                    return ret != 0;
+                }
+                throw new Exception("squirrel pop type error");
             }
         }
 
@@ -252,7 +294,13 @@ namespace AMLCore.Injection.Engine.Script
 
         public static void Set(ManagedSQObject key, ManagedSQObject value)
         {
-
+            key.Push(SquirrelVM);
+            value.Push(SquirrelVM);
+            if (SquirrelFunctions.set(SquirrelVM, -3) != 0)
+            {
+                SquirrelFunctions.pop(SquirrelVM, 2);
+                throw new Exception("newslot error");
+            }
         }
 
         public static int GetInt32(ManagedSQObject key)
@@ -298,6 +346,46 @@ namespace AMLCore.Injection.Engine.Script
             }
             SquirrelFunctions.pop(SquirrelVM, 1);
             return ret;
+        }
+
+        public static bool GetBool(ManagedSQObject key)
+        {
+            key.Push(SquirrelVM);
+            if (SquirrelFunctions.get(SquirrelVM, -2) != 0)
+            {
+                throw new Exception("sq_get error");
+            }
+            if (SquirrelFunctions.getbool(SquirrelVM, -1, out var ret) != 0)
+            {
+                throw new Exception("squirrel pop type error");
+            }
+            SquirrelFunctions.pop(SquirrelVM, 1);
+            return ret != 0;
+        }
+
+        public static PopStackScopeGuard CallPush(params ManagedSQObject[] args)
+        {
+            foreach (var a in args)
+            {
+                a.Push(SquirrelVM);
+            }
+            if (SquirrelFunctions.call(SquirrelVM, args.Length, 1, 0) != 0)
+            {
+                throw new Exception("sq_call error");
+            }
+            return new PopStackScopeGuard(true);
+        }
+
+        public static void CallEmpty(params ManagedSQObject[] args)
+        {
+            foreach (var a in args)
+            {
+                a.Push(SquirrelVM);
+            }
+            if (SquirrelFunctions.call(SquirrelVM, args.Length, 0, 0) != 0)
+            {
+                throw new Exception("sq_call error");
+            }
         }
     }
 }

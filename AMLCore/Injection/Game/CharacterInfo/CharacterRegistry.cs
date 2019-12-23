@@ -160,14 +160,16 @@ namespace AMLCore.Injection.Game.CharacterInfo
             {
                 foreach (var ch in _characters)
                 {
-                    WritePlayerGlobalData(ch.Key, ch.Value.CharacterData);
+                    using (var obj = CreatePlayerGlobalData(ch.Value.CharacterData))
+                    {
+                        SquirrelHelper.NewSlot(ch.Key, obj.SQObject);
+                    }
                 }
             }
         }
 
         public static void ResetAllPlayerSoul()
         {
-            var vm = SquirrelHelper.SquirrelVM;
             using (SquirrelHelper.PushMemberChainRoot("playerData"))
             {
                 foreach (var ch in _characters)
@@ -184,46 +186,23 @@ namespace AMLCore.Injection.Game.CharacterInfo
             }
         }
 
-        private static void WritePlayerGlobalData(string name, CharacterData data)
+        private static ReferencedScriptObject CreatePlayerGlobalData(CharacterData data)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-
-            SquirrelFunctions.pushstring(vm, name, -1);
-
-            //create a new instance
-            SquirrelFunctions.pushroottable(vm);
-            SquirrelFunctions.pushstring(vm, "PlayerData", -1);
-            if (SquirrelFunctions.get(vm, -2) != 0)
+            using (SquirrelHelper.PushMemberChainRoot("PlayerData"))
             {
-                //TODO log
-                SquirrelFunctions.pop(vm, 2);
-                return;
-            }
-            SquirrelFunctions.remove(vm, -2);
-            SquirrelFunctions.pushroottable(vm);
-            SquirrelFunctions.call(vm, 1, 1, 0);
-            SquirrelFunctions.remove(vm, -2);
+                using (var dataStackObj = SquirrelHelper.CallPush(ManagedSQObject.Root))
+                {
+                    SquirrelHelper.Set("level", 1);
+                    SquirrelHelper.Set("lifeMax", data.Life);
+                    SquirrelHelper.Set("lifeUP", data.LifeUp);
+                    SquirrelHelper.Set("soulMax", data.Soul);
+                    SquirrelHelper.Set("soul", data.Soul);
+                    SquirrelHelper.Set("soulUp", data.SoulUp);
+                    SquirrelHelper.Set("baseAtk", data.Attack);
+                    SquirrelHelper.Set("atkUP", data.AttackUp);
 
-            WriteIntField("level", 1);
-            WriteIntField("lifeMax", data.Life);
-            WriteIntField("lifeUP", data.LifeUp);
-            WriteIntField("soulMax", data.Soul);
-            WriteIntField("soul", data.Soul);
-            WriteIntField("soulUp", data.SoulUp);
-            WriteIntField("baseAtk", data.Attack);
-            WriteIntField("atkUP", data.AttackUp);
-
-            SquirrelFunctions.newslot(vm, -3, 0);
-        }
-
-        private static void WriteIntField(string name, int val)
-        {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushstring(vm, name, -1);
-            SquirrelFunctions.pushinteger(vm, val);
-            if (SquirrelFunctions.set(vm, -3) != 0)
-            {
-                SquirrelFunctions.pop(vm, 2);
+                    return dataStackObj.PopRefObject();
+                }
             }
         }
 

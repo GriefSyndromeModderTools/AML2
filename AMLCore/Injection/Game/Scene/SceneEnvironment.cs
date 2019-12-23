@@ -33,77 +33,44 @@ namespace AMLCore.Injection.Game.Scene
             _obj.ReleaseRef();
         }
 
-        private void PushLayout()
-        {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushobject(vm, _obj.SQObject);
-            SquirrelFunctions.pushstring(vm, "layout", -1);
-            SquirrelFunctions.get(vm, -2);
-            SquirrelFunctions.remove(vm, -2);
-        }
-
         private float ReadFloat(string name)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushobject(vm, _obj.SQObject);
-            SquirrelFunctions.pushstring(vm, name, -1);
-            SquirrelFunctions.get(vm, -2);
-            SquirrelFunctions.getfloat(vm, -1, out var ret);
-            SquirrelFunctions.pop(vm, 2);
-            return ret;
+            return SquirrelHelper.PushMemberChainObj(_obj.SQObject, name).PopFloat();
         }
 
         public void WriteFloat(string name, float val)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushobject(vm, _obj.SQObject);
-            SquirrelFunctions.pushstring(vm, name, -1);
-            SquirrelFunctions.pushfloat(vm, val);
-            SquirrelFunctions.set(vm, -3);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainObj(_obj.SQObject))
+            {
+                SquirrelHelper.Set(name, val);
+            }
         }
 
         private bool ReadBool(string name)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushobject(vm, _obj.SQObject);
-            SquirrelFunctions.pushstring(vm, name, -1);
-            SquirrelFunctions.get(vm, -2);
-            SquirrelFunctions.getbool(vm, -1, out var ret);
-            SquirrelFunctions.pop(vm, 2);
-            return ret != 0;
+            return SquirrelHelper.PushMemberChainObj(_obj.SQObject, name).PopBool();
         }
 
         public void WriteBool(string name, bool val)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushobject(vm, _obj.SQObject);
-            SquirrelFunctions.pushstring(vm, name, -1);
-            SquirrelFunctions.pushbool(vm, val ? 1 : 0);
-            SquirrelFunctions.set(vm, -3);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainObj(_obj.SQObject))
+            {
+                SquirrelHelper.Set(name, val);
+            }
         }
 
         public float RollZ
         {
             get
             {
-                var vm = SquirrelHelper.SquirrelVM;
-                PushLayout();
-                SquirrelFunctions.pushstring(vm, "roll_z", -1);
-                SquirrelFunctions.get(vm, -2);
-                SquirrelFunctions.getfloat(vm, -1, out var ret);
-                SquirrelFunctions.pop(vm, 2);
-                return ret;
+                return SquirrelHelper.PushMemberChainObj(_obj.SQObject, "layout", "roll_z").PopFloat();
             }
             set
             {
-                var vm = SquirrelHelper.SquirrelVM;
-                PushLayout();
-                SquirrelFunctions.pushstring(vm, "roll_z", -1);
-                SquirrelFunctions.pushfloat(vm, value);
-                SquirrelFunctions.set(vm, -3);
-                SquirrelFunctions.pop(vm, 1);
+                using (SquirrelHelper.PushMemberChainObj(_obj.SQObject, "layout"))
+                {
+                    SquirrelHelper.Set("roll_z", value);
+                }
             }
         }
 
@@ -152,19 +119,8 @@ namespace AMLCore.Injection.Game.Scene
             _obj.ReleaseRef();
         }
 
-        private float ReadFloat(string name)
-        {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushobject(vm, _obj.SQObject);
-            SquirrelFunctions.pushstring(vm, name, -1);
-            SquirrelFunctions.get(vm, -2);
-            SquirrelFunctions.getfloat(vm, -1, out var ret);
-            SquirrelFunctions.pop(vm, 2);
-            return ret;
-        }
-
-        public float ImageWidth => ReadFloat("image_width");
-        public float ImageHeight => ReadFloat("image_height");
+        public float ImageWidth => SquirrelHelper.PushMemberChainObj(_obj.SQObject, "image_width").PopFloat();
+        public float ImageHeight => SquirrelHelper.PushMemberChainObj(_obj.SQObject, "image_height").PopFloat();
     }
 
     public class SceneEnvironment
@@ -174,33 +130,27 @@ namespace AMLCore.Injection.Game.Scene
         private readonly Dictionary<string, Resource> _cachedResource = new Dictionary<string, Resource>();
         private readonly Dictionary<string, Resource> _createdResource = new Dictionary<string, Resource>();
 
-        private ReferencedScriptObject _plObject = new ReferencedScriptObject();
-        private ReferencedScriptObject _setBlend = new ReferencedScriptObject();
-        private ReferencedScriptObject _stretchBlt = new ReferencedScriptObject();
-        private ReferencedScriptObject _bitBlt = new ReferencedScriptObject();
-        private ReferencedScriptObject _playSE = new ReferencedScriptObject();
-        private ReferencedScriptObject _createResource2D = new ReferencedScriptObject();
+        private ReferencedScriptObject _plObject;
+        private ReferencedScriptObject _setBlend;
+        private ReferencedScriptObject _stretchBlt;
+        private ReferencedScriptObject _bitBlt;
+        private ReferencedScriptObject _playSE;
+        private ReferencedScriptObject _createResource2D;
 
         public SceneEnvironment()
         {
-            var vm = SquirrelHelper.SquirrelVM;
-
-            SquirrelHelper.GetMemberChainThis("pl");
-            _plObject.GetFromStack(-1);
-
-            SquirrelHelper.GetMemberChainStack(-1, "SetBlend");
-            _setBlend.PopFromStack();
-            SquirrelHelper.GetMemberChainStack(-1, "StretchBlt");
-            _stretchBlt.PopFromStack();
-            SquirrelHelper.GetMemberChainStack(-1, "BitBlt");
-            _bitBlt.PopFromStack();
-            SquirrelHelper.GetMemberChainStack(-1, "CreateResource2D");
-            _createResource2D.PopFromStack();
-
-            SquirrelFunctions.pop(vm, 1); //pop pl
-
-            SquirrelHelper.GetMemberChainRoot("PlaySE");
-            _playSE.PopFromStack();
+            using (SquirrelHelper.PushMemberChainThis())
+            {
+                _plObject = SquirrelHelper.PushMemberChainStack(-1, "pl").PopRefObject();
+                using (SquirrelHelper.PushMemberChainObj(_plObject.SQObject))
+                {
+                    _setBlend = SquirrelHelper.PushMemberChainStack(-1, "SetBlend").PopRefObject();
+                    _stretchBlt = SquirrelHelper.PushMemberChainStack(-1, "StretchBlt").PopRefObject();
+                    _bitBlt = SquirrelHelper.PushMemberChainStack(-1, "BitBlt").PopRefObject();
+                    _createResource2D = SquirrelHelper.PushMemberChainStack(-1, "CreateResource2D").PopRefObject();
+                }
+            }
+            _playSE = SquirrelHelper.PushMemberChainRoot("PlaySE").PopRefObject();
         }
 
         public void DisposeResources()
@@ -220,11 +170,7 @@ namespace AMLCore.Injection.Game.Scene
         {
             if (!_cachedElement.TryGetValue(name, out var ret))
             {
-                var vm = SquirrelHelper.SquirrelVM;
-
-                SquirrelHelper.GetMemberChainThis(name);
-                var obj = new ReferencedScriptObject();
-                obj.PopFromStack();
+                var obj = SquirrelHelper.PushMemberChainThis(name).PopRefObject();
 
                 ret = new SceneElement(obj);
                 _cachedElement.Add(name, ret);
@@ -236,11 +182,7 @@ namespace AMLCore.Injection.Game.Scene
         {
             if (!_cachedResource.TryGetValue(name, out var ret))
             {
-                var vm = SquirrelHelper.SquirrelVM;
-
-                SquirrelHelper.GetMemberChainThis("resource", name);
-                var obj = new ReferencedScriptObject();
-                obj.PopFromStack();
+                var obj = SquirrelHelper.PushMemberChainThis("resource", name).PopRefObject();
 
                 ret = new Resource(obj);
                 _cachedResource.Add(name, ret);
@@ -250,7 +192,6 @@ namespace AMLCore.Injection.Game.Scene
 
         private void DisposeCachedElements()
         {
-            var vm = SquirrelHelper.SquirrelVM;
             foreach (var e in _cachedElement)
             {
                 e.Value.Release();
@@ -260,7 +201,6 @@ namespace AMLCore.Injection.Game.Scene
 
         private void DisposeResource()
         {
-            var vm = SquirrelHelper.SquirrelVM;
             foreach (var e in _cachedResource)
             {
                 e.Value.Release();
@@ -276,86 +216,53 @@ namespace AMLCore.Injection.Game.Scene
         public void StretchBlt(Resource res, float destX, float destY, float destW, float destH,
             float srcX, float srcY, float srcW, float srcH, Blend blend, float alpha)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-
-            SquirrelFunctions.pushobject(vm, _setBlend.SQObject);
-            SquirrelFunctions.pushobject(vm, _plObject.SQObject);
-            SquirrelFunctions.pushinteger(vm, (int)blend);
-            SquirrelFunctions.pushfloat(vm, alpha);
-            SquirrelFunctions.call(vm, 3, 0, 0);
-            SquirrelFunctions.pop(vm, 1);
-
-            SquirrelFunctions.pushobject(vm, _stretchBlt.SQObject);
-            SquirrelFunctions.pushobject(vm, _plObject.SQObject);
-            SquirrelFunctions.pushfloat(vm, destX);
-            SquirrelFunctions.pushfloat(vm, destY);
-            SquirrelFunctions.pushfloat(vm, destW);
-            SquirrelFunctions.pushfloat(vm, destH);
-            SquirrelFunctions.pushobject(vm, res._obj.SQObject);
-            SquirrelFunctions.pushfloat(vm, srcX);
-            SquirrelFunctions.pushfloat(vm, srcY);
-            SquirrelFunctions.pushfloat(vm, srcW);
-            SquirrelFunctions.pushfloat(vm, srcH);
-            SquirrelFunctions.call(vm, 10, 0, 0);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainObj(_setBlend.SQObject))
+            {
+                SquirrelHelper.CallEmpty(_plObject.SQObject, (int)blend, alpha);
+            }
+            using (SquirrelHelper.PushMemberChainObj(_stretchBlt.SQObject))
+            {
+                SquirrelHelper.CallEmpty(_plObject.SQObject, destX, destY, destW, destH,
+                    res._obj.SQObject, srcX, srcY, srcW, srcH);
+            }
         }
 
         public void BitBlt(Resource res, float destX, float destY, float destW, float destH,
             float srcX, float srcY, Blend blend, float alpha)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-
-            SquirrelFunctions.pushobject(vm, _bitBlt.SQObject);
-            SquirrelFunctions.pushobject(vm, _plObject.SQObject);
-            SquirrelFunctions.pushfloat(vm, destX);
-            SquirrelFunctions.pushfloat(vm, destY);
-            SquirrelFunctions.pushfloat(vm, destW);
-            SquirrelFunctions.pushfloat(vm, destH);
-            SquirrelFunctions.pushobject(vm, res._obj.SQObject);
-            SquirrelFunctions.pushfloat(vm, srcX);
-            SquirrelFunctions.pushfloat(vm, srcY);
-            SquirrelFunctions.pushinteger(vm, (int)blend);
-            SquirrelFunctions.pushfloat(vm, alpha);
-            SquirrelFunctions.call(vm, 10, 0, 0);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainObj(_bitBlt.SQObject))
+            {
+                SquirrelHelper.CallEmpty(_plObject.SQObject, destX, destY, destW, destH,
+                    res._obj.SQObject, srcX, srcY, (int)blend, alpha);
+            }
         }
 
         public void PlaySE(int id)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushobject(vm, _playSE.SQObject);
-            SquirrelFunctions.push(vm, 1);
-            SquirrelFunctions.pushinteger(vm, id);
-            SquirrelFunctions.call(vm, 2, 0, 0);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainObj(_playSE.SQObject))
+            {
+                SquirrelHelper.CallEmpty(ManagedSQObject.Root, id);
+            }
         }
 
         public Resource CreateResource(string path)
         {
             if (!_createdResource.TryGetValue(path, out var ret))
             {
-                var vm = SquirrelHelper.SquirrelVM;
-
-                SquirrelFunctions.pushobject(vm, _createResource2D.SQObject);
-                SquirrelFunctions.pushobject(vm, _plObject.SQObject);
-                SquirrelFunctions.pushstring(vm, path, -1);
-                SquirrelFunctions.call(vm, 2, 1, 0);
-
-                var obj = new ReferencedScriptObject();
-                obj.PopFromStack();
-                SquirrelFunctions.pop(vm, 1);
-
-                ret = new Resource(obj);
-                _createdResource.Add(path, ret);
+                using (SquirrelHelper.PushMemberChainObj(_createResource2D.SQObject))
+                {
+                    var obj = SquirrelHelper.CallPush(_plObject.SQObject, path).PopRefObject();
+                    ret = new Resource(obj);
+                    _createdResource.Add(path, ret);
+                }
             }
             return ret;
         }
 
         public bool CompareActInstance()
         {
-            var vm = SquirrelHelper.SquirrelVM;
             //We don't have sq_cmp. Have to get and compare.
-            SquirrelFunctions.getstackobj(vm, 1, out var obj);
+            SquirrelFunctions.getstackobj(SquirrelHelper.SquirrelVM, 1, out var obj);
             if (obj.Value.Pointer == _plObject.SQObject.Value.Pointer)
             {
                 return true;
@@ -365,17 +272,10 @@ namespace AMLCore.Injection.Game.Scene
 
         public void DrawNumber(string font, int x, int y, int num, int digits, float alpha)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelHelper.GetMemberChainThis("DrawNumber");
-            SquirrelFunctions.push(vm, 1);
-            SquirrelFunctions.pushstring(vm, font, -1);
-            SquirrelFunctions.pushinteger(vm, x);
-            SquirrelFunctions.pushinteger(vm, y);
-            SquirrelFunctions.pushinteger(vm, num);
-            SquirrelFunctions.pushinteger(vm, digits);
-            SquirrelFunctions.pushfloat(vm, alpha);
-            SquirrelFunctions.call(vm, 7, 0, 0);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainThis("DrawNumber"))
+            {
+                SquirrelHelper.CallEmpty(ManagedSQObject.Parameter(1), font, x, y, num, digits, alpha);
+            }
         }
     }
 }

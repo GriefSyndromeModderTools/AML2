@@ -79,42 +79,40 @@ namespace AMLCore.Injection.Game.CharacterInfo
             var type = SquirrelHelper.PushMemberChainThis("type").PopInt32();
             var charName = CharacterRegistry.GetCharacterConfigInfo(type).Character.PlayerDataName;
 
-            SquirrelFunctions.pushobject(vm, _newExpFunc.SQObject);
-            SquirrelFunctions.push(vm, 1);
-            SquirrelFunctions.push(vm, 2);
-            SquirrelFunctions.pushstring(vm, charName, -1);
-            SquirrelFunctions.call(vm, 3, 0, 0);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainObj(_newExpFunc.SQObject))
+            {
+                SquirrelHelper.CallEmpty(ManagedSQObject.Parameter(1), ManagedSQObject.Parameter(2), charName);
+            }
         }
 
         private static void BeforeLevel(IntPtr vm)
         {
             if (SquirrelFunctions.gettop(vm) != 2) return;
-            SquirrelHelper.GetMemberChainRoot("playerData");
-            SquirrelFunctions.pushstring(vm, "level0_player", -1);
-            SquirrelFunctions.newtable(vm);
-            SquirrelFunctions.pushstring(vm, "level", -1);
-            SquirrelFunctions.pushinteger(vm, 100);
-            SquirrelFunctions.newslot(vm, -3, 0);
-            SquirrelFunctions.newslot(vm, -3, 0);
-            SquirrelFunctions.pop(vm, 1);
 
+            using (SquirrelHelper.PushMemberChainRoot("playerData"))
+            {
+                SquirrelFunctions.pushstring(vm, "level0_player", -1);
+
+                SquirrelFunctions.newtable(vm);
+                SquirrelFunctions.pushstring(vm, "level", -1);
+                SquirrelFunctions.pushinteger(vm, 100);
+                SquirrelFunctions.newslot(vm, -3, 0);
+
+                SquirrelFunctions.newslot(vm, -3, 0);
+            }
             SquirrelFunctions.pop(vm, 1);
             SquirrelFunctions.pushstring(vm, "level0_player", -1);
         }
 
         private static void AfterLevel(IntPtr vm)
         {
-            SquirrelHelper.GetMemberChainThis("type");
-            SquirrelFunctions.getinteger(vm, -1, out var type);
-            SquirrelFunctions.pop(vm, 1);
+            var type = SquirrelHelper.PushMemberChainThis("type").PopInt32();
             var charName = CharacterRegistry.GetCharacterConfigInfo(type).Character.PlayerDataName;
 
-            SquirrelFunctions.pushobject(vm, _newLevelFunc.SQObject);
-            SquirrelFunctions.push(vm, 1);
-            SquirrelFunctions.pushstring(vm, charName, -1);
-            SquirrelFunctions.call(vm, 2, 0, 0);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainObj(_newLevelFunc.SQObject))
+            {
+                SquirrelHelper.CallEmpty(ManagedSQObject.Parameter(1), charName);
+            }
         }
     }
 }

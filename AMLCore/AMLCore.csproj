@@ -53,6 +53,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Injection\AntiCheating\AnitCheatingEntry.cs" />
+    <Compile Include="Injection\Debugging\UnmanagedStacktrace.cs" />
     <Compile Include="Injection\Engine\DirectX\ActorTransform\ActorObject.cs" />
     <Compile Include="Injection\Engine\DirectX\ActorTransform\ActorTransformEntry.cs" />
     <Compile Include="Injection\Engine\DirectX\ActorTransform\ActorTransformManager.cs" />
@@ -61,6 +63,7 @@
     <Compile Include="Injection\Engine\DirectX\Direct3DEntry.cs" />
     <Compile Include="Injection\Engine\DirectX\Direct3DHelper.cs" />
     <Compile Include="Injection\Engine\Input\ReadOnlyInputHandler.cs" />
+    <Compile Include="Injection\Engine\Renderer\SkipRenderer.cs" />
     <Compile Include="Injection\Engine\Script\CompileFileInjectionManager.cs" />
     <Compile Include="Injection\Engine\Script\InjectedScriptFunction.cs" />
     <Compile Include="Injection\Engine\Script\ManagedSQObject.cs" />
@@ -79,6 +82,9 @@
     <Compile Include="Injection\Game\CharacterInfo\SimpleInitFunction.cs" />
     <Compile Include="Injection\Game\CharacterInfo\NewCharacterDataInjectEntry.cs" />
     <Compile Include="Injection\Game\CharacterInfo\NewCharacterInitFunctionHelper.cs" />
+    <Compile Include="Injection\Game\Pat\AnimationIdAssignment.cs" />
+    <Compile Include="Injection\Game\Pat\PatFileResLoaderEntry.cs" />
+    <Compile Include="Injection\Game\Pat\PatFileParser.cs" />
     <Compile Include="Injection\Game\ResourcePack\GS0XResourceReader.cs" />
     <Compile Include="Injection\Game\ResourcePack\IResourceContentProvider.cs" />
     <Compile Include="Injection\Game\ResourcePack\Package.cs" />
@@ -111,6 +117,9 @@
     <Compile Include="Injection\Game\Scene\StageSelect\ICharacterSelectionComponent.cs" />
     <Compile Include="Injection\Game\Scene\StageSelect\NewStageSelect.cs" />
     <Compile Include="Injection\Game\Scene\StageSelect\NewStageSelectOptions.cs" />
+    <Compile Include="Injection\Game\SoundEffect\SoundEffectIdAssignment.cs" />
+    <Compile Include="Injection\Game\SoundEffect\SoundEffectListModification.cs" />
+    <Compile Include="Injection\Game\SoundEffect\SoundEffectResLoadEntry.cs" />
     <Compile Include="Injection\GSO\GSOReadyInjectEntry.cs" />
     <Compile Include="Injection\GSO\PostGSOInjection.cs" />
     <Compile Include="Injection\Native\CalliGenerator.cs" />
@@ -120,6 +129,7 @@
     <Compile Include="Internal\GSOLoadingInjection.cs" />
     <Compile Include="Internal\NativeThreadIdentifyEntry.cs" />
     <Compile Include="Internal\OnlineUpdateCheck.cs" />
+    <Compile Include="Internal\ShortcutArguments.cs" />
     <Compile Include="Internal\UpdateWaitingWindow.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -141,6 +151,12 @@
     <Compile Include="Internal\StackTraceHelper.cs" />
     <Compile Include="Misc\ThreadHelper.cs" />
     <Compile Include="Misc\WindowsHelper.cs" />
+    <Compile Include="Plugins\CreateShortcutDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Plugins\CreateShortcutDialog.Designer.cs">
+      <DependentUpon>CreateShortcutDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="Plugins\IEntryPoint.cs" />
     <Compile Include="Injection\Native\AbstractNativeInjection.cs" />
     <Compile Include="Injection\Native\AddressHelper.cs" />
@@ -188,6 +204,9 @@
     <EmbeddedResource Include="Internal\UpdateWaitingWindow.resx">
       <DependentUpon>UpdateWaitingWindow.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Plugins\CreateShortcutDialog.resx">
+      <DependentUpon>CreateShortcutDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Plugins\LauncherOptionForm.resx">
       <DependentUpon>LauncherOptionForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -202,6 +221,9 @@
     <Error Condition="!Exists('..\packages\Costura.Fody.1.6.2\build\portable-net+sl+win+wpa+wp\Costura.Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Costura.Fody.1.6.2\build\portable-net+sl+win+wpa+wp\Costura.Fody.targets'))" />
   </Target>
   <Import Project="..\packages\Costura.Fody.1.6.2\build\portable-net+sl+win+wpa+wp\Costura.Fody.targets" Condition="Exists('..\packages\Costura.Fody.1.6.2\build\portable-net+sl+win+wpa+wp\Costura.Fody.targets')" />
+  <PropertyGroup>
+    <PostBuildEvent>copy $(TargetPath) E:\Games\aml_pack\aml\core</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

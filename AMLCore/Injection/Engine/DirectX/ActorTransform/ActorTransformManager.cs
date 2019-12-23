@@ -1,4 +1,5 @@
-﻿using AMLCore.Injection.Native;
+﻿using AMLCore.Injection.AntiCheating;
+using AMLCore.Injection.Native;
 using AMLCore.Internal;
 using System;
 using System.Collections.Generic;
@@ -30,7 +31,9 @@ namespace AMLCore.Injection.Engine.DirectX.ActorTransform
             public void DrawPrimitive(int primitiveType, int count, IntPtr buffer, ActorImageRef img)
             {
                 if (!_rendererAvailable.Value) throw new InvalidOperationException("Not during rendering.");
+                AnitCheatingEntry.Disable();
                 _doDrawPUP(primitiveType, count, buffer, 0x1C, 0x144, img.A, img.B);
+                AnitCheatingEntry.Enable();
             }
         }
 

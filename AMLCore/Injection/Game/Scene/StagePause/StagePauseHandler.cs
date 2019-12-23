@@ -40,52 +40,31 @@ namespace AMLCore.Injection.Game.Scene.StagePause
             var vm = SquirrelHelper.SquirrelVM;
             _textVisible[i] = false;
 
-            var name = "player" + (i + 1).ToString();
-            SquirrelHelper.GetMemberChainRoot("actor");
-            SquirrelFunctions.pushstring(vm, name, -1);
-            if (SquirrelFunctions.get(vm, -2) != 0)
+            using (var player = SquirrelHelper.PushMemberChainRoot("actor", "player" + (i + 1).ToString()))
             {
-                SquirrelFunctions.pop(vm, 1);
-                return;
+                if (!player.IsSuccess) return;
+                var type = SquirrelHelper.GetInt32("type");
+                if (type > 6 && _handlers.TryGetValue(type, out var handler))
+                {
+                    //stack: actor table, player
+
+                    int left = 310 + 160 * i;
+                    int top = 511;
+                    _textVisible[i] = true;
+
+                    handler.DrawName(env, left, top);
+                    env.DrawNumber("status_num", left + 65, top + 20, SquirrelHelper.GetInt32("level"), -2, 1);
+                    env.DrawNumber("status_num", left + 77, top + 42, SquirrelHelper.GetInt32("soulMax"), -5, 1);
+                    env.DrawNumber("status_num", left + 31, top + 63, SquirrelHelper.GetInt32("lifeMax"), -2, 1);
+                    env.DrawNumber("status_num", left + 108, top + 63, SquirrelHelper.GetInt32("baseAtk"), -2, 1);
+
+                    var frame = env.GetElement("frame_p" + (i + 1).ToString());
+                    handler.DrawImage(env, i, (int)frame.DestX, (int)frame.DestY);
+
+                    var img = env.GetResource($"c{i + 1}pP");
+                    env.BitBlt(img, frame.DestX + 57, frame.DestY + 345, img.ImageWidth, img.ImageHeight, 0, 0, Blend.Alpha, 1);
+                }
             }
-
-            SquirrelFunctions.pushstring(vm, "type", -1);
-            SquirrelFunctions.get_check(vm, -2);
-            SquirrelFunctions.getinteger(vm, -1, out var type);
-            SquirrelFunctions.pop(vm, 1);
-
-            if (type > 6 && _handlers.TryGetValue(type, out var handler))
-            {
-                //stack: actor table, player
-
-                int left = 310 + 160 * i;
-                int top = 511;
-                _textVisible[i] = true;
-
-                handler.DrawName(env, left, top);
-                env.DrawNumber("status_num", left + 65, top + 20, GetStackTopMemberInt("level"), -2, 1);
-                env.DrawNumber("status_num", left + 77, top + 42, GetStackTopMemberInt("soulMax"), -5, 1);
-                env.DrawNumber("status_num", left + 31, top + 63, GetStackTopMemberInt("lifeMax"), -2, 1);
-                env.DrawNumber("status_num", left + 108, top + 63, GetStackTopMemberInt("baseAtk"), -2, 1);
-
-                var frame = env.GetElement("frame_p" + (i + 1).ToString());
-                handler.DrawImage(env, i, (int)frame.DestX, (int)frame.DestY);
-
-                var img = env.GetResource($"c{i + 1}pP");
-                env.BitBlt(img, frame.DestX + 57, frame.DestY + 345, img.ImageWidth, img.ImageHeight, 0, 0, Blend.Alpha, 1);
-            }
-
-            SquirrelFunctions.pop(vm, 2);
-        }
-
-        private static int GetStackTopMemberInt(string name)
-        {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushstring(vm, name, -1);
-            SquirrelFunctions.get_check(vm, -2);
-            SquirrelFunctions.getinteger(vm, -1, out var ret);
-            SquirrelFunctions.pop(vm, 1);
-            return ret;
         }
     }
 }

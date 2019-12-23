@@ -39,6 +39,7 @@ namespace AMLCore.Injection.Engine.Script
             new InjectAfterRun(0);
             new InjectAfterRun(1);
             new InjectCreateActCompileFile();
+
             //crash fix
             //World2D.SetXXXXFunction and CreateActor
             //old:
@@ -53,12 +54,15 @@ namespace AMLCore.Injection.Engine.Script
             //similar fix related to CreateEventFromMap
             CodeModification.Modify(0x6304D, 0xF7, 0x00, 0x00, 0x03, 0x00, 0x00, 0x0F, 0x84);
 
-
             //add API functions
             SquirrelAPINewFunctions.Write_set();
             SquirrelAPINewFunctions.Write_rset();
             SquirrelAPINewFunctions.Write_rget();
+
+            //crash fix (something on sq stack not popped)
+            new FixSqStackLeak();
         }
+
 
         private class InjectSquirrelVM : CodeInjection
         {
@@ -144,6 +148,37 @@ namespace AMLCore.Injection.Engine.Script
             protected override void Triggered(NativeEnvironment env)
             {
                 CompileFileInjectionManager.CreateActBeforeRun();
+            }
+        }
+
+        private class FixSqStackLeak : CodeInjection
+        {
+            public FixSqStackLeak()
+                : base(0xB65F, 8)
+            {
+                _stackResize = (StackResize)Marshal.GetDelegateForFunctionPointer(AddressHelper.Code(0x12E2B0), typeof(StackResize));
+            }
+
+            [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+            private delegate void StackResize(IntPtr pthis, int size, ref SQObject value);
+
+            private StackResize _stackResize;
+
+            protected override void Triggered(NativeEnvironment env)
+            {
+                SquirrelFunctions.getstackobj(SquirrelVM, -1, out var obj);
+                if (obj.Type == SQObject.SQObjectType.OT_ARRAY)
+                {
+                    //SquirrelFunctions.addref_(SquirrelVM, ref obj);
+                    //SquirrelFunctions.pop(SquirrelHelper.SquirrelVM, 1);
+                    var stackCapacity = Marshal.ReadInt32(SquirrelVM + 4 * 8);
+                    var top = Marshal.ReadInt32(SquirrelVM + 4 * 12);
+                    if (top + 1000 > stackCapacity)
+                    {
+                        SQObject nullObj = SQObject.Null;
+                        _stackResize(SquirrelVM + 4 * 6, top + 3000, ref nullObj);
+                    }
+                }
             }
         }
     }

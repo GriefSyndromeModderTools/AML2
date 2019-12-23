@@ -64,15 +64,7 @@ namespace AMLCore.Internal
 
         public string[] GetPluginFiles()
         {
-            if (Mods == null)
-            {
-                var d = PathHelper.GetPath("aml/mods");
-                return Directory.EnumerateFiles(d, "*.dll").ToArray();
-            }
-            else
-            {
-                return GetModFileListFromMods();
-            }
+            return GetModFileListFromMods();
         }
 
         internal void SetPluginOptions(PluginContainer[] plugins)

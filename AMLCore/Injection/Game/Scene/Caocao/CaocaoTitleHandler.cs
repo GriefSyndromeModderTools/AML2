@@ -97,16 +97,10 @@ namespace AMLCore.Injection.Game.Scene.Caocao
             _input = ReadOnlyInputHandler.Get();
 
             //set itemImage[0][0] to null
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelHelper.GetMemberChainThis("itemImage");
-            SquirrelFunctions.pushinteger(vm, 0);
-            SquirrelFunctions.get_check(vm, -2);
-            SquirrelFunctions.remove(vm, -2);
-
-            SquirrelFunctions.pushinteger(vm, 0);
-            SquirrelFunctions.pushnull(vm);
-            SquirrelFunctions.set(vm, -3);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainThis("itemImage", 0))
+            {
+                SquirrelHelper.Set(0, ManagedSQObject.Null);
+            }
         }
 
         public void Exit()
@@ -117,24 +111,16 @@ namespace AMLCore.Injection.Game.Scene.Caocao
         {
             _frame += 1;
 
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelHelper.GetMemberChainThis("frontFaderAlpha");
-            SquirrelFunctions.getfloat(vm, -1, out _faderAlpha);
-            SquirrelFunctions.pop(vm, 1);
-            SquirrelFunctions.push(vm, 1);
-            SquirrelFunctions.pushstring(vm, "frontFaderAlpha", -1);
-            SquirrelFunctions.pushfloat(vm, 0);
-            SquirrelFunctions.set(vm, -3);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainThis())
+            {
+                _faderAlpha = SquirrelHelper.GetFloat("frontFaderAlpha");
+                SquirrelHelper.Set("frontFaderAlpha", 0f);
+            }
         }
 
         public void PostUpdate()
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelHelper.GetMemberChainThis("selector", "cursor");
-            SquirrelFunctions.getinteger(vm, -1, out var cursor);
-            SquirrelFunctions.pop(vm, 1);
-
+            var cursor = SquirrelHelper.PushMemberChainThis("selector", "cursor").PopInt32();
             if (cursor == 0)
             {
                 //Draw arrows
@@ -159,35 +145,29 @@ namespace AMLCore.Injection.Game.Scene.Caocao
             _faderAlpha -= 0.025f;
             if (_faderAlpha < 0) _faderAlpha = 0;
 
-            SquirrelFunctions.pushstring(vm, "frontFaderAlpha", -1);
-            SquirrelFunctions.pushfloat(vm, _faderAlpha);
-            SquirrelFunctions.set(vm, 1);
+            using (SquirrelHelper.PushMemberChainThis())
+            {
+                SquirrelHelper.Set("frontFaderAlpha", _faderAlpha);
+            }
             _env.StretchBlt(_env.GetResource("black_dot"), -10, -10, 820, 820, 0, 0, 1, 1, Blend.Alpha, _faderAlpha);
 
             if (cursor == 0 && _input.InputAll.B0 > 0)
             {
-                SquirrelHelper.GetMemberChainRoot("EnableInput");
-                SquirrelFunctions.pushroottable(vm);
-                SquirrelFunctions.pushbool(vm, 1);
-                SquirrelFunctions.call(vm, 2, 0, 0);
-                SquirrelFunctions.pop(vm, 1);
+                using (SquirrelHelper.PushMemberChainRoot("EnableInput"))
+                {
+                    SquirrelHelper.CallEmpty(ManagedSQObject.Root, true);
+                }
             }
         }
 
         public void PreUpdate1()
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelHelper.GetMemberChainThis("cursor_pos", "x");
-            SquirrelFunctions.getfloat(vm, -1, out _cursorX);
-            SquirrelFunctions.pop(vm, 1);
+            _cursorX = SquirrelHelper.PushMemberChainThis("cursor_pos", "x").PopFloat();
         }
 
         public void PostUpdate1()
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelHelper.GetMemberChainThis("selector", "cursor");
-            SquirrelFunctions.getinteger(vm, -1, out var cursor);
-            SquirrelFunctions.pop(vm, 1);
+            var cursor = SquirrelHelper.PushMemberChainThis("selector", "cursor").PopInt32();
             if (cursor == 0)
             {
                 //Fix cursor_pos
@@ -196,11 +176,10 @@ namespace AMLCore.Injection.Game.Scene.Caocao
                 {
                     _cursorX = 420;
                 }
-                SquirrelHelper.GetMemberChainThis("cursor_pos");
-                SquirrelFunctions.pushstring(vm, "x", -1);
-                SquirrelFunctions.pushfloat(vm, _cursorX);
-                SquirrelFunctions.set(vm, -3);
-                SquirrelFunctions.pop(vm, 1);
+                using (SquirrelHelper.PushMemberChainThis("cursor_pos"))
+                {
+                    SquirrelHelper.Set("x", _cursorX);
+                }
             }
 
             if (cursor == 0)

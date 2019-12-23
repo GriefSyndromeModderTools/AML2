@@ -13,12 +13,14 @@ namespace AMLCore.Internal
 {
     public class LauncherArguments : CommonArguments
     {
-        public bool RequiresGui { get; private set; } = true;
+        public bool RequiresGui => !ArgsRequiresGui.HasValue || ArgsRequiresGui.Value;
+        public bool? ArgsRequiresGui { get; private set; } = null;
         public string ProcessName { get; private set; } = "griefsyndrome.exe";
         public int WaitLength { get; private set; } = 250;
         public string DllName { get; private set; } = "AMLInjected.dll";
         public string ExportName { get; private set; } = "LoadCore";
         public bool WaitProcess { get; private set; } = false;
+        public string PresetOptions { get; private set; } = null;
 
         private LauncherArguments()
         {
@@ -30,7 +32,10 @@ namespace AMLCore.Internal
         {
             var ret = new LauncherArguments();
             ret.ParseArgumentList(args);
-            ret.RequiresGui = args.Length == 0;
+            if (!ret.ArgsRequiresGui.HasValue)
+            {
+                ret.ArgsRequiresGui = args.Length == 0;
+            }
             return ret;
         }
 
@@ -38,13 +43,13 @@ namespace AMLCore.Internal
         {
             if (key == "NoGui")
             {
-                if (value != null || !RequiresGui)
+                if (value != null || ArgsRequiresGui.HasValue)
                 {
                     CoreLoggers.Loader.Error("invalid NoGui argument");
                 }
                 else
                 {
-                    RequiresGui = false;
+                    ArgsRequiresGui = false;
                 }
             }
             else if (key == "WaitProcess")
@@ -56,6 +61,32 @@ namespace AMLCore.Internal
                 else
                 {
                     WaitProcess = true;
+                }
+            }
+            else if (key == "ProcessName")
+            {
+                ProcessName = value;
+            }
+            else if (key == "Gui")
+            {
+                if (value != null || ArgsRequiresGui.HasValue)
+                {
+                    CoreLoggers.Loader.Error("invalid Gui argument");
+                }
+                else
+                {
+                    ArgsRequiresGui = true;
+                }
+            }
+            else if (key == "PresetOptions")
+            {
+                if (value == null || PresetOptions != null)
+                {
+                    CoreLoggers.Loader.Error("invalid PresetOptions argument");
+                }
+                else
+                {
+                    PresetOptions = value;
                 }
             }
             else
@@ -103,12 +134,10 @@ namespace AMLCore.Internal
                 return true;
             }
 
-            string[] plugins = GetPluginFiles();
-
-            var loadedPlugins = PluginLoader.LoadInLauncher(plugins);
+            var loadedPlugins = PluginLoader.LoadAllInLauncher();
             SetPluginOptions(loadedPlugins);
 
-            var dialog = new LauncherOptionForm(loadedPlugins, allowOnlineInjection);
+            var dialog = new LauncherOptionForm(loadedPlugins, allowOnlineInjection, PresetOptions);
             if (dialog.ShowDialog() == DialogResult.Cancel)
             {
                 CoreLoggers.Loader.Info("exit from option form");

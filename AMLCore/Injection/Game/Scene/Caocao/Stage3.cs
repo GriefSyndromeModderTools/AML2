@@ -130,21 +130,18 @@ namespace AMLCore.Injection.Game.Scene.Caocao
                     CreateEventFromMap("map3", "stopPoint1");
                     StartFadeIn(0, true);
                     {
-                        SquirrelHelper.GetMemberChainRoot("world2d", "CreateActor");
-                        SquirrelHelper.GetMemberChainRoot("world2d");
-                        SquirrelFunctions.pushinteger(vm, 0);
-                        SquirrelFunctions.pushinteger(vm, 0);
-                        SquirrelFunctions.pushfloat(vm, -1);
-                        SquirrelHelper.GetMemberChainRoot("stage", "BossMapLoop");
-                        SquirrelFunctions.pushnull(vm);
-                        SquirrelFunctions.call(vm, 6, 0, 0);
-                        SquirrelFunctions.pop(vm, 1);
+                        var world2d = SquirrelHelper.PushMemberChainRoot("world2d").PopObject();
+                        using (SquirrelHelper.PushMemberChainObj(world2d, "CreateActor"))
+                        {
+                            SquirrelHelper.CallEmpty(world2d, 0, 0, -1f, 
+                                SquirrelHelper.PushMemberChainRoot("stage", "BossMapLoop").PopObject(),
+                                ManagedSQObject.Null);
+                        }
 
-                        SquirrelHelper.GetMemberChainRoot("StopBgm");
-                        SquirrelFunctions.pushroottable(vm);
-                        SquirrelFunctions.pushinteger(vm, 2000);
-                        SquirrelFunctions.call(vm, 2, 0, 0);
-                        SquirrelFunctions.pop(vm, 1);
+                        using (SquirrelHelper.PushMemberChainRoot("StopBgm"))
+                        {
+                            SquirrelHelper.CallEmpty(ManagedSQObject.Root, 2000);
+                        }
                     }
                     SetScrollLock(true, true, true, true);
                     break;

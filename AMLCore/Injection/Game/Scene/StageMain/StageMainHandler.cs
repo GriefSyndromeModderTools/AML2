@@ -44,19 +44,16 @@ namespace AMLCore.Injection.Game.Scene.StageMain
 
         public void PostUpdate()
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelHelper.GetMemberChainThis("guage");
-            var gsize = SquirrelFunctions.getsize(vm, -1);
-            if (gsize > 0)
+            using (SquirrelHelper.PushMemberChainThis("guage"))
             {
+                var gsize = SquirrelFunctions.getsize(SquirrelHelper.SquirrelVM, -1);
+                if (gsize <= 0) return;
+
                 var top = 470;
                 var left0 = 410 - 130 * gsize;
                 for (int i = 0; i < gsize; ++i)
                 {
-                    SquirrelFunctions.pushinteger(vm, i);
-                    SquirrelFunctions.get_check(vm, -2);
-                    SquirrelFunctions.getstackobj(vm, -1, out var info);
-                    SquirrelFunctions.pop(vm, 1);
+                    var info = SquirrelHelper.PushMemberChainStack(-1, i).PopObject();
 
                     if (info.Type == SQObject.SQObjectType.OT_NULL)
                     {
@@ -148,7 +145,6 @@ namespace AMLCore.Injection.Game.Scene.StageMain
                     }
                 }
             }
-            SquirrelFunctions.pop(vm, 1);
         }
 
         public void Exit()
@@ -158,77 +154,55 @@ namespace AMLCore.Injection.Game.Scene.StageMain
         private void DrawGem(SQObject info, int x, int y, Resource img)
         {
             //Replace this.gemImage
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelHelper.GetMemberChainThis("gemImage");
-            SquirrelFunctions.pushinteger(vm, 0);
-            SquirrelFunctions.pushobject(vm, img._obj.SQObject);
-            SquirrelFunctions.set(vm, -3);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainThis("gemImage"))
+            {
+                SquirrelHelper.Set(0, img._obj.SQObject);
+            }
 
             //Replace info.charactorType
             var type = GetI(info, "charactorType");
             SetI(info, "charactorType", 0);
 
             //Call this.DrawGem
-            SquirrelHelper.GetMemberChainThis("DrawGem");
-            SquirrelFunctions.push(vm, 1);
-            SquirrelFunctions.pushinteger(vm, x);
-            SquirrelFunctions.pushinteger(vm, y);
-            SquirrelFunctions.pushobject(vm, info);
-            SquirrelFunctions.call(vm, 4, 0, 0);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainThis("DrawGem"))
+            {
+                SquirrelHelper.CallEmpty(ManagedSQObject.Parameter(1), x, y, info);
+            }
 
             //Restore info.charactorType
             SetI(info, "charactorType", type);
 
             //Restore this.gemImage
-            SquirrelHelper.GetMemberChainThis("gemImage");
-            SquirrelFunctions.pushinteger(vm, 0);
-            SquirrelFunctions.pushobject(vm, _env.GetResource("jem_homura")._obj.SQObject);
-            SquirrelFunctions.set(vm, -3);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainThis("gemImage"))
+            {
+                SquirrelHelper.Set(0, _env.GetResource("jem_homura")._obj.SQObject);
+            }
         }
 
         private static float GetF(SQObject obj, string name)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushobject(vm, obj);
-            SquirrelFunctions.pushstring(vm, name, -1);
-            SquirrelFunctions.get_check(vm, -2);
-            SquirrelFunctions.getfloat(vm, -1, out var ret);
-            SquirrelFunctions.pop(vm, 2);
-            return ret;
+            return SquirrelHelper.PushMemberChainObj(obj, name).PopFloat();
         }
 
         private static void SetF(SQObject obj, string name, float value)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushobject(vm, obj);
-            SquirrelFunctions.pushstring(vm, name, -1);
-            SquirrelFunctions.pushfloat(vm, value);
-            SquirrelFunctions.set(vm, -3);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainObj(obj))
+            {
+                SquirrelHelper.Set(name, value);
+            }
         }
 
         private static int GetI(SQObject obj, string name)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushobject(vm, obj);
-            SquirrelFunctions.pushstring(vm, name, -1);
-            SquirrelFunctions.get_check(vm, -2);
-            SquirrelFunctions.getinteger(vm, -1, out var ret);
-            SquirrelFunctions.pop(vm, 2);
-            return ret;
+            return SquirrelHelper.PushMemberChainObj(obj, name).PopInt32();
         }
 
         private static void SetI(SQObject obj, string name, int value)
         {
-            var vm = SquirrelHelper.SquirrelVM;
-            SquirrelFunctions.pushobject(vm, obj);
-            SquirrelFunctions.pushstring(vm, name, -1);
-            SquirrelFunctions.pushinteger(vm, value);
-            SquirrelFunctions.set(vm, -3);
-            SquirrelFunctions.pop(vm, 1);
+            using (SquirrelHelper.PushMemberChainObj(obj))
+            {
+                SquirrelHelper.Set(name, value);
+            }
         }
     }
 }

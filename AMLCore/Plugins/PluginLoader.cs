@@ -104,8 +104,10 @@ namespace AMLCore.Plugins
             CoreLoggers.Loader.Info("finished");
         }
 
-        public static PluginContainer[] LoadInLauncher(string[] plugins)
+        public static PluginContainer[] LoadAllInLauncher()
         {
+            var d = PathHelper.GetPath("aml/mods");
+            var plugins = Directory.EnumerateFiles(d, "*.dll").ToArray();
             foreach (var p in plugins)
             {
                 try
@@ -119,6 +121,23 @@ namespace AMLCore.Plugins
                 }
             }
             return _Plugins.Values.ToArray();
+        }
+
+        /// <summary>
+        /// Check whether there are any effective/functional AML mods.
+        /// Currently we enable anti-cheating when this function returns true.
+        /// </summary>
+        /// <returns></returns>
+        public static bool ContainsFunctionalMods()
+        {
+            foreach (var p in _Plugins.Values)
+            {
+                if (p.Type != PluginType.Debug && p.Type != PluginType.Optimization)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

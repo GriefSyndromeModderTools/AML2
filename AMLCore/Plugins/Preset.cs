@@ -21,5 +21,12 @@ namespace AMLCore.Plugins
         {
             Name = null;
         }
+
+        public void ParseModsAndOptions(string[] args)
+        {
+            base.Mods = "";
+            base.Options.Clear();
+            base.ParseArgumentList(args);
+        }
     }
 }

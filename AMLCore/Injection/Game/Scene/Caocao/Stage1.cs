@@ -37,11 +37,10 @@ namespace AMLCore.Injection.Game.Scene.Caocao
         {
             if (CaocaoPlayerLocation.Name == 122)
             {
-                SquirrelHelper.GetMemberChainRoot("stage");
-                SquirrelFunctions.pushstring(vm, "scrollBottom", -1);
-                SquirrelFunctions.pushinteger(vm, 4152);
-                SquirrelFunctions.set(vm, -3);
-                SquirrelFunctions.pop(vm, 1);
+                using (SquirrelHelper.PushMemberChainRoot("stage"))
+                {
+                    SquirrelHelper.Set("scrollBottom", 4152);
+                }
             }
         }
 
@@ -49,11 +48,10 @@ namespace AMLCore.Injection.Game.Scene.Caocao
         {
             if (CaocaoPlayerLocation.Name == 123)
             {
-                SquirrelHelper.GetMemberChainRoot("stage");
-                SquirrelFunctions.pushstring(vm, "scrollBottom", -1);
-                SquirrelFunctions.pushinteger(vm, 3064);
-                SquirrelFunctions.set(vm, -3);
-                SquirrelFunctions.pop(vm, 1);
+                using (SquirrelHelper.PushMemberChainRoot("stage"))
+                {
+                    SquirrelHelper.Set("scrollBottom", 3064);
+                }
             }
         }
 

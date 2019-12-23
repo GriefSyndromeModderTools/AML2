@@ -28,60 +28,43 @@ namespace AMLCore.Injection.Game.CharacterInfo
                 var ch = CharacterRegistry.GetCharacterConfigInfo(type).Character;
                 var name = ch.PlayerDataName;
 
-                SquirrelFunctions.pushstring(vm, "type", -1);
-                SquirrelFunctions.pushinteger(vm, type);
-                SquirrelFunctions.set(vm, 1);
-
-                SquirrelFunctions.pushstring(vm, "fontType", -1);
-                SquirrelFunctions.pushinteger(vm, fontType);
-                SquirrelFunctions.set(vm, 1);
-
-                SquirrelHelper.GetMemberChainThis("PlayerInit");
-                SquirrelFunctions.push(vm, 1);
-                SquirrelFunctions.pushstring(vm, name, -1);
-                SquirrelFunctions.pushstring(vm, "playerID", -1);
-                SquirrelFunctions.get(vm, 2);
-                SquirrelFunctions.call(vm, 3, 0, 0);
-                SquirrelFunctions.pop(vm, 1);
-
-                SquirrelHelper.GetMemberChainRoot("CompileFile");
-                foreach (var file in compileFiles)
+                using (SquirrelHelper.PushMemberChainStack(1))
                 {
-                    SquirrelFunctions.push(vm, 1);
-                    SquirrelFunctions.pushstring(vm, file, -1);
-                    SquirrelFunctions.pushstring(vm, "u", -1);
-                    SquirrelFunctions.get(vm, 1);
-                    SquirrelFunctions.call(vm, 3, 0, 0);
+                    SquirrelHelper.Set("type", type);
+                    SquirrelHelper.Set("fontType", fontType);
+                    var playerID = SquirrelHelper.PushMemberChainStack(2, "playerID").PopInt32();
+                    using (SquirrelHelper.PushMemberChainThis("PlayerInit"))
+                    {
+                        SquirrelHelper.CallEmpty(ManagedSQObject.Parameter(1), name, playerID);
+                    }
                 }
-                SquirrelFunctions.pop(vm, 1);
-
-                SquirrelHelper.GetMemberChainThis("u");
-
-                SquirrelFunctions.pushstring(vm, "CA", -1);
-                SquirrelFunctions.pushinteger(vm, ca);
-                SquirrelFunctions.set(vm, -3);
-
-                SquirrelFunctions.pushstring(vm, "regainCycle", -1);
-                SquirrelFunctions.pushinteger(vm, ch.CharacterData.RegainCycle);
-                SquirrelFunctions.set(vm, -3);
-
-                SquirrelFunctions.pushstring(vm, "regainRate", -1);
-                SquirrelFunctions.pushinteger(vm, ch.CharacterData.RegainRate);
-                SquirrelFunctions.set(vm, -3);
-
-                SquirrelFunctions.pop(vm, 1);
-
-                SquirrelFunctions.pushstring(vm, "atkOffset", -1);
-                SquirrelFunctions.pushfloat(vm, ch.CharacterData.AttackOffset);
-                SquirrelFunctions.set(vm, 1);
+                using (var u = SquirrelHelper.PushMemberChainStack(1, "u").PopRefObject())
+                {
+                    using (SquirrelHelper.PushMemberChainRoot("CompileFile"))
+                    {
+                        foreach (var file in compileFiles)
+                        {
+                            SquirrelHelper.CallEmpty(ManagedSQObject.Parameter(1), file, u.SQObject);
+                        }
+                    }
+                }
+                using (SquirrelHelper.PushMemberChainStack(1, "u"))
+                {
+                    SquirrelHelper.Set("CA", ca);
+                    SquirrelHelper.Set("regainCycle", ch.CharacterData.RegainCycle);
+                    SquirrelHelper.Set("regainRate", ch.CharacterData.RegainRate);
+                }
+                using (SquirrelHelper.PushMemberChainStack(1))
+                {
+                    SquirrelHelper.Set("atkOffset", ch.CharacterData.AttackOffset);
+                }
 
                 additional?.Invoke(vm);
 
-                SquirrelFunctions.pushobject(vm, _commonInit.SQObject);
-                SquirrelFunctions.push(vm, 1);
-                SquirrelFunctions.call(vm, 1, 0, 0);
-                SquirrelFunctions.pop(vm, 1);
-
+                using (SquirrelHelper.PushMemberChainObj(_commonInit.SQObject))
+                {
+                    SquirrelHelper.CallEmpty(ManagedSQObject.Parameter(1));
+                }
                 return 0;
             });
         }

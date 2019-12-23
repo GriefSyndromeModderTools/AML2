@@ -88,6 +88,7 @@ namespace AMLCore.Injection.Game.ResourcePack
                     var c = p.GetResourceContent(path);
                     if (c != null)
                     {
+                        ReplaceResourceData?.Invoke(path, ref c);
                         id = _items.Count;
                         _items.Add(c);
                         _pathMap[path] = id;
@@ -97,5 +98,8 @@ namespace AMLCore.Injection.Game.ResourcePack
                 return -1;
             }
         }
+
+        internal delegate void ReplaceResourceDataDelegate(string path, ref byte[] data);
+        internal static event ReplaceResourceDataDelegate ReplaceResourceData;
     }
 }

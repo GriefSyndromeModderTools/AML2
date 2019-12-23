@@ -5,12 +5,17 @@ using System.Text;
 
 namespace AMLCore.Injection.Engine.Script
 {
-    //We don't mark this as IDisposable because we ignore it if it is release
-    //at exiting, when the sqvm is possibly released already.
-    //TODO better idea is to inject and release right before vm released.
-    public class ReferencedScriptObject
+    public class ReferencedScriptObject : IDisposable
     {
         public SQObject SQObject = SQObject.Null;
+
+        public void Dispose()
+        {
+            if (SQObject.Type != SQObject.SQObjectType.OT_NULL)
+            {
+                ReleaseRef();
+            }
+        }
 
         public void GetFromStack(int index)
         {

@@ -22,6 +22,9 @@ namespace AMLCore.Internal
         [DllImport("kernel32", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
         public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
 
+        [DllImport("kernel32.dll")]
+        public static extern void GetCurrentThreadStackLimits(out IntPtr low, out IntPtr high);
+
         [Flags]
         public enum AllocationType : uint
         {
