@@ -40,6 +40,18 @@ namespace AMLCore.Internal
         void SetPath([MarshalAs(UnmanagedType.LPWStr)] string pszFile);
     }
 
+    [ComImport]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    [Guid("45e2b4ae-b1c3-11d0-b92f-00a0c90312e1")]
+    internal interface IShellLinkDataList
+    {
+        void AddDataBlock(IntPtr pDataBlock);
+        void CopyDataBlock(uint dwSig, out IntPtr ppDataBlock);
+        void RemoveDataBlock(uint dwSig);
+        void GetFlags(out uint pdwFlags);
+        void SetFlags(uint dwFlags);
+    }
+
     enum ShortcutStartupMode
     {
         Game,
@@ -59,12 +71,26 @@ namespace AMLCore.Internal
             return ret;
         }
 
-        public void Save(string filename, string presetOptions)
+        public void Save(string filename, string presetOptions, bool useRelPath)
         {
             var link = (IShellLink)new ShellLink();
-            link.SetDescription("AML shortcut");
-            link.SetPath(PathHelper.GetPath("Launcher.exe"));
-            link.SetWorkingDirectory(PathHelper.GetPath(""));
+
+            if (useRelPath)
+            {
+                //Haven't got this working.
+                var dataList = (IShellLinkDataList)link;
+                dataList.GetFlags(out var flags);
+                flags |= 0x100 /*SLDF_FORCE_NO_LINKINFO*/ | 0x40000 /*SLDF_FORCE_NO_LINKTRACK*/;
+                dataList.SetFlags(flags);
+                link.SetDescription("AML shortcut");
+                link.SetPath("Launcher.exe");
+            }
+            else
+            {
+                link.SetDescription("AML shortcut");
+                link.SetPath(PathHelper.GetPath("Launcher.exe"));
+                link.SetWorkingDirectory(PathHelper.GetPath(""));
+            }
             var processNameArg = "";
             var guiArg = "";
             switch (Mode)
@@ -104,6 +130,7 @@ namespace AMLCore.Internal
             sb.Append(presetOptions);
             link.SetArguments(sb.ToString());
             var linkFile = (IPersistFile)link;
+
             linkFile.Save(PathHelper.GetPath(filename + ".lnk"), false);
         }
     }

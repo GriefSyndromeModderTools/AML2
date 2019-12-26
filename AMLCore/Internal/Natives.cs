@@ -25,6 +25,15 @@ namespace AMLCore.Internal
         [DllImport("kernel32.dll")]
         public static extern void GetCurrentThreadStackLimits(out IntPtr low, out IntPtr high);
 
+        [DllImport("user32.dll", EntryPoint = "SendMessageW")]
+        public static extern IntPtr SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+        [DllImport("user32.dll", EntryPoint = "SendMessageW")]
+        public static extern IntPtr SendMessage(IntPtr hWnd, int Msg, int wParam,
+            [In, MarshalAs(UnmanagedType.LPWStr)] string lParam);
+
+        [DllImport("user32.dll")]
+        public static extern int GetWindowTextLength(IntPtr hWnd);
+
         [Flags]
         public enum AllocationType : uint
         {

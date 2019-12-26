@@ -170,14 +170,14 @@ namespace AMLCore.Injection.Engine.Script
                 if (obj.Type == SQObject.SQObjectType.OT_ARRAY)
                 {
                     //SquirrelFunctions.addref_(SquirrelVM, ref obj);
-                    //SquirrelFunctions.pop(SquirrelHelper.SquirrelVM, 1);
-                    var stackCapacity = Marshal.ReadInt32(SquirrelVM + 4 * 8);
-                    var top = Marshal.ReadInt32(SquirrelVM + 4 * 12);
-                    if (top + 1000 > stackCapacity)
-                    {
-                        SQObject nullObj = SQObject.Null;
-                        _stackResize(SquirrelVM + 4 * 6, top + 3000, ref nullObj);
-                    }
+                    SquirrelFunctions.pop(SquirrelHelper.SquirrelVM, 1);
+                    //var stackCapacity = Marshal.ReadInt32(SquirrelVM + 4 * 8);
+                    //var top = Marshal.ReadInt32(SquirrelVM + 4 * 12);
+                    //if (top + 1000 > stackCapacity)
+                    //{
+                    //    SQObject nullObj = SQObject.Null;
+                    //    _stackResize(SquirrelVM + 4 * 6, top + 3000, ref nullObj);
+                    //}
                 }
             }
         }

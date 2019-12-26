@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -182,6 +183,13 @@ namespace AMLCore.Plugins
             RefreshControls();
         }
 
+        private class LoadingPreset
+        {
+            public string Name;
+            public string Mods;
+            public string[] Options;
+        }
+
         private void ReadPresets()
         {
             _Presets.Add(new Preset("(默认)", true));
@@ -191,6 +199,29 @@ namespace AMLCore.Plugins
             foreach (var c in Options)
             {
                 c.CollectPresets(_Presets);
+            }
+
+            foreach (var file in Directory.EnumerateFiles(PathHelper.GetPath("aml/presets/"), "*.*"))
+            {
+                try
+                {
+                    var str = File.ReadAllText(file);
+                    var list = TinyJson.JSONParser.FromJson<LoadingPreset[]>(str);
+                    foreach (var p in list)
+                    {
+                        var n = new Preset(p.Name, false);
+                        n.Mods = p.Mods;
+                        n.Options.AddRange(p.Options
+                                .Where(oo => oo.Length > 0 && oo.Contains("="))
+                                .Select(oo => oo.Split('='))
+                                .Select(oo => new Tuple<string, string>(oo[0], oo[1])));
+                        _Presets.Add(n);
+                    }
+                }
+                catch
+                {
+                    CoreLoggers.Loader.Error("Cannot load preset file {0}", file);
+                }
             }
 
             //var p1 = new Preset("草草", false);
@@ -495,7 +526,7 @@ namespace AMLCore.Plugins
                         sb.Append(oo.Item2);
                     }
                 }
-                args.Save(dialog.FileName, sb.ToString());
+                args.Save(dialog.FileName, sb.ToString(), false);
             }
         }
     }

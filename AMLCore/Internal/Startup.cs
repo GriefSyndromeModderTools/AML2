@@ -74,9 +74,9 @@ namespace AMLCore.Internal
                 AddressHelper.Code("gso", 0).ToInt32().ToString("X8"));
             var args = InjectedArguments.Deserialize(ud);
             WindowsHelper.Init();
+            GSOLoadingInjection.Inject();
             if (GSOLoadingInjection.RequireGSOLoading)
             {
-                GSOLoadingInjection.Inject();
                 GSOLoadingInjection.PreparePlugins(args);
             }
             else

@@ -120,7 +120,11 @@
     <Compile Include="Injection\Game\SoundEffect\SoundEffectIdAssignment.cs" />
     <Compile Include="Injection\Game\SoundEffect\SoundEffectListModification.cs" />
     <Compile Include="Injection\Game\SoundEffect\SoundEffectResLoadEntry.cs" />
-    <Compile Include="Injection\GSO\GSOReadyInjectEntry.cs" />
+    <Compile Include="Injection\GSO\GSOWindowLog.cs" />
+    <Compile Include="Injection\GSO\CrcProtection.cs" />
+    <Compile Include="Injection\GSO\GSOConnectionMonitor.cs" />
+    <Compile Include="Injection\GSO\GSOConnectionStatus.cs" />
+    <Compile Include="Injection\GSO\IMessageFilter.cs" />
     <Compile Include="Injection\GSO\PostGSOInjection.cs" />
     <Compile Include="Injection\Native\CalliGenerator.cs" />
     <Compile Include="Injection\Native\OverlapCheck.cs" />
@@ -129,6 +133,7 @@
     <Compile Include="Internal\GSOLoadingInjection.cs" />
     <Compile Include="Internal\NativeThreadIdentifyEntry.cs" />
     <Compile Include="Internal\OnlineUpdateCheck.cs" />
+    <Compile Include="Internal\ParameterCompression.cs" />
     <Compile Include="Internal\ShortcutArguments.cs" />
     <Compile Include="Internal\UpdateWaitingWindow.cs">
       <SubType>Form</SubType>
@@ -136,6 +141,7 @@
     <Compile Include="Internal\UpdateWaitingWindow.Designer.cs">
       <DependentUpon>UpdateWaitingWindow.cs</DependentUpon>
     </Compile>
+    <Compile Include="Internal\Crc32.cs" />
     <Compile Include="Misc\IniFile.cs" />
     <Compile Include="Injection\Engine\File\CachedModificationFileProxyFactory.cs" />
     <Compile Include="Injection\Engine\File\FileEntry.cs" />
