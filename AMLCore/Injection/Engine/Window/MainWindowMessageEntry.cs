@@ -18,6 +18,7 @@ namespace AMLCore.Injection.Engine.Window
         public void Run()
         {
             new MainWindowMessageInjection();
+            new MainWindowMessageLoopInjection();
             MainWindowHelper.RegisterMessageHandler(CheckWindowsClosed);
             MainWindowHelper.RegisterMessageHandler(DisableIME);
         }
@@ -47,8 +48,20 @@ namespace AMLCore.Injection.Engine.Window
 
             protected override void Triggered(NativeEnvironment env)
             {
-                MainWindowHelper.Invoke(env.GetParameterP(0), (uint)env.GetParameterI(1),
+                MainWindowHelper.RunWinProcHandlers(env.GetParameterP(0), (uint)env.GetParameterI(1),
                     env.GetParameterI(2), env.GetParameterI(3));
+            }
+        }
+
+        private class MainWindowMessageLoopInjection : CodeInjection
+        {
+            public MainWindowMessageLoopInjection() : base(0xC5E40, 6)
+            {
+            }
+
+            protected override void Triggered(NativeEnvironment env)
+            {
+                MainWindowHelper.ExecuteLoop();
             }
         }
     }

@@ -11,7 +11,7 @@ namespace AMLCore.Internal
 {
     internal class GSOLoadingInjection
     {
-        public static bool IsGSO => Marshal.ReadInt32(AddressHelper.Code(0x286080)) == 0x00730067;
+        public static readonly bool IsGSO = Marshal.ReadInt32(AddressHelper.Code(0x286080)) == 0x00730067;
         public static bool IsGSOLoaded => AddressHelper.Code("gso", 0) != IntPtr.Zero;
 
         public static bool RequireGSOLoading => false; //ModCheckSync;
@@ -40,20 +40,6 @@ namespace AMLCore.Internal
         public static void Inject()
         {
             new GSOReady();
-            if (RequireGSOLoading)
-            {
-                //injection for game start loading
-                //as client:
-                //- receive game start message (don't pass to gso)
-                //- connected to server (received server reply) (ask support for delayed loading)
-                //- gso message API (capture and send)
-                //as server:
-                //- gso message API (receive and reply)
-            }
-            else
-            {
-                //gso message API
-            }
         }
 
         public static void PreparePlugins(InjectedArguments args)
@@ -68,17 +54,7 @@ namespace AMLCore.Internal
             PostGSOInjection.Invoke();
             GSOConnectionMonitor.Inject();
             GSOWindowLog.Inject();
-            //TODO run gso entry point
-        }
-
-        private static void StartGameServer()
-        {
-
-        }
-
-        private static void StartGameClient()
-        {
-
+            //TODO run gso entry point (maybe in PostGSOInjection)
         }
 
         private class GSOReady : CodeInjection

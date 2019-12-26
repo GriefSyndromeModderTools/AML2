@@ -9,7 +9,8 @@ namespace AMLCore.Injection.Engine.DirectX.ActorTransform
 {
     internal class ActorTransformEntry : IEntryPointLoad
     {
-        private static IntPtr _currentActorObj;
+        //Also used by GSO.GSOChatMessageFix
+        internal static IntPtr CurrentActorObj;
 
         public void Run()
         {
@@ -29,7 +30,7 @@ namespace AMLCore.Injection.Engine.DirectX.ActorTransform
                 var actorObj = new ActorObject(actorPtr);
                 if (actorObj.IsActive && actorObj.AnimationInfoAvailable)
                 {
-                    _currentActorObj = actorPtr;
+                    CurrentActorObj = actorPtr;
                 }
             }
         }
@@ -42,11 +43,11 @@ namespace AMLCore.Injection.Engine.DirectX.ActorTransform
 
             protected override void Triggered(NativeEnvironment env)
             {
-                if (_currentActorObj != IntPtr.Zero)
+                if (CurrentActorObj != IntPtr.Zero)
                 {
                     var matPtr = env.GetParameterP(0);
-                    ActorTransformManager.BeforeDrawActor(_currentActorObj, matPtr);
-                    _currentActorObj = IntPtr.Zero;
+                    ActorTransformManager.BeforeDrawActor(CurrentActorObj, matPtr);
+                    CurrentActorObj = IntPtr.Zero;
                 }
             }
         }

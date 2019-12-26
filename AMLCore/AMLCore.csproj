@@ -74,6 +74,7 @@
     <Compile Include="Injection\Engine\Script\SquirrelFunctions.cs" />
     <Compile Include="Injection\Engine\Script\SquirrelHelper.cs" />
     <Compile Include="Injection\Engine\Script\SquirrelInjectEntry.cs" />
+    <Compile Include="Injection\GSO\ChatMessageTest.cs" />
     <Compile Include="Injection\Engine\Window\MainWindowHelper.cs" />
     <Compile Include="Injection\Engine\Window\MainWindowMessageEntry.cs" />
     <Compile Include="Injection\Game\ActorSystem\UpdateFunctionRedirect.cs" />
@@ -120,6 +121,7 @@
     <Compile Include="Injection\Game\SoundEffect\SoundEffectIdAssignment.cs" />
     <Compile Include="Injection\Game\SoundEffect\SoundEffectListModification.cs" />
     <Compile Include="Injection\Game\SoundEffect\SoundEffectResLoadEntry.cs" />
+    <Compile Include="Injection\GSO\GSOChatMessageFix.cs" />
     <Compile Include="Injection\GSO\GSOWindowLog.cs" />
     <Compile Include="Injection\GSO\CrcProtection.cs" />
     <Compile Include="Injection\GSO\GSOConnectionMonitor.cs" />

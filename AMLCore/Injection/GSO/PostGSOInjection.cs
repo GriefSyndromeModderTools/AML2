@@ -12,8 +12,8 @@ namespace AMLCore.Injection.GSO
     {
         private readonly static List<Action> _actionList = new List<Action>();
 
-        public static readonly bool IsGSO = Marshal.ReadInt32(AddressHelper.Code(0x286080)) == 0x00730067;
-        public static bool IsGSOLoaded => AddressHelper.Code("gso", 0) != IntPtr.Zero;
+        public static bool IsGSO => GSOLoadingInjection.IsGSO;
+        public static bool IsGSOLoaded => GSOLoadingInjection.IsGSOLoaded;
 
         public static void Run(Action action)
         {

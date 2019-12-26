@@ -1,5 +1,6 @@
 ﻿using AMLCore.Internal;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,13 +12,14 @@ namespace AMLCore.Injection.Engine.Window
     public static class MainWindowHelper
     {
         private static readonly List<WindowProc> _ProcList = new List<WindowProc>();
+        private static readonly ConcurrentQueue<Action> _Actions = new ConcurrentQueue<Action>();
 
         public static void RegisterMessageHandler(WindowProc proc)
         {
             _ProcList.Add(proc);
         }
 
-        internal static void Invoke(IntPtr hWnd, uint uMsg, int wParam, int lParam)
+        internal static void RunWinProcHandlers(IntPtr hWnd, uint uMsg, int wParam, int lParam)
         {
             foreach (var p in _ProcList)
             {
@@ -30,6 +32,19 @@ namespace AMLCore.Injection.Engine.Window
                     CoreLoggers.Main.Error("exception in WindProc: {0}", e.ToString());
                 }
             }
+        }
+
+        internal static void ExecuteLoop()
+        {
+            while (_Actions.TryDequeue(out var aa))
+            {
+                aa();
+            }
+        }
+
+        public static void Invoke(Action action)
+        {
+            _Actions.Enqueue(action);
         }
     }
 }

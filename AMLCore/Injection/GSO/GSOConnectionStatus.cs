@@ -9,6 +9,12 @@ namespace AMLCore.Injection.GSO
     public class ConnectedPeer
     {
         public readonly ulong AddrLow, AddrHigh;
+
+        public ConnectedPeer(ulong low, ulong high)
+        {
+            AddrLow = low;
+            AddrHigh = high;
+        }
     }
 
     public class ServerConnectionStatus

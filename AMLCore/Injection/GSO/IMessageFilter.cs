@@ -5,6 +5,7 @@ using System.Text;
 
 namespace AMLCore.Injection.GSO
 {
+    //Note that this interface will be executed on other threads
     interface IMessageFilter
     {
         void FilterSend(ConnectedPeer peer, IntPtr buffer, ref int len);

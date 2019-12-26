@@ -8,6 +8,9 @@ namespace AMLCore.Internal
 {
     internal class Natives
     {
+        [DllImport("kernel32.dll", SetLastError = false)]
+        public static extern void CopyMemory(IntPtr dest, IntPtr src, int count);
+
         [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr GetModuleHandle(string lpModuleName);
 
