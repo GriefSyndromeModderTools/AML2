@@ -18,5 +18,6 @@ namespace AMLCore.Internal
         public static readonly Logger Rendering = new Logger("Core/Rendering");
         public static readonly Logger Scene = new Logger("Core/Scene");
         public static readonly Logger GSO = new Logger("Core/GSO");
+        public static readonly Logger Replay = new Logger("Core/Replay");
     }
 }

@@ -65,7 +65,7 @@ namespace AMLCore.Injection.Engine.DirectX.ActorTransform
                         }
                         catch (Exception e)
                         {
-                            CoreLoggers.Rendering.Error("Exception in handling ActorTransform: {0}",
+                            CoreLoggers.Rendering.Error("exception in handling ActorTransform: {0}",
                                 e.ToString());
                         }
                     }

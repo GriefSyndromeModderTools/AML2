@@ -74,6 +74,10 @@
     <Compile Include="Injection\Engine\Script\SquirrelFunctions.cs" />
     <Compile Include="Injection\Engine\Script\SquirrelHelper.cs" />
     <Compile Include="Injection\Engine\Script\SquirrelInjectEntry.cs" />
+    <Compile Include="Injection\Game\Replay\FilenameParser.cs" />
+    <Compile Include="Injection\Game\Replay\ReplayFileStream.cs" />
+    <Compile Include="Injection\Game\Replay\ReplayRecorderEntry.cs" />
+    <Compile Include="Injection\Game\Replay\ReplayFile.cs" />
     <Compile Include="Injection\GSO\ChatMessageTest.cs" />
     <Compile Include="Injection\Engine\Window\MainWindowHelper.cs" />
     <Compile Include="Injection\Engine\Window\MainWindowMessageEntry.cs" />
@@ -127,11 +131,13 @@
     <Compile Include="Injection\GSO\GSOConnectionMonitor.cs" />
     <Compile Include="Injection\GSO\GSOConnectionStatus.cs" />
     <Compile Include="Injection\GSO\IMessageFilter.cs" />
+    <Compile Include="Injection\GSO\InternalMessageId.cs" />
     <Compile Include="Injection\GSO\PostGSOInjection.cs" />
     <Compile Include="Injection\Native\CalliGenerator.cs" />
     <Compile Include="Injection\Native\OverlapCheck.cs" />
     <Compile Include="Internal\ArgumentHelper.cs" />
     <Compile Include="Internal\CommonArguments.cs" />
+    <Compile Include="Internal\FunctionalModListHelper.cs" />
     <Compile Include="Internal\GSOLoadingInjection.cs" />
     <Compile Include="Internal\NativeThreadIdentifyEntry.cs" />
     <Compile Include="Internal\OnlineUpdateCheck.cs" />
@@ -200,6 +206,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Gui\" />
+    <Folder Include="Injection\Game\Replay\Test\" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Injection\Game\Scene\Caocao\CaocaoRes.dat" />

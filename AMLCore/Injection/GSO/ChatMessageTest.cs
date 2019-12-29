@@ -24,7 +24,7 @@ namespace AMLCore.Injection.GSO
         {
             MainWindowHelper.Invoke(() =>
             {
-                ShowChatMessage(0, "Hello world!");
+                //ShowChatMessage(0, "Hello world!");
             });
         }
 

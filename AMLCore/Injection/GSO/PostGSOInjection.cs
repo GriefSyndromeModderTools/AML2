@@ -34,22 +34,8 @@ namespace AMLCore.Injection.GSO
 
         internal static void Invoke()
         {
-            if (AddressHelper.Code("gso", 0) != IntPtr.Zero)
-            {
-                CoreLoggers.Injection.Info("gso.dll loaded at 0x{0}", AddressHelper.Code("gso", 0).ToInt32().ToString("X8"));
-            }
-            else if (!IsGSO)
-            {
-                CoreLoggers.Injection.Info("not in griefsyndrome_online.exe");
-            }
-            else
-            {
-                CoreLoggers.Injection.Error("gso.dll not successfully loaded in griefsyndrome_online.exe");
-            }
-            CoreLoggers.Injection.Info("post-gso injection starts");
             _actionList.ForEach(aa => aa());
             _actionList.Clear();
-            CoreLoggers.Injection.Info("post-gso injection finishes");
         }
     }
 }

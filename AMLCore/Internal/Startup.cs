@@ -73,16 +73,18 @@ namespace AMLCore.Internal
                 AddressHelper.Code(0).ToInt32().ToString("X8"),
                 AddressHelper.Code("gso", 0).ToInt32().ToString("X8"));
             var args = InjectedArguments.Deserialize(ud);
+            CoreLoggers.Injection.Info("injected options: {0}", args.ToString());
+
             WindowsHelper.Init();
+            NativeThreadIdentifyEntry.Run();
+
             if (GSOLoadingInjection.IsGSO)
             {
                 GSOLoadingInjection.Inject();
-            }
-            if (GSOLoadingInjection.RequireGSOLoading)
-            {
                 GSOLoadingInjection.PreparePlugins(args);
             }
-            else
+
+            if (!GSOLoadingInjection.RequireGSOLoading)
             {
                 PluginLoader.Load(args);
             }

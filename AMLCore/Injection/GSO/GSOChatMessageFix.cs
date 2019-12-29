@@ -109,6 +109,10 @@ namespace AMLCore.Injection.GSO
                 {
                     Marshal.WriteInt32(_playerIdAddr, 2);
                 }
+                else
+                {
+                    Marshal.WriteInt32(_playerIdAddr, -1);
+                }
             }
         }
     }

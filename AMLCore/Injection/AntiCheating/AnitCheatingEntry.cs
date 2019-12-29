@@ -42,16 +42,16 @@ namespace AMLCore.Injection.AntiCheating
 
             if (!PluginLoader.ContainsFunctionalMods())
             {
-                CoreLoggers.Main.Info("No AML mods loaded. AntiCheating function disabled.");
+                CoreLoggers.Main.Info("no AML mods loaded. AntiCheating function disabled.");
                 return;
             }
             var configDisabled = new IniFile("Core").Read("AntiCheating", "CompatibleMode", "false");
             if (configDisabled != "false" && configDisabled != "0")
             {
-                CoreLoggers.Main.Info("AntiCheating disabled by config file.");
+                CoreLoggers.Main.Info("antiCheating disabled by config file.");
                 return;
             }
-            CoreLoggers.Main.Info("AntiCheating function enabled.");
+            CoreLoggers.Main.Info("antiCheating function enabled.");
 
             _rand = (StdlibRandDelegate)Marshal.GetDelegateForFunctionPointer(AddressHelper.Code(0x1B0DEF), typeof(StdlibRandDelegate));
             ModifyRenderFunction();

@@ -8,9 +8,9 @@ using System.Text;
 
 namespace AMLCore.Internal
 {
-    internal class NativeThreadIdentifyEntry : IEntryPointLoad
+    internal class NativeThreadIdentifyEntry
     {
-        public void Run()
+        public static void Run()
         {
             new InitThreadEntryInjection();
             new MainThreadEntryInjection();

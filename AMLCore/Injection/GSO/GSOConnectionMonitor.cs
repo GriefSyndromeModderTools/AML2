@@ -1,5 +1,6 @@
 ﻿using AMLCore.Injection.Native;
 using AMLCore.Internal;
+using AMLCore.Misc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,22 +14,48 @@ namespace AMLCore.Injection.GSO
         public static void Inject()
         {
             new BeforeServerLoop();
+            new BeforeClientLoop();
+            new ServerLoopTimeout();
             new InjectCloseSocket();
+            new InjectSend();
+            new InjectReceive();
             Filters.Add(new CrcProtection());
             Filters.Add(new ServerConnectionMonitor());
             Filters.Add(new ClientConnectionMonitor());
-            //TODO handle timeout (server 0x77DE, client 0x8003)
+            //should also consider client status update after game start
+            //TODO load mods when starting playing rep
         }
 
         private static void StartServer(IntPtr server)
         {
-            GSOWindowLog.WriteLine("Server started");
+            ThreadHelper.InitInternalThread("GSOServer");
+            GSOConnectionStatus.ClientStatus = null;
+            GSOConnectionStatus.ServerStatus = new ServerConnectionStatus(server);
+            CoreLoggers.GSO.Info("server started");
+        }
+
+        private static void StartClient(IntPtr client, ConnectedPeer peer)
+        {
+            ThreadHelper.InitInternalThread("GSOClient");
+
+            GSOConnectionStatus.ClientStatus = new ClientConnectionStatus(client, peer);
+            if (GSOLoadingInjection.ModCheck)
+            {
+                GSOConnectionStatus.ClientStatus.Send(new byte[] { 0, InternalMessageId.RequestModString });
+            }
         }
 
         private static void CloseSocket(IntPtr socket)
         {
-            //TODO need to confirm server/client
-            GSOWindowLog.WriteLine("Socket closed");
+            if (GSOConnectionStatus.ServerStatus?.Socket == socket)
+            {
+                GSOConnectionStatus.ServerStatus = null;
+            }
+            else if (GSOConnectionStatus.ClientStatus?.Socket == socket)
+            {
+                GSOConnectionStatus.ClientStatus = null;
+            }
+            CoreLoggers.GSO.Info("socket closed");
         }
 
         internal static List<IMessageFilter> Filters = new List<IMessageFilter>();
@@ -40,7 +67,7 @@ namespace AMLCore.Injection.GSO
             if (client != null)
             {
                 var p = client.Server;
-                if (low == p.AddrLow && high == p.AddrHigh)
+                if (low == p.Address.AddrLow && high == p.Address.AddrHigh)
                 {
                     return p;
                 }
@@ -49,14 +76,14 @@ namespace AMLCore.Injection.GSO
             {
                 foreach (var p in server.Clients)
                 {
-                    if (low == p.AddrLow && high == p.AddrHigh)
+                    if (p != null && low == p.Address.AddrLow && high == p.Address.AddrHigh)
                     {
                         return p;
                     }
                 }
             }
             //TODO check and remove this
-            CoreLoggers.GSO.Info("Unrecognized peer");
+            CoreLoggers.GSO.Info("unrecognized peer");
             return new ConnectedPeer(low, high);
         }
 
@@ -68,7 +95,7 @@ namespace AMLCore.Injection.GSO
                 Filters[i].FilterSend(peer, buffer, ref len);
                 if (len < 0 || len > 516)
                 {
-                    CoreLoggers.GSO.Error("Invalid message after filter");
+                    CoreLoggers.GSO.Error("invalid message after filter");
                     return 0;
                 }
             }
@@ -83,7 +110,7 @@ namespace AMLCore.Injection.GSO
                 f.FilterReceive(peer, buffer, ref len);
                 if (len < 0 || len > 516)
                 {
-                    CoreLoggers.GSO.Error("Invalid message after filter");
+                    CoreLoggers.GSO.Error("invalid message after filter");
                     return 0;
                 }
             }
@@ -106,6 +133,32 @@ namespace AMLCore.Injection.GSO
             }
         }
 
+        private static IntPtr _clientPtr;
+
+        private class BeforeClientLoop : CodeInjection
+        {
+            public BeforeClientLoop() : base(AddressHelper.Code("gso", 0x7C9C), 7)
+            {
+            }
+
+            protected override void Triggered(NativeEnvironment env)
+            {
+                _clientPtr = env.GetParameterP(3);
+            }
+        }
+
+        private class ServerLoopTimeout : CodeInjection
+        {
+            public ServerLoopTimeout() : base(AddressHelper.Code("gso", 0x77F4), 6)
+            {
+            }
+
+            protected override void Triggered(NativeEnvironment env)
+            {
+                GSOConnectionStatus.ServerStatus?.UpdateClientList();
+            }
+        }
+
         private class InjectCloseSocket : FunctionPointerInjection<CloseSocketDelegate>
         {
             public InjectCloseSocket() : base(AddressHelper.Code("gso", 0x1C264))
@@ -115,6 +168,7 @@ namespace AMLCore.Injection.GSO
             protected override void Triggered(NativeEnvironment env)
             {
                 CloseSocket(env.GetParameterP(0));
+                env.SetReturnValue(Original(env.GetParameterP(0)));
             }
         }
 
@@ -164,7 +218,7 @@ namespace AMLCore.Injection.GSO
                 var addr = env.GetParameterP(4);
                 var addrLen = env.GetParameterP(5);
                 var received = Original(s, b, len, f, addr, addrLen);
-                if (len == 516 && Marshal.ReadInt32(addrLen) == 16)
+                if (len == 516 && Marshal.ReadInt32(addrLen) == 16 && received > 0)
                 {
                     var addrLow = (ulong)Marshal.ReadInt64(addr, 0);
                     var addrHigh = (ulong)Marshal.ReadInt64(addr, 8);
@@ -180,27 +234,102 @@ namespace AMLCore.Injection.GSO
 
         private class ServerConnectionMonitor : IMessageFilter
         {
+            private Crc32 _crc = new Crc32();
+
             public void FilterReceive(ConnectedPeer peer, IntPtr buffer, ref int len)
             {
-                throw new NotImplementedException();
+                var msg = Marshal.ReadByte(buffer, 1);
+                if (msg == InternalMessageId.RequestModString)
+                {
+                    if (!GSOConnectionStatus.ServerStatus.IsKnownPeer(peer))
+                    {
+                        return;
+                    }
+                    byte[] strData = GSOLoadingInjection.ServerGetModString();
+                    byte[] data = new byte[strData.Length + 6];
+                    data[0] = 0;
+                    data[1] = InternalMessageId.ReplyModString;
+                    Array.Copy(strData, 0, data, 2, strData.Length);
+                    Array.Copy(BitConverter.GetBytes(_crc.ComputeChecksum(data, 1, strData.Length + 1)), 0, data, strData.Length + 2, 4);
+                    GSOConnectionStatus.ServerStatus.Send(peer, data);
+                    CoreLoggers.GSO.Info("mod list request replied");
+                    GSOWindowLog.WriteLine("Mod list request replied.");
+                }
             }
 
             public void FilterSend(ConnectedPeer peer, IntPtr buffer, ref int len)
             {
-                throw new NotImplementedException();
+                var msg = Marshal.ReadByte(buffer, 1);
+                if (msg == 0x41)
+                {
+                    GSOConnectionStatus.ServerStatus?.UpdateClientList();
+                }
+                else if (msg == 0x44)
+                {
+                    GSOConnectionStatus.ServerStatus?.DisconnectClient(peer);
+                }
+                else if (msg == 0x45)
+                {
+                    GSOLoadingInjection.ServerGameStart();
+                }
             }
         }
 
         private class ClientConnectionMonitor : IMessageFilter
         {
+            private Crc32 _crc = new Crc32();
+            private byte[] _serverModString;
+
             public void FilterReceive(ConnectedPeer peer, IntPtr buffer, ref int len)
             {
-                throw new NotImplementedException();
+                var msg = Marshal.ReadByte(buffer, 1);
+                if (msg == 0x41)
+                {
+                    StartClient(_clientPtr, peer);
+                }
+                else if (msg == 0x45)
+                {
+                    GSOLoadingInjection.ClientGameStart(_serverModString);
+                }
+                else if (msg == InternalMessageId.ReplyModString)
+                {
+                    if (GSOLoadingInjection.ModCheck)
+                    {
+                        //Check crc
+                        var copy = new byte[len - 5];
+                        Marshal.Copy(buffer + 1, copy, 0, copy.Length);
+                        var calcCrc = _crc.ComputeChecksum(copy, 0, copy.Length);
+                        var readCrc = (uint)Marshal.ReadInt32(buffer, len - 4);
+                        if (calcCrc != readCrc)
+                        {
+                            CoreLoggers.GSO.Error("mod list message corrupted");
+                            GSOWindowLog.WriteLine("Received server mod list but it's corrupted. Ignored.");
+                        }
+                        else
+                        {
+                            _serverModString = copy.Skip(1).ToArray();
+                            CoreLoggers.GSO.Info("mod list message received");
+                            GSOWindowLog.WriteLine("Server mod list received.");
+                        }
+                        if (GSOLoadingInjection.ModCheck && ! GSOLoadingInjection.ModCheckSync)
+                        {
+                            if (GSOLoadingInjection.ClientCheckArgs(_serverModString))
+                            {
+                                CoreLoggers.GSO.Info("mod list consistent");
+                                GSOWindowLog.WriteLine("Using same mods.");
+                            }
+                            else
+                            {
+                                CoreLoggers.GSO.Info("mod list inconsistent");
+                                GSOWindowLog.WriteLine("Using different mods.");
+                            }
+                        }
+                    }
+                }
             }
 
             public void FilterSend(ConnectedPeer peer, IntPtr buffer, ref int len)
             {
-                throw new NotImplementedException();
             }
         }
     }

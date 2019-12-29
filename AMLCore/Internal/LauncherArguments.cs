@@ -96,28 +96,11 @@ namespace AMLCore.Internal
         }
 
         #endregion
-        
+
+        //For compatibility.
         public byte[] WriteInjectedData()
         {
-            var ms = new MemoryStream();
-            using (var bw = new BinaryWriter(ms, Encoding.UTF8))
-            {
-                bw.Write(0);
-                bw.Write(Mods != null);
-                if (Mods != null) bw.Write(Mods);
-                bw.Write(Options.Count);
-                foreach (var o in Options)
-                {
-                    if (o.Item1 != null && o.Item2 != null)
-                    {
-                        bw.Write(o.Item1);
-                        bw.Write(o.Item2);
-                    }
-                }
-                ms.Position = 0;
-                ms.Write(BitConverter.GetBytes(ms.Length - 4), 0, 4);
-                return ms.ToArray();
-            }
+            return this.Serialize();
         }
 
         public void LogOptions()

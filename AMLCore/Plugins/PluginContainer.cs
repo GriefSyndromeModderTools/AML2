@@ -10,7 +10,7 @@ namespace AMLCore.Plugins
 {
     internal class PluginContainer
     {
-        private string _AssemblyName;
+        private string _AssemblyName, _InternalName;
         private IPluginDescription _Desc;
         private IPluginOption _Option;
         private IEntryPointPreload[] _Pre;
@@ -50,6 +50,7 @@ namespace AMLCore.Plugins
             }
             _Presets = CreateInstances<IPresetProvider>(assembly);
             _Type = _Desc?.PluginType ?? PluginType.Debug;
+            _InternalName = _Desc?.InternalName ?? "unknown";
             CoreLoggers.Loader.Info("initialized assembly {0}", _AssemblyName);
         }
 
@@ -102,6 +103,11 @@ namespace AMLCore.Plugins
         public string AssemblyName
         {
             get { return _AssemblyName; }
+        }
+
+        public string InternalName
+        {
+            get { return _InternalName; }
         }
 
         public string DisplayName

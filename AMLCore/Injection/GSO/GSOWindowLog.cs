@@ -44,6 +44,7 @@ namespace AMLCore.Injection.GSO
             new GSOConnectDialogLoop();
         }
 
+        //TODO should try to fix the delay (cause by GetMessage)
         private class GSOConnectDialogLoop : CodeInjection
         {
             public GSOConnectDialogLoop() : base(AddressHelper.Code("gso", 0x2782), 6)

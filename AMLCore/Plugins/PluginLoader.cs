@@ -19,6 +19,13 @@ namespace AMLCore.Plugins
             InitAssembly(typeof(PluginLoader).Assembly, false);
         }
 
+        public static PluginContainer GetTemporaryContainer(string name)
+        {
+            var path = PathHelper.GetPath("aml/mods/" + name + ".dll");
+            if (!File.Exists(path)) return null;
+            return new PluginContainer(Assembly.LoadFile(path), true);
+        }
+
         private static PluginContainer InitAssembly(Assembly a, bool noEntry)
         {
             lock (_Plugins)
@@ -26,6 +33,12 @@ namespace AMLCore.Plugins
                 if (!_Plugins.TryGetValue(a, out var ret))
                 {
                     ret = new PluginContainer(a, noEntry);
+                    if (ret.InternalName == "RepRecorder")
+                    {
+                        CoreLoggers.Loader.Error("RepRecorder is replaced by an internal recorder in AML");
+                        //Don't add to list.
+                        return ret;
+                    }
                     _Plugins.Add(a, ret);
                 }
                 return ret;
@@ -77,20 +90,15 @@ namespace AMLCore.Plugins
         {
             InitCorePlugin();
             Queue<string> loadList = new Queue<string>(args.GetPluginFiles());
-            HashSet<string> allPlanned = new HashSet<string>(loadList);
             while (loadList.Count > 0)
             {
                 var p = loadList.Dequeue();
                 try
                 {
                     var c = InitAssembly(Assembly.LoadFile(p), false);
-                    foreach (var dep in c.Dependencies ?? new string[0])
+                    if (c.Dependencies != null && c.Dependencies.Length > 0)
                     {
-                        if (allPlanned.Add(dep))
-                        {
-                            CoreLoggers.Loader.Info("load plugin {1} requested by {0}", p, dep);
-                            loadList.Enqueue(dep);
-                        }
+                        CoreLoggers.Loader.Error("plugin dependency is no longer supported");
                     }
                 }
                 catch (Exception e)

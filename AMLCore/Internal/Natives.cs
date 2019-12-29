@@ -36,6 +36,21 @@ namespace AMLCore.Internal
 
         [DllImport("user32.dll")]
         public static extern int GetWindowTextLength(IntPtr hWnd);
+        
+        [DllImport("ws2_32.dll", EntryPoint = "sendto")]
+        public static extern int SendTo(IntPtr Socket, IntPtr buff, int len, int flags, ref ulong addr, int addrLen);
+
+        [DllImport("ws2_32.dll", EntryPoint = "sendto")]
+        public static extern int SendTo(IntPtr Socket, ref byte buff, int len, int flags, ref ulong addr, int addrLen);
+
+        [DllImport("ws2_32.dll", EntryPoint = "recvfrom")]
+        public static extern int RecvFrom(IntPtr Socket, IntPtr buff, int len, int flags, ref ulong addr, ref int addrLen);
+
+        [DllImport("kernel32.dll")]
+        public static extern void EnterCriticalSection(IntPtr lpCriticalSection);
+
+        [DllImport("kernel32.dll")]
+        public static extern void LeaveCriticalSection(IntPtr lpCriticalSection);
 
         [Flags]
         public enum AllocationType : uint

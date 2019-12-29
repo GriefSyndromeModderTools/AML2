@@ -15,10 +15,11 @@ namespace AMLCore.Injection.GSO
     {
         private byte[] _copyBuffer = new byte[35];
         private Crc32 _crc32 = new Crc32();
+        private bool _receivedCrc = false;
 
         public CrcProtection()
         {
-            CoreLoggers.GSO.Info("Crc32 redundancy check enabled for sending");
+            CoreLoggers.GSO.Info("CRC32 redundancy check enabled for sending");
         }
 
         public void FilterSend(ConnectedPeer peer, IntPtr buffer, ref int len)
@@ -46,12 +47,17 @@ namespace AMLCore.Injection.GSO
             var msg = Marshal.ReadByte(buffer, 1);
             if (msg == 0x49 && len == 40)
             {
+                if (!_receivedCrc)
+                {
+                    _receivedCrc = true;
+                    CoreLoggers.GSO.Info("key message with CRC protection received");
+                }
                 Marshal.Copy(buffer + 1, _copyBuffer, 0, 35);
                 var crc = _crc32.ComputeChecksum(_copyBuffer, 0, 35);
                 var crcInMsg = (uint)Marshal.ReadInt32(buffer, 36);
                 if (crc != crcInMsg)
                 {
-                    CoreLoggers.GSO.Error("Corrupted message detected. Ignored.");
+                    CoreLoggers.GSO.Error("corrupted message detected. Ignored.");
                     Marshal.WriteByte(buffer, 1, 0); //Set message id to 0.
                     return;
                 }
