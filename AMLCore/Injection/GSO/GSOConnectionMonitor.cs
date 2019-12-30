@@ -19,6 +19,7 @@ namespace AMLCore.Injection.GSO
             new InjectCloseSocket();
             new InjectSend();
             new InjectReceive();
+            new DragRepFile();
             Filters.Add(new CrcProtection());
             Filters.Add(new ServerConnectionMonitor());
             Filters.Add(new ClientConnectionMonitor());
@@ -330,6 +331,19 @@ namespace AMLCore.Injection.GSO
 
             public void FilterSend(ConnectedPeer peer, IntPtr buffer, ref int len)
             {
+            }
+        }
+
+        private class DragRepFile : CodeInjection
+        {
+            public DragRepFile() : base(AddressHelper.Code("gso", 0x250B), 6)
+            {
+            }
+
+            protected override void Triggered(NativeEnvironment env)
+            {
+                //TODO in the future we may extract mod information
+                GSOLoadingInjection.ServerGameStart();
             }
         }
     }

@@ -77,6 +77,7 @@ namespace AMLCore.Internal
             CoreLoggers.GSO.Info("post-gso injection finishes");
         }
 
+        //Also called when playing rep files.
         public static void ServerGameStart()
         {
             if (IsGameStarted) return;

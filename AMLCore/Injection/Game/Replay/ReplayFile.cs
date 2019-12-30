@@ -13,8 +13,7 @@ namespace AMLCore.Injection.Game.Replay
         public int BaseLap;
         public UInt16[] InputData;
         public ChatMessage[] ChatMessages;
-
-        public int FileSize;
+        public Dictionary<string, byte[]> AMLSections;
 
         public class ChatMessage
         {
@@ -67,21 +66,23 @@ namespace AMLCore.Injection.Game.Replay
             Buffer.BlockCopy(data, 16, InputData, 0, (int)length * 2);
 
             int chatOffset = 16 + (int)length * 2;
-            ChatMessages = new ChatMessage[chat];
+            var chatList = new List<ChatMessage>();
 
             for (int i = 0; i < chat; ++i)
             {
-                try
+                var c = ReadChat(data, ref chatOffset);
+                if (c.Time != int.MaxValue)
                 {
-                    ChatMessages[i] = ReadChat(data, ref chatOffset);
-                }
-                catch
-                {
-                    throw new Exception("chat message reading error");
+                    chatList.Add(c);
                 }
             }
+            ChatMessages = chatList.ToArray();
+            if (chatOffset < data.Length)
+            {
+                ReadChat(data, ref chatOffset);
+            }
 
-            FileSize = data.Length;
+            ReadAMLData(data, chatOffset);
         }
 
         public ReplayFile(int lap, int time)
@@ -105,6 +106,47 @@ namespace AMLCore.Injection.Game.Replay
                 Player = p,
                 Message = new string(str),
             };
+        }
+
+        private void ReadAMLData(byte[] data, int start)
+        {
+            Dictionary<uint, byte[]> blocks = new Dictionary<uint, byte[]>();
+            while (start < data.Length)
+            {
+                uint header = BitConverter.ToUInt32(data, start);
+                var d = new byte[252];
+                Array.Copy(data, start + 4, d, 0, 252);
+                var section = header >> 24;
+                //Section 255 is reserved in current version.
+                //Header 0x00FFFFFF is empty block.
+                if (section != 255 && header != 0xFFFFFF)
+                {
+                    blocks.Add(header, d);
+                }
+                start += 256;
+            }
+            var sections = blocks
+                .GroupBy(bb => (int)(bb.Key >> 24), (kk, ee) => new {
+                    Section = kk,
+                    Data = ee
+                        .OrderBy(bbb => bbb.Key)
+                        .Select(bbb => bbb.Value)
+                        .SelectMany(bbb => bbb)
+                })
+                .ToDictionary(ss => ss.Section, ss => ss.Data.Take(ss.Data.Count() - 252 + ss.Data.Last()).ToArray());
+            List<string> sectionId = new List<string>();
+            var sectionIdData = sections[0];
+            int s0pos = 0;
+            while (s0pos < sectionIdData.Length)
+            {
+                var s0end = Array.FindIndex(sectionIdData, s0pos, ii => ii == 0);
+                var str = Encoding.UTF8.GetString(sectionIdData, s0pos, s0end - s0pos);
+                s0pos = s0end + 1;
+                sectionId.Add(str);
+            }
+            AMLSections = sections
+                .Where(ss => ss.Key != 0)
+                .ToDictionary(ss => sectionId[ss.Key - 1], ss => ss.Value);
         }
 
         public void Save(string filename)

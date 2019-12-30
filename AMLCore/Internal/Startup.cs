@@ -84,7 +84,7 @@ namespace AMLCore.Internal
                 GSOLoadingInjection.PreparePlugins(args);
             }
 
-            if (!GSOLoadingInjection.RequireGSOLoading)
+            if (!GSOLoadingInjection.IsGSO || !GSOLoadingInjection.RequireGSOLoading)
             {
                 PluginLoader.Load(args);
             }

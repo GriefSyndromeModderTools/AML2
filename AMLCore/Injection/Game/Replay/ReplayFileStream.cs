@@ -16,6 +16,8 @@ namespace AMLCore.Injection.Game.Replay
         private const int AMLMoveCount = 3;
         private const int FrameCountPerAMLMove = BlockSize * AMLMoveCount / 6;
         private const int ByteCountPerAMLMove = BlockSize * AMLMoveCount;
+        private const int EmptyMessageLength = 250; //number of char, including '\0'
+        private const int EmptyMessageCount = ByteCountPerAMLMove / (EmptyMessageLength * 2 + 12) + 1;
 
         //count. size is count*6. rep size is count*3
         private int _inputFrameCount;
@@ -49,9 +51,28 @@ namespace AMLCore.Injection.Game.Replay
         public static void Test1()
         {
             var rep = new ReplayFileStream(@"E:\test.dat", 0x1234);
-            rep.WriteChatMessage(1, 0, "Message 1");
+            rep.WriteChatMessage(60, 0, "吼吼");
+            rep.WriteChatMessage(120, 1, new string('x', 255));
             rep.WriteInputData(new byte[60 * 12 * 6], 0, 60 * 12);
             rep.WriteInputData(new byte[] { 0x10, 0, 0, 0, 0, 0 }, 0, 1);
+            var s1 = rep.CreateSection("aml.test");
+            rep.AppendSection(s1, new byte[] { 1, 2, 3, 4 }, 0, 4);
+            rep.WriteInputData(new byte[60 * 12 * 6], 0, 60 * 12);
+            rep.MoveChatDataStep();
+            var s2 = rep.CreateSection("aml.compressed");
+            rep.AppendSection(s2, Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 280);
+            rep.WriteInputData(new byte[60 * 24 * 6], 0, 60 * 24);
+            for (int i = 0; i < 10; ++i)
+            {
+                rep.WriteChatMessage(i * 20 + 200, 0, i.ToString() + new string('!', 200));
+            }
+            rep.AppendSection(rep.CreateSection("aml.x2"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 251);
+            rep.AppendSection(rep.CreateSection("aml.x3"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 252);
+            rep.AppendSection(rep.CreateSection("aml.x4"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 253);
+            rep.AppendSection(rep.CreateSection("aml.x5"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 254);
+            rep.AppendSection(rep.CreateSection("aml.x6"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 255);
+            rep.ResetSection(s2);
+            rep.AppendSection(rep.CreateSection("aml.x7"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 256);
             rep.Close();
 
             var read = new ReplayFile(@"E:\test.dat");
@@ -77,14 +98,7 @@ namespace AMLCore.Injection.Game.Replay
 
             _sectionTailBlockNumber.Add(-1);
             _blockCountForSections.Add(0);
-            var block = CreateNewBlock(section);
-
-            _stream.Seek(GetBlockFileOffset(block), SeekOrigin.Begin);
-            var sectionu = (uint)section;
-            _writer.Write(sectionu << 24);
-            _stream.Seek(BlockSize - 4 - 1, SeekOrigin.Current);
-            _writer.Write((byte)0);
-
+            CreateNewBlock(section);
             return section;
         }
 
@@ -94,12 +108,24 @@ namespace AMLCore.Injection.Game.Replay
             {
                 throw new ArgumentOutOfRangeException(nameof(section));
             }
-            _sectionTailBlockNumber[section] = -1;
+            var last = _sectionTailBlockNumber[section];
             for (int i = 0; i < _sectionIndexForBlocks.Count; ++i)
             {
                 if (_sectionIndexForBlocks[i] == section)
                 {
-                    _sectionIndexForBlocks[i] = -1;
+                    if (i == last)
+                    {
+                        _stream.Seek(GetBlockFileOffset(i), SeekOrigin.Begin);
+                        _writer.Write(((uint)section) << 24);
+                        _stream.Seek(251, SeekOrigin.Current);
+                        _writer.Write((byte)0);
+                    }
+                    else
+                    {
+                        _sectionIndexForBlocks[i] = -1;
+                        _stream.Seek(GetBlockFileOffset(i), SeekOrigin.Begin);
+                        _writer.Write(0x00FFFFFF);
+                    }
                 }
             }
         }
@@ -109,6 +135,7 @@ namespace AMLCore.Injection.Game.Replay
             var block = _sectionTailBlockNumber[section];
             while (length > 0)
             {
+                //Note that written is length+1 if all data is successfully written.
                 var written = AppendBlockData(block, buffer, offset, length);
                 offset += written;
                 length -= written;
@@ -169,18 +196,18 @@ namespace AMLCore.Injection.Game.Replay
             _stream.Seek(GetBlockFileOffset(block + 1) - 1, SeekOrigin.Begin);
             var currentCount = _reader.ReadByte();
             var writtenMax = BlockSize - 4 - currentCount;
-            if (writtenMax < length)
+            if (writtenMax > length)
             {
-                _stream.Seek(GetBlockFileOffset(block) + currentCount, SeekOrigin.Begin);
+                _stream.Seek(GetBlockFileOffset(block) + 4 + currentCount, SeekOrigin.Begin);
                 _stream.Write(buffer, offset, length);
                 _stream.Seek(GetBlockFileOffset(block + 1) - 1, SeekOrigin.Begin);
                 currentCount += (byte)length;
                 _writer.Write(currentCount);
-                return length;
+                return length + 1;
             }
             else
             {
-                _stream.Seek(GetBlockFileOffset(block) + currentCount, SeekOrigin.Begin);
+                _stream.Seek(GetBlockFileOffset(block) + 4 + currentCount, SeekOrigin.Begin);
                 _stream.Write(buffer, offset, writtenMax);
                 return writtenMax;
             }
@@ -200,6 +227,14 @@ namespace AMLCore.Injection.Game.Replay
             _sectionIndexForBlocks[ret] = section;
             _blockCountForSections[section] += 1;
             _sectionTailBlockNumber[section] = ret;
+
+            //Init new block.
+            _stream.Seek(GetBlockFileOffset(ret), SeekOrigin.Begin);
+            var sectionu = (uint)section;
+            var header = sectionu << 24 | (uint)(_blockCountForSections[section] - 1);
+            _writer.Write(header);
+            _stream.Seek(251, SeekOrigin.Current);
+            _writer.Write((byte)0);
 
             return ret;
         }
@@ -252,8 +287,15 @@ namespace AMLCore.Injection.Game.Replay
         private void UpdateRepChatSize()
         {
             _stream.Seek(12, SeekOrigin.Begin);
-            //Our empty message will cause error in gso so we decided to let it ignore the last msg.
-            _writer.Write(_chatMessageOffset.Count - 1);
+            if (_chatMovingCursor == -1)
+            {
+                //Our last message is too long for gso. Don't include it.
+                _writer.Write(_chatMessageOffset.Count - 1);
+            }
+            else
+            {
+                _writer.Write(_chatMessageOffset.Count - 1 + EmptyMessageCount);
+            }
         }
 
         private void WriteLastChatMessage()
@@ -261,7 +303,7 @@ namespace AMLCore.Injection.Game.Replay
             var pos = GetChatFileOffset(_chatMessageOffset.Count - 1);
             _stream.Seek(pos, SeekOrigin.Begin);
             _writer.Write(int.MaxValue);
-            _writer.Write(0);
+            _writer.Write(3); //message with player id=3 won't be displayed
             var len = _amlDataStart - pos - 12;
             if (len < 2)
             {
@@ -279,7 +321,31 @@ namespace AMLCore.Injection.Game.Replay
             {
                 throw new Exception("RepRecorder internal error");
             }
-            _writer.Write((totalLen - 12) / 2 - 1);
+            //_writer.Write((totalLen - 12) / 2 - 1);
+
+            var dataLen = _reader.ReadInt32();
+            _stream.Seek(dataLen * 2 + 2, SeekOrigin.Current);
+            var emptyLen = totalLen - 12 - dataLen * 2 - 2;
+            var remainingCount = EmptyMessageCount;
+            while (remainingCount > 0)
+            {
+                var l = EmptyMessageLength;
+                if (remainingCount == 2)
+                {
+                    l = (emptyLen - 24) / 4;
+                }
+                else if (remainingCount == 1)
+                {
+                    l = (emptyLen - 12) / 2;
+                }
+                emptyLen -= 12 + l * 2;
+                remainingCount -= 1;
+                _writer.Write(int.MaxValue);
+                _writer.Write(3);
+                _writer.Write(l - 1);
+                _writer.Write((ushort)0);
+                _stream.Seek(l * 2 - 2, SeekOrigin.Current);
+            }
         }
 
         private void MoveChatMessage(int index, int dist)
@@ -287,7 +353,7 @@ namespace AMLCore.Injection.Game.Replay
             _stream.Seek(GetChatFileOffset(index), SeekOrigin.Begin);
             var t = _reader.ReadInt32();
             var p = _reader.ReadInt32();
-            var l = _reader.ReadInt32() * 2 - dist;
+            var l = _reader.ReadInt32() * 2;
             if (l < 0)
             {
                 throw new Exception("RepRecorder internal error");
@@ -299,6 +365,7 @@ namespace AMLCore.Injection.Game.Replay
             _writer.Write(p);
             _writer.Write(l / 2);
             _writer.Write(data);
+            _writer.Write((ushort)0);
             if (index != 0)
             {
                 UpdateChatMessageSize(index - 1);
@@ -311,34 +378,43 @@ namespace AMLCore.Injection.Game.Replay
         private void MoveAMLDataStep()
         {
             _stream.Seek(_amlDataStart, SeekOrigin.Begin);
-            _stream.Read(_amlMoveBuffer, 0, ByteCountPerAMLMove);
-            _stream.Seek(_amlDataEnd, SeekOrigin.Begin);
-            _stream.Write(_amlMoveBuffer, 0, ByteCountPerAMLMove);
-            _amlDataStart += ByteCountPerAMLMove;
-            _amlDataEnd += ByteCountPerAMLMove;
+            var moved = _stream.Read(_amlMoveBuffer, 0, ByteCountPerAMLMove);
+            if (_sectionIndexForBlocks.Count <= AMLMoveCount)
+            {
+                _amlDataStart += ByteCountPerAMLMove;
+                _amlDataEnd += ByteCountPerAMLMove;
+                _stream.Seek(_amlDataStart, SeekOrigin.Begin);
+                _stream.Write(_amlMoveBuffer, 0, moved);
+            }
+            else
+            {
+                _stream.Seek(_amlDataEnd, SeekOrigin.Begin);
+                _stream.Write(_amlMoveBuffer, 0, ByteCountPerAMLMove);
+                _amlDataStart += ByteCountPerAMLMove;
+                _amlDataEnd += ByteCountPerAMLMove;
+            }
             WriteLastChatMessage();
 
-            //tail number
-            for (int i = 0; i < _sectionTailBlockNumber.Count; ++i)
-            {
-
-                if (_sectionTailBlockNumber[i]  == -1)
-                {
-                }
-                else if (_sectionTailBlockNumber[i] < AMLMoveCount)
-                {
-                    _sectionTailBlockNumber[i] += _sectionTailBlockNumber.Count - AMLMoveCount;
-                }
-                else
-                {
-                    _sectionTailBlockNumber[i] -= AMLMoveCount;
-                }
-            }
-
-            //section id
             if (_sectionIndexForBlocks.Count > AMLMoveCount)
             {
-                _sectionIndexForBlocks.AddRange(_sectionIndexForBlocks.Take(AMLMoveCount));
+                //tail number
+                for (int i = 0; i < _sectionTailBlockNumber.Count; ++i)
+                {
+                    if (_sectionTailBlockNumber[i] == -1)
+                    {
+                    }
+                    else if (_sectionTailBlockNumber[i] < AMLMoveCount)
+                    {
+                        _sectionTailBlockNumber[i] += _sectionIndexForBlocks.Count - AMLMoveCount;
+                    }
+                    else
+                    {
+                        _sectionTailBlockNumber[i] -= AMLMoveCount;
+                    }
+                }
+
+                //section id
+                _sectionIndexForBlocks.AddRange(_sectionIndexForBlocks.Take(AMLMoveCount).ToArray());
                 _sectionIndexForBlocks.RemoveRange(0, AMLMoveCount);
             }
         }
@@ -382,6 +458,7 @@ namespace AMLCore.Injection.Game.Replay
                 _chatMessageOffset[_chatMessageOffset.Count - 1] += ByteCountPerAMLMove;
                 WriteLastChatMessage();
                 UpdateChatMessageSize(_chatMovingCursor);
+                UpdateRepChatSize();
                 return true;
             }
 
@@ -394,9 +471,9 @@ namespace AMLCore.Injection.Game.Replay
                 {
                     _chatMessageOffset[i] -= reduce;
                 }
-
                 AppendEmptyFrames(FrameCountPerAMLMove);
                 UpdateRepInputSize();
+                UpdateRepChatSize();
                 return false;
             }
             return true;

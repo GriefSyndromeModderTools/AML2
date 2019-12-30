@@ -76,6 +76,7 @@
     <Compile Include="Injection\Engine\Script\SquirrelInjectEntry.cs" />
     <Compile Include="Injection\Game\Replay\FilenameParser.cs" />
     <Compile Include="Injection\Game\Replay\ReplayFileStream.cs" />
+    <Compile Include="Injection\Game\Replay\ReplayRecorder.cs" />
     <Compile Include="Injection\Game\Replay\ReplayRecorderEntry.cs" />
     <Compile Include="Injection\Game\Replay\ReplayFile.cs" />
     <Compile Include="Injection\GSO\ChatMessageTest.cs" />
@@ -206,7 +207,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Gui\" />
-    <Folder Include="Injection\Game\Replay\Test\" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Injection\Game\Scene\Caocao\CaocaoRes.dat" />
