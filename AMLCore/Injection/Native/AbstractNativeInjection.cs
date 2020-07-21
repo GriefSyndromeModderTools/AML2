@@ -95,6 +95,7 @@ namespace AMLCore.Injection.Native
             NativeEntrance.Register(index, WrappedNativeCallback);
             /*
              * push ecx
+             * push edx
              * push eax
              * 
              * sub esp, 4/8/12/...
@@ -113,14 +114,16 @@ namespace AMLCore.Injection.Native
              * add esp, 4/8/12/...
              * 
              * pop eax
+             * pop edx
              * pop ecx
              * 
              */
-            
+
+            //ECX and EDX are volatile registers
             //push ecx
-            //Sometimes the native function pointer returned by .NET modifies
-            //ECX register. To avoid this, we protect ecx ourselves.
             bw.Write((byte)0x51);
+            //push edx
+            bw.Write((byte)0x52);
 
             if (_ReturnValueIndex == -1)
             {
@@ -203,6 +206,8 @@ namespace AMLCore.Injection.Native
                 bw.Write((byte)0x58);
             }
 
+            //pop edx
+            bw.Write((byte)0x5A);
             //pop ecx
             bw.Write((byte)0x59);
         }

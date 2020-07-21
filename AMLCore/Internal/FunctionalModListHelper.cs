@@ -8,28 +8,54 @@ namespace AMLCore.Internal
 {
     internal class FunctionalModListHelper
     {
-        private static Dictionary<string, bool> _cache = new Dictionary<string, bool>();
+        private static Dictionary<string, bool> _isFunctional = new Dictionary<string, bool>();
+        private static Dictionary<string, string> _version = new Dictionary<string, string>();
+        private static Dictionary<string, string[]> _optionIgnoreList = new Dictionary<string, string[]>();
+
+        private static void LoadCache(string name, out bool isF, out string v, out string[] ignoreList)
+        {
+            var container = PluginLoader.GetTemporaryContainer(name);
+            isF = container != null && (container.Type == PluginType.EffectOnly || container.Type == PluginType.Functional);
+            _isFunctional.Add(name, isF);
+            v = container?.AssemblyVersion ?? "0";
+            _version.Add(name, v);
+            ignoreList = container.GetExtension<IPluginOptionExtSyncArgument>()?.GetOptionSyncIgnoreList() ?? new string[0];
+            _optionIgnoreList.Add(name, ignoreList);
+        }
+
+        private static string GetLocalVersion(string name)
+        {
+            lock (_isFunctional)
+            {
+                if (!_version.TryGetValue(name, out var ret))
+                {
+                    LoadCache(name, out _, out ret, out _);
+                }
+                return ret;
+            }
+        }
 
         private static bool IsFunctionalMod(string name)
         {
-            lock (_cache)
+            lock (_isFunctional)
             {
-                if (_cache.TryGetValue(name, out var ret))
+                if (!_isFunctional.TryGetValue(name, out var ret))
                 {
-                    return ret;
+                    LoadCache(name, out ret, out _, out _);
                 }
-                var container = PluginLoader.GetTemporaryContainer(name);
-                if (container != null)
+                return ret;
+            }
+        }
+
+        private static string[] GetOptionIgnoreList(string name)
+        {
+            lock (_isFunctional)
+            {
+                if (!_optionIgnoreList.TryGetValue(name, out var ret))
                 {
-                    var type = container.Type;
-                    if (type == PluginType.EffectOnly || type == PluginType.Functional)
-                    {
-                        _cache.Add(name, true);
-                        return true;
-                    }
+                    LoadCache(name, out _, out _, out ret);
                 }
-                _cache.Add(name, false);
-                return false;
+                return ret;
             }
         }
 
@@ -44,7 +70,9 @@ namespace AMLCore.Internal
             ret.Mods = string.Join(",", mods);
             foreach (var o in arguments.Options)
             {
-                if (mods.Any(o.Item1.StartsWith))
+                var splitOptionName = o.Item1.Split('.');
+                if (mods.Any(modName => modName == splitOptionName[0] &&
+                        !GetOptionIgnoreList(modName).Contains(splitOptionName[1])))
                 {
                     ret.Options.Add(o);
                 }
@@ -52,7 +80,7 @@ namespace AMLCore.Internal
             return ret;
         }
 
-        public static CommonArguments SelectNonfunctionalMods(CommonArguments arguments)
+        private static CommonArguments SelectNonfunctionalMods(CommonArguments arguments)
         {
             var ret = new CommonArguments();
             if (arguments == null || arguments.Mods == null)
@@ -71,6 +99,19 @@ namespace AMLCore.Internal
             return ret;
         }
 
+        private static void CopyIgnoredOptions(CommonArguments copyFrom, CommonArguments copyTo, CommonArguments filterMods)
+        {
+            var filterList = filterMods.Mods.Split(',');
+            foreach (var option in copyFrom.Options)
+            {
+                var splitOptionName = option.Item1.Split('.');
+                if (filterList.Contains(splitOptionName[0]))
+                {
+                    copyTo.Options.Add(option);
+                }
+            }
+        }
+
         public static void ReplaceFunctionalMods(CommonArguments oldArgs, CommonArguments newArgs)
         {
             if (oldArgs == null || oldArgs.Mods == null)
@@ -82,6 +123,10 @@ namespace AMLCore.Internal
                 newArgs = new CommonArguments();
             }
             var nonfunctional = SelectNonfunctionalMods(oldArgs);
+
+            //Copy effect-only options for mods existing in newArgs into nonfunctional.
+            CopyIgnoredOptions(oldArgs, nonfunctional, newArgs);
+
             oldArgs.Mods = nonfunctional.Mods + "," + newArgs.Mods;
             oldArgs.Options.Clear();
             oldArgs.Options.AddRange(nonfunctional.Options);
@@ -103,11 +148,31 @@ namespace AMLCore.Internal
             {
                 return false;
             }
-            var options1 = target.Options.Select(tt => tt.Item1 + "=" + tt.Item2).OrderBy(ss => ss);
+            var options1 = selected.Options.Select(tt => tt.Item1 + "=" + tt.Item2).OrderBy(ss => ss);
             var options2 = functionalOnly.Options.Select(tt => tt.Item1 + "=" + tt.Item2).OrderBy(ss => ss);
             if (!options1.SequenceEqual(options2))
             {
                 return false;
+            }
+            return true;
+        }
+
+        public static void AddModVersionInfo(CommonArguments args)
+        {
+            foreach (var mod in args.Mods.Split(',').Where(mm => IsFunctionalMod(mm)))
+            {
+                args.ModVersions[mod] = GetLocalVersion(mod);
+            }
+        }
+
+        public static bool CheckModVersion(CommonArguments args)
+        {
+            foreach (var vv in args.ModVersions)
+            {
+                if (GetLocalVersion(vv.Key) != vv.Value)
+                {
+                    return false;
+                }
             }
             return true;
         }

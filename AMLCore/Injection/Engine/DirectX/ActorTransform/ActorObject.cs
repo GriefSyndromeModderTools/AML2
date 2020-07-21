@@ -85,5 +85,41 @@ namespace AMLCore.Injection.Engine.DirectX.ActorTransform
                 }
             }
         }
+
+        public float SX
+        {
+            get
+            {
+                lock (_marshalFloat)
+                {
+                    Marshal.Copy(RawPointer + 0xC8, _marshalFloat, 0, 1);
+                    return _marshalFloat[0];
+                }
+            }
+        }
+
+        public float SY
+        {
+            get
+            {
+                lock (_marshalFloat)
+                {
+                    Marshal.Copy(RawPointer + 0xCC, _marshalFloat, 0, 1);
+                    return _marshalFloat[0];
+                }
+            }
+        }
+
+        public float RZ
+        {
+            get
+            {
+                lock (_marshalFloat)
+                {
+                    Marshal.Copy(RawPointer + 0xD8, _marshalFloat, 0, 1);
+                    return _marshalFloat[0];
+                }
+            }
+        }
     }
 }

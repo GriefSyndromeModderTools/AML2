@@ -34,6 +34,9 @@ namespace AMLCore.Internal
         public static extern IntPtr SendMessage(IntPtr hWnd, int Msg, int wParam,
             [In, MarshalAs(UnmanagedType.LPWStr)] string lParam);
 
+        [DllImport("user32.dll", EntryPoint = "PostMessageW")]
+        public static extern IntPtr PostMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
         [DllImport("user32.dll")]
         public static extern int GetWindowTextLength(IntPtr hWnd);
         

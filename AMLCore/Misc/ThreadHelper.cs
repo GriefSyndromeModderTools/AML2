@@ -48,6 +48,7 @@ namespace AMLCore.Misc
             };
             _Threads.AddOrUpdate(th, k => info, (k1, k2) => info);
             CoreLoggers.Main.Info("new thread {0} on {1}", attr.Name, entryName);
+
             th.Start();
             return th;
         }

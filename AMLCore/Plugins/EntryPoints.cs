@@ -17,4 +17,8 @@ namespace AMLCore.Plugins
     {
         void Run();
     }
+    public interface IEntryPointGSO
+    {
+        void Run();
+    }
 }

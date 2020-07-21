@@ -7,13 +7,13 @@ using System.Text;
 
 namespace AMLCore.Injection.Game.ResourcePack
 {
-    interface IFileContentProvider
+    public interface IFileContentProvider
     {
         int Length { get; }
         void Read(byte[] data, int offset);
     }
 
-    class Package : IDisposable
+    public class Package : IDisposable
     {
         class EncryptArray
         {

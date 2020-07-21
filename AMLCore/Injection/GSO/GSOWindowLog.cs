@@ -21,6 +21,7 @@ namespace AMLCore.Injection.GSO
         public static void WriteLine(string str)
         {
             _queue.Enqueue(str + "\r\n");
+            Natives.PostMessage(GetTextCtrlHandle(), 0, 0, 0); //WM_NULL message to get message loop running.
         }
 
         public static void WriteLine(string str, params string[] obj)

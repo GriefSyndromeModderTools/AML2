@@ -17,6 +17,9 @@ namespace AMLCore.Injection.Engine.Input
         private static GeneratedDelegate _Generated;
         private static object _Mutex = new object();
 
+        //private delegate uint GetCtrlBitsDelegate();
+        //private static GetCtrlBitsDelegate _getCtrlBits;
+
         public static void Reset()
         {
             lock (_Mutex)
@@ -27,8 +30,17 @@ namespace AMLCore.Injection.Engine.Input
                     GeneratedDelegate f = (GeneratedDelegate)Marshal.GetDelegateForFunctionPointer(raw, typeof(GeneratedDelegate));
                     _Generated = f;
                 }
+                //if (_getCtrlBits == null)
+                //{
+                //    var data = AssemblyCodeStorage.WriteCode(new byte[]
+                //    {
+                //        0x55, 0x89, 0xE5, 0x50, 0x0F, 0xAE, 0x1C, 0x24, 0x58, 0x81, 0x64, 0x24, 0xFC, 0xFF, 0x9F, 0x00, 0x00, 0x81, 0x4C, 0x24, 0xFC, 0x00, 0x40, 0x00, 0x00, 0x0F, 0xAE, 0x54, 0x24, 0xFC, 0x5D, 0xC3
+                //    });
+                //    _getCtrlBits = (GetCtrlBitsDelegate)Marshal.GetDelegateForFunctionPointer(data, typeof(GetCtrlBitsDelegate));
+                //}
             }
             _Generated();
+            //var old = _getCtrlBits();
         }
 
         private static byte[] Generate()

@@ -1,5 +1,6 @@
 ﻿using AMLCore.Injection.Native;
 using AMLCore.Internal;
+using AMLCore.Misc;
 using AMLCore.Plugins;
 using System;
 using System.Collections.Generic;

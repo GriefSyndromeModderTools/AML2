@@ -26,4 +26,14 @@ namespace AMLCore.Plugins
         object GetPropertyWindowObject();
         Control GetConfigControl();
     }
+
+    //Extensions
+
+    //This is an unused (and thus untested) functionality.
+    //GS03Loader was designed to use it, but since most gs03 affects AC system, we should
+    //not treat any gs03 mod as effect-only.
+    public interface IPluginOptionExtSyncArgument
+    {
+        string[] GetOptionSyncIgnoreList();
+    }
 }

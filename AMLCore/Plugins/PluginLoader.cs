@@ -16,37 +16,46 @@ namespace AMLCore.Plugins
 
         private static void InitCorePlugin()
         {
-            InitAssembly(typeof(PluginLoader).Assembly, false);
+            InitAssembly(typeof(PluginLoader).Assembly, true, true);
         }
 
         public static PluginContainer GetTemporaryContainer(string name)
         {
             var path = PathHelper.GetPath("aml/mods/" + name + ".dll");
             if (!File.Exists(path)) return null;
-            return new PluginContainer(Assembly.LoadFile(path), true);
+            return new PluginContainer(Assembly.LoadFile(path));
         }
 
-        private static PluginContainer InitAssembly(Assembly a, bool noEntry)
+        private static PluginContainer InitAssembly(Assembly a, bool loadNormalEntry, bool loadGSOEntry)
         {
             lock (_Plugins)
             {
                 if (!_Plugins.TryGetValue(a, out var ret))
                 {
-                    ret = new PluginContainer(a, noEntry);
+                    ret = new PluginContainer(a);
                     if (ret.InternalName == "RepRecorder")
                     {
-                        CoreLoggers.Loader.Error("RepRecorder is replaced by an internal recorder in AML");
+                        CoreLoggers.Loader.Error("RepRecorder has been replaced by an internal recorder in AML");
                         //Don't add to list.
                         return ret;
                     }
                     _Plugins.Add(a, ret);
                 }
+                if (loadNormalEntry)
+                {
+                    ret.LoadNormalEntry();
+                }
+                if (loadGSOEntry)
+                {
+                    ret.LoadGSOEntry();
+                }
                 return ret;
             }
         }
 
-        private static void RunEntryPoints()
+        public static void RunEntryPoints()
         {
+            CoreLoggers.Loader.Info("run entry points");
             var list = _Plugins.Values.OrderByDescending(p => p.Priority).ToArray();
             foreach (var p in list)
             {
@@ -84,9 +93,29 @@ namespace AMLCore.Plugins
                         p.AssemblyName, e.ToString());
                 }
             }
+            CoreLoggers.Loader.Info("entry points finished");
         }
 
-        public static void Load(InjectedArguments args)
+        public static void RunGSOEntryPoints()
+        {
+            CoreLoggers.Loader.Info("run gso entry points");
+            var list = _Plugins.Values.OrderByDescending(p => p.Priority).ToArray();
+            foreach (var p in list)
+            {
+                try
+                {
+                    p.GSOLoad();
+                }
+                catch (Exception e)
+                {
+                    CoreLoggers.Loader.Error("exception in gsoload callback of {0}: {1}",
+                        p.AssemblyName, e.ToString());
+                }
+            }
+            CoreLoggers.Loader.Info("gso entry points finished");
+        }
+
+        public static void Initialize(InjectedArguments args, bool loadNormalEntry, bool loadGSOEntry)
         {
             InitCorePlugin();
             Queue<string> loadList = new Queue<string>(args.GetPluginFiles());
@@ -95,7 +124,7 @@ namespace AMLCore.Plugins
                 var p = loadList.Dequeue();
                 try
                 {
-                    var c = InitAssembly(Assembly.LoadFile(p), false);
+                    var c = InitAssembly(Assembly.LoadFile(p), loadNormalEntry, loadGSOEntry);
                     if (c.Dependencies != null && c.Dependencies.Length > 0)
                     {
                         CoreLoggers.Loader.Error("plugin dependency is no longer supported");
@@ -108,11 +137,10 @@ namespace AMLCore.Plugins
                 }
             }
             args.SetPluginOptions(_Plugins.Values.ToArray());
-            RunEntryPoints();
-            CoreLoggers.Loader.Info("finished");
+            CoreLoggers.Loader.Info("initialization finished");
         }
 
-        public static PluginContainer[] LoadAllInLauncher()
+        public static PluginContainer[] InitializeAllInLauncher()
         {
             var d = PathHelper.GetPath("aml/mods");
             var plugins = Directory.EnumerateFiles(d, "*.dll").ToArray();
@@ -120,7 +148,7 @@ namespace AMLCore.Plugins
             {
                 try
                 {
-                    InitAssembly(Assembly.LoadFile(p), true);
+                    InitAssembly(Assembly.LoadFile(p), false, false);
                 }
                 catch (Exception e)
                 {

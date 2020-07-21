@@ -117,7 +117,7 @@ namespace AMLCore.Internal
                 return true;
             }
 
-            var loadedPlugins = PluginLoader.LoadAllInLauncher();
+            var loadedPlugins = PluginLoader.InitializeAllInLauncher();
             SetPluginOptions(loadedPlugins);
 
             var dialog = new LauncherOptionForm(loadedPlugins, allowOnlineInjection, PresetOptions);

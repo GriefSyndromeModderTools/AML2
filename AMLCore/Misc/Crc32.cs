@@ -1,15 +1,17 @@
 ﻿using AMLCore.Injection.Native;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace AMLCore.Internal
+namespace AMLCore.Misc
 {
-    class Crc32
+    public class Crc32
     {
-        uint[] table;
+        private uint[] table;
+        private byte[] buffer = new byte[1000];
 
         public uint ComputeChecksum(byte[] bytes, int start, int len)
         {
@@ -18,6 +20,29 @@ namespace AMLCore.Internal
             {
                 byte index = (byte)(((crc) & 0xff) ^ bytes[i]);
                 crc = (uint)((crc >> 8) ^ table[index]);
+            }
+            return ~crc;
+        }
+
+        public uint ComputeChecksum(Stream stream, int length = -1)
+        {
+            uint crc = 0xffffffff;
+            int remaining = length;
+            while (remaining != 0)
+            {
+                var toRead = remaining == -1 ? buffer.Length : Math.Min(buffer.Length, remaining);
+                var read = stream.Read(buffer, 0, toRead);
+
+                for (int i = 0; i < read; ++i)
+                {
+                    byte index = (byte)(((crc) & 0xff) ^ buffer[i]);
+                    crc = (uint)((crc >> 8) ^ table[index]);
+                }
+                remaining = remaining == -1 ? -1 : remaining - read;
+                if (read == 0)
+                {
+                    break;
+                }
             }
             return ~crc;
         }

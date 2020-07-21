@@ -1,4 +1,5 @@
-﻿using AMLCore.Injection.Native;
+﻿using AMLCore.Injection.GSO.Localization;
+using AMLCore.Injection.Native;
 using AMLCore.Internal;
 using AMLCore.Misc;
 using System;
@@ -20,9 +21,11 @@ namespace AMLCore.Injection.GSO
             new InjectSend();
             new InjectReceive();
             new DragRepFile();
+            new GSOStatusChange();
             Filters.Add(new CrcProtection());
             Filters.Add(new ServerConnectionMonitor());
             Filters.Add(new ClientConnectionMonitor());
+            Filters.Add(new CustomMessageManager.MessageFilter());
             //should also consider client status update after game start
             //TODO load mods when starting playing rep
         }
@@ -33,13 +36,16 @@ namespace AMLCore.Injection.GSO
             GSOConnectionStatus.ClientStatus = null;
             GSOConnectionStatus.ServerStatus = new ServerConnectionStatus(server);
             CoreLoggers.GSO.Info("server started");
+            GSOConnectionStatus.InvokeStatusChange(GSOConnectionStatusChangeType.ServerStart);
         }
 
-        private static void StartClient(IntPtr client, ConnectedPeer peer)
+        private static void StartClient(IntPtr client, ConnectedPeer peer, int clientNumber)
         {
             ThreadHelper.InitInternalThread("GSOClient");
 
-            GSOConnectionStatus.ClientStatus = new ClientConnectionStatus(client, peer);
+            GSOConnectionStatus.ClientStatus = new ClientConnectionStatus(client, peer, clientNumber);
+            GSOConnectionStatus.InvokeStatusChange(GSOConnectionStatusChangeType.ClientConnected);
+
             if (GSOLoadingInjection.ModCheck)
             {
                 GSOConnectionStatus.ClientStatus.Send(new byte[] { 0, InternalMessageId.RequestModString });
@@ -50,13 +56,16 @@ namespace AMLCore.Injection.GSO
         {
             if (GSOConnectionStatus.ServerStatus?.Socket == socket)
             {
+                GSOConnectionStatus.InvokeStatusChange(GSOConnectionStatusChangeType.ConnectionClose);
                 GSOConnectionStatus.ServerStatus = null;
+                CoreLoggers.GSO.Info("socket closed");
             }
             else if (GSOConnectionStatus.ClientStatus?.Socket == socket)
             {
+                GSOConnectionStatus.InvokeStatusChange(GSOConnectionStatusChangeType.ConnectionClose);
                 GSOConnectionStatus.ClientStatus = null;
+                CoreLoggers.GSO.Info("socket closed");
             }
-            CoreLoggers.GSO.Info("socket closed");
         }
 
         internal static List<IMessageFilter> Filters = new List<IMessageFilter>();
@@ -84,7 +93,7 @@ namespace AMLCore.Injection.GSO
                 }
             }
             //TODO check and remove this
-            CoreLoggers.GSO.Info("unrecognized peer");
+            //CoreLoggers.GSO.Info("unrecognized peer");
             return new ConnectedPeer(low, high);
         }
 
@@ -254,7 +263,7 @@ namespace AMLCore.Injection.GSO
                     Array.Copy(BitConverter.GetBytes(_crc.ComputeChecksum(data, 1, strData.Length + 1)), 0, data, strData.Length + 2, 4);
                     GSOConnectionStatus.ServerStatus.Send(peer, data);
                     CoreLoggers.GSO.Info("mod list request replied");
-                    GSOWindowLog.WriteLine("Mod list request replied.");
+                    GSOWindowLog.WriteLine(GSOLocalization.ModListReplied);
                 }
             }
 
@@ -286,7 +295,7 @@ namespace AMLCore.Injection.GSO
                 var msg = Marshal.ReadByte(buffer, 1);
                 if (msg == 0x41)
                 {
-                    StartClient(_clientPtr, peer);
+                    StartClient(_clientPtr, peer, Marshal.ReadByte(buffer, 2));
                 }
                 else if (msg == 0x45)
                 {
@@ -304,25 +313,45 @@ namespace AMLCore.Injection.GSO
                         if (calcCrc != readCrc)
                         {
                             CoreLoggers.GSO.Error("mod list message corrupted");
-                            GSOWindowLog.WriteLine("Received server mod list but it's corrupted. Ignored.");
+                            GSOWindowLog.WriteLine(GSOLocalization.ModListReceivedCorrupted);
                         }
                         else
                         {
                             _serverModString = copy.Skip(1).ToArray();
                             CoreLoggers.GSO.Info("mod list message received");
-                            GSOWindowLog.WriteLine("Server mod list received.");
-                        }
-                        if (GSOLoadingInjection.ModCheck && ! GSOLoadingInjection.ModCheckSync)
-                        {
-                            if (GSOLoadingInjection.ClientCheckArgs(_serverModString))
+                            GSOWindowLog.WriteLine(GSOLocalization.ModListReceived);
+
+                            if (GSOLoadingInjection.ModCheckSync)
                             {
-                                CoreLoggers.GSO.Info("mod list consistent");
-                                GSOWindowLog.WriteLine("Using same mods.");
+                                if (GSOLoadingInjection.ClientCheckModVersion(_serverModString))
+                                {
+                                    CoreLoggers.GSO.Info("versions are the same");
+                                    GSOWindowLog.WriteLine(GSOLocalization.ModListReplaced);
+                                }
+                                else
+                                {
+                                    CoreLoggers.GSO.Info("versions are different");
+                                    GSOWindowLog.WriteLine(GSOLocalization.ModListVersionCheckFailure);
+                                }
                             }
-                            else
+                            else if (GSOLoadingInjection.ModCheck)
                             {
-                                CoreLoggers.GSO.Info("mod list inconsistent");
-                                GSOWindowLog.WriteLine("Using different mods.");
+                                GSOLoadingInjection.ClientCheckArgs(_serverModString, out var argCheck, out var versionCheck);
+                                if (argCheck && versionCheck)
+                                {
+                                    CoreLoggers.GSO.Info("mod list consistent, and versions are the same");
+                                    GSOWindowLog.WriteLine(GSOLocalization.ModListArgCheckSuccess);
+                                }
+                                else if (argCheck)
+                                {
+                                    CoreLoggers.GSO.Info("mod list consistent, but versions are different");
+                                    GSOWindowLog.WriteLine(GSOLocalization.ModListVersionCheckFailure);
+                                }
+                                else
+                                {
+                                    CoreLoggers.GSO.Info("mod list inconsistent");
+                                    GSOWindowLog.WriteLine(GSOLocalization.ModListArgCheckFailure);
+                                }
                             }
                         }
                     }
@@ -344,6 +373,18 @@ namespace AMLCore.Injection.GSO
             {
                 //TODO in the future we may extract mod information
                 GSOLoadingInjection.ServerGameStart();
+            }
+        }
+
+        private class GSOStatusChange : CodeInjection
+        {
+            public GSOStatusChange() : base(AddressHelper.Code("gso", 0x1A63), 6)
+            {
+            }
+
+            protected override void Triggered(NativeEnvironment env)
+            {
+                GSOConnectionStatus.OnGSOStatusChange(env.GetParameterI(0), env.GetParameterP(1));
             }
         }
     }

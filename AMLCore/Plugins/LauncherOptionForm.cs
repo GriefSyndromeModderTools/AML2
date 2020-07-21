@@ -206,7 +206,7 @@ namespace AMLCore.Plugins
                 try
                 {
                     var str = File.ReadAllText(file);
-                    var list = TinyJson.JSONParser.FromJson<LoadingPreset[]>(str);
+                    var list = JsonSerialization.Deserialize<LoadingPreset[]>(str);
                     foreach (var p in list)
                     {
                         var n = new Preset(p.Name, false);

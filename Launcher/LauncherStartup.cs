@@ -36,14 +36,15 @@ namespace Launcher
         {
             lock (_LoadedAssemblies)
             {
-                if (_LoadedAssemblies.TryGetValue(args.Name, out var ret))
+                var cacheName = new AssemblyName(args.Name).Name;
+                if (_LoadedAssemblies.TryGetValue(cacheName, out var ret))
                 {
                     return ret;
                 }
 
                 string folderPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 string assemblyPath = Path.Combine(folderPath,
-                    "aml/core", new AssemblyName(args.Name).Name + ".dll");
+                    "aml/core", cacheName + ".dll");
                 if (!File.Exists(assemblyPath))
                 {
                     return null;
@@ -51,12 +52,18 @@ namespace Launcher
 
                 try
                 {
-                    //Read the bytes instead of directly load from file.
-                    //This allows update functions to be implemented in the core dll.
-                    byte[] data = File.ReadAllBytes(assemblyPath);
-                    ret = Assembly.Load(data);
-                    _LoadedAssemblies.Add(args.Name, ret);
-                    return ret;
+                    //Loading from memory preventint old mods from loading correctly in launcher.
+
+                    ////Read the bytes instead of directly load from file.
+                    ////This allows update functions to be implemented in the core dll.
+                    //byte[] data = File.ReadAllBytes(assemblyPath);
+                    //ret = Assembly.Load(data);
+                    //_LoadedAssemblies.Add(cacheName, ret);
+                    //return ret;
+
+                    //
+
+                    return Assembly.LoadFrom(assemblyPath);
                 }
                 catch
                 {

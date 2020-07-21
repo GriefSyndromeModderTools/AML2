@@ -43,10 +43,12 @@ namespace AMLCore.Injection.Game.Replay
             rep.Save(@"E:\1.rep");
         }
 
-        public ReplayFile(string filename)
+        public ReplayFile(string filename) : this(File.ReadAllBytes(filename))
         {
-            var data = File.ReadAllBytes(filename);
+        }
 
+        public ReplayFile(byte[] data)
+        {
             if (BitConverter.ToUInt32(data, 0) != Magic)
             {
                 throw new Exception("not a replay file");
@@ -157,26 +159,31 @@ namespace AMLCore.Injection.Game.Replay
             }
             using (var file = File.OpenWrite(filename))
             {
-                using (var w = new BinaryWriter(file))
-                {
-                    w.Write(Magic);
-                    w.Write(BaseLap);
-                    w.Write(InputData.Length);
-                    w.Write(ChatMessages.Length);
+                Save(file);
+            }
+        }
 
-                    foreach (var input in InputData)
-                    {
-                        w.Write(input);
-                    }
-                    foreach (var msg in ChatMessages)
-                    {
-                        w.Write(msg.Time);
-                        w.Write(msg.Player);
-                        w.Write(msg.Message.Length);
-                        var buffer = new byte[(msg.Message.Length + 1) * 2];
-                        Buffer.BlockCopy(msg.Message.ToCharArray(), 0, buffer, 0, msg.Message.Length * 2);
-                        w.Write(buffer);
-                    }
+        public void Save(Stream stream)
+        {
+            using (var w = new BinaryWriter(stream))
+            {
+                w.Write(Magic);
+                w.Write(BaseLap);
+                w.Write(InputData.Length);
+                w.Write(ChatMessages.Length);
+
+                foreach (var input in InputData)
+                {
+                    w.Write(input);
+                }
+                foreach (var msg in ChatMessages)
+                {
+                    w.Write(msg.Time);
+                    w.Write(msg.Player);
+                    w.Write(msg.Message.Length);
+                    var buffer = new byte[(msg.Message.Length + 1) * 2];
+                    Buffer.BlockCopy(msg.Message.ToCharArray(), 0, buffer, 0, msg.Message.Length * 2);
+                    w.Write(buffer);
                 }
             }
         }

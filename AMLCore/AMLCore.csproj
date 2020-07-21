@@ -36,6 +36,9 @@
       <HintPath>..\packages\Costura.Fody.1.6.2\lib\portable-net+sl+win+wpa+wp\Costura.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -45,15 +48,14 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="TinyJson, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\TinyJson.0.9.1\lib\TinyJson.dll</HintPath>
-    </Reference>
     <Reference Include="zlib.net">
       <HintPath>..\packages\zlib.net.1.0.4.0\lib\zlib.net.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Injection\AntiCheating\AnitCheatingEntry.cs" />
+    <Compile Include="Injection\Debugging\InvalidSetMotionLog.cs" />
+    <Compile Include="Injection\Debugging\SquirrelStacktrace.cs" />
     <Compile Include="Injection\Debugging\UnmanagedStacktrace.cs" />
     <Compile Include="Injection\Engine\DirectX\ActorTransform\ActorObject.cs" />
     <Compile Include="Injection\Engine\DirectX\ActorTransform\ActorTransformEntry.cs" />
@@ -75,6 +77,14 @@
     <Compile Include="Injection\Engine\Script\SquirrelHelper.cs" />
     <Compile Include="Injection\Engine\Script\SquirrelInjectEntry.cs" />
     <Compile Include="Injection\Game\Replay\FilenameParser.cs" />
+    <Compile Include="Injection\Game\Replay\FramerateControl\FramerateControlEntry.cs" />
+    <Compile Include="Injection\Game\Replay\FramerateControl\FramerateHelper.cs" />
+    <Compile Include="Injection\Game\Replay\FramerateControl\GuiController.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Injection\Game\Replay\FramerateControl\GuiController.Designer.cs">
+      <DependentUpon>GuiController.cs</DependentUpon>
+    </Compile>
     <Compile Include="Injection\Game\Replay\ReplayFileStream.cs" />
     <Compile Include="Injection\Game\Replay\ReplayRecorder.cs" />
     <Compile Include="Injection\Game\Replay\ReplayRecorderEntry.cs" />
@@ -126,15 +136,20 @@
     <Compile Include="Injection\Game\SoundEffect\SoundEffectIdAssignment.cs" />
     <Compile Include="Injection\Game\SoundEffect\SoundEffectListModification.cs" />
     <Compile Include="Injection\Game\SoundEffect\SoundEffectResLoadEntry.cs" />
+    <Compile Include="Injection\GSO\CustomMessageManager.cs" />
     <Compile Include="Injection\GSO\GSOChatMessageFix.cs" />
+    <Compile Include="Injection\GSO\GSOReplayRedirect.cs" />
     <Compile Include="Injection\GSO\GSOWindowLog.cs" />
     <Compile Include="Injection\GSO\CrcProtection.cs" />
     <Compile Include="Injection\GSO\GSOConnectionMonitor.cs" />
     <Compile Include="Injection\GSO\GSOConnectionStatus.cs" />
+    <Compile Include="Injection\GSO\ICustomMessageHandler.cs" />
     <Compile Include="Injection\GSO\IMessageFilter.cs" />
     <Compile Include="Injection\GSO\InternalMessageId.cs" />
+    <Compile Include="Injection\GSO\Localization\GSOLocalization.cs" />
     <Compile Include="Injection\GSO\PostGSOInjection.cs" />
     <Compile Include="Injection\Native\CalliGenerator.cs" />
+    <Compile Include="Injection\Native\ModifyRegisterInjection.cs" />
     <Compile Include="Injection\Native\OverlapCheck.cs" />
     <Compile Include="Internal\ArgumentHelper.cs" />
     <Compile Include="Internal\CommonArguments.cs" />
@@ -150,7 +165,7 @@
     <Compile Include="Internal\UpdateWaitingWindow.Designer.cs">
       <DependentUpon>UpdateWaitingWindow.cs</DependentUpon>
     </Compile>
-    <Compile Include="Internal\Crc32.cs" />
+    <Compile Include="Misc\Crc32.cs" />
     <Compile Include="Misc\IniFile.cs" />
     <Compile Include="Injection\Engine\File\CachedModificationFileProxyFactory.cs" />
     <Compile Include="Injection\Engine\File\FileEntry.cs" />
@@ -164,15 +179,19 @@
     <Compile Include="Injection\Engine\Input\KeyConfigRedirect.cs" />
     <Compile Include="Internal\DebugPoint.cs" />
     <Compile Include="Internal\StackTraceHelper.cs" />
+    <Compile Include="Misc\JsonSerialization.cs" />
     <Compile Include="Misc\ThreadHelper.cs" />
     <Compile Include="Misc\WindowsHelper.cs" />
+    <Compile Include="Misc\X87Float.cs" />
+    <Compile Include="Misc\X87FloatHelper.cs" />
+    <Compile Include="Plugins\AMLFeatureLevel.cs" />
     <Compile Include="Plugins\CreateShortcutDialog.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Plugins\CreateShortcutDialog.Designer.cs">
       <DependentUpon>CreateShortcutDialog.cs</DependentUpon>
     </Compile>
-    <Compile Include="Plugins\IEntryPoint.cs" />
+    <Compile Include="Plugins\EntryPoints.cs" />
     <Compile Include="Injection\Native\AbstractNativeInjection.cs" />
     <Compile Include="Injection\Native\AddressHelper.cs" />
     <Compile Include="Injection\Native\AssemblyCodeStorage.cs" />
@@ -209,6 +228,9 @@
     <Folder Include="Gui\" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Injection\Game\Replay\FramerateControl\GuiController.resx">
+      <DependentUpon>GuiController.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Injection\Game\Scene\Caocao\CaocaoRes.dat" />
     <None Include="packages.config" />
   </ItemGroup>

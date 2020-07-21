@@ -12,20 +12,23 @@ namespace AMLCore.Internal
     {
         public string Mods { get; set; }
         public List<Tuple<string, string>> Options { get; protected set; }
+        public Dictionary<string, string> ModVersions { get; protected set; }
 
         public CommonArguments()
         {
             Mods = "";
             Options = new List<Tuple<string, string>>();
+            ModVersions = new Dictionary<string, string>();
         }
         
         public CommonArguments(IEnumerable<CommonArguments> aa)
         {
             Mods = String.Join(",", aa.SelectMany(a => a.SplitMods()).Distinct());
             Options = aa.SelectMany(a => a.Options).Distinct().ToList();
+            ModVersions = new Dictionary<string, string>(); //Merging presets, no version info.
         }
 
-        public byte[] Serialize()
+        public byte[] Serialize(bool includeModVersions = false)
         {
             var ms = new MemoryStream();
             using (var bw = new BinaryWriter(ms, Encoding.UTF8))
@@ -40,6 +43,18 @@ namespace AMLCore.Internal
                     {
                         bw.Write(o.Item1);
                         bw.Write(o.Item2);
+                    }
+                }
+                if (includeModVersions && ModVersions.Count > 0)
+                {
+                    bw.Write(ModVersions.Count);
+                    foreach (var o in ModVersions)
+                    {
+                        if (o.Key != null && o.Value != null)
+                        {
+                            bw.Write(o.Key);
+                            bw.Write(o.Value);
+                        }
                     }
                 }
                 ms.Position = 0;
@@ -58,6 +73,19 @@ namespace AMLCore.Internal
                 var key = br.ReadString();
                 var val = br.ReadString();
                 Options.Add(new Tuple<string, string>(key, val));
+            }
+
+            //Optional mod version list
+            if (br.BaseStream.Position == br.BaseStream.Length)
+            {
+                return;
+            }
+            c = br.ReadInt32();
+            for (int i = 0; i < c; ++i)
+            {
+                var key = br.ReadString();
+                var val = br.ReadString();
+                ModVersions.Add(key, val);
             }
         }
 

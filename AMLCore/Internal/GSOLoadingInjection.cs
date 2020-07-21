@@ -23,7 +23,7 @@ namespace AMLCore.Internal
 
         static GSOLoadingInjection()
         {
-            var syncType = new IniFile("Core").Read("GSO", "ModCheckMode", "sync");
+            var syncType = new IniFile("Core").Read("GSO", "ModCheckMode", "check");
             if (syncType == "sync")
             {
                 ModCheck = ModCheckSync = true;
@@ -49,6 +49,8 @@ namespace AMLCore.Internal
         public static void PreparePlugins(InjectedArguments args)
         {
             _arguments = args;
+            PluginLoader.Initialize(args, false, true);
+            PluginLoader.RunGSOEntryPoints();
         }
 
         private static void OnGSOReady()
@@ -56,10 +58,6 @@ namespace AMLCore.Internal
             if (AddressHelper.Code("gso", 0) != IntPtr.Zero)
             {
                 CoreLoggers.GSO.Info("gso.dll loaded at 0x{0}", AddressHelper.Code("gso", 0).ToInt32().ToString("X8"));
-            }
-            else if (!IsGSO)
-            {
-                CoreLoggers.GSO.Info("not in griefsyndrome_online.exe");
             }
             else
             {
@@ -72,6 +70,7 @@ namespace AMLCore.Internal
             GSOConnectionMonitor.Inject();
             GSOWindowLog.Inject();
             PostGSOInjection.Invoke();
+            GSOReplayRedirect.Inject();
             //TODO run gso entry point (maybe in PostGSOInjection)
 
             CoreLoggers.GSO.Info("post-gso injection finishes");
@@ -114,22 +113,38 @@ namespace AMLCore.Internal
             th.Join();
         }
 
-        public static bool ClientCheckArgs(byte[] replacedArgs)
+        public static void ClientCheckArgs(byte[] replacedArgs, out bool argCheckResult, out bool versionCheckResult)
+        {
+            argCheckResult = versionCheckResult = false;
+            var a = InjectedArguments.Deserialize(replacedArgs);
+            if (FunctionalModListHelper.CompareFunctionalMods(_arguments, a))
+            {
+                argCheckResult = true;
+                if (FunctionalModListHelper.CheckModVersion(a))
+                {
+                    versionCheckResult = true;
+                }
+            }
+        }
+
+        public static bool ClientCheckModVersion(byte[] replacedArgs)
         {
             var a = InjectedArguments.Deserialize(replacedArgs);
-            return FunctionalModListHelper.CompareFunctionalMods(_arguments, a);
+            return FunctionalModListHelper.CheckModVersion(a);
         }
 
         public static byte[] ServerGetModString()
         {
             var a = FunctionalModListHelper.SelectFunctionalMods(_arguments);
-            return a.Serialize();
+            FunctionalModListHelper.AddModVersionInfo(a);
+            return a.Serialize(true);
         }
 
         private static void LoadingThreadEntry()
         {
             ThreadHelper.InitInternalThread("GSOInject");
-            PluginLoader.Load(_arguments);
+            PluginLoader.Initialize(_arguments, true, false);
+            PluginLoader.RunEntryPoints();
         }
 
         private class GSOReady : CodeInjection

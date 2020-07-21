@@ -68,7 +68,7 @@ namespace AMLCore.Injection.Debugging
             }
         }
 
-        private static IntPtr[] GetStacktrace(IntPtr ebp)
+        public static IntPtr[] GetStacktrace(IntPtr ebp)
         {
             List<IntPtr> ret = new List<IntPtr>();
             do

@@ -19,7 +19,7 @@ namespace AMLCore.Injection.Game.Replay
         }
         private string GetFilenameFormat()
         {
-            return _Config.Read("Replay", "Filename", "yyMMddHHmmss");
+            return _Config.Read("Replay", "Filename", "yyyy-MM/yyMMddHHmmss");
         }
         private string GetFileName()
         {
@@ -41,18 +41,14 @@ namespace AMLCore.Injection.Game.Replay
 
         private ReplayFileStream _stream;
         private const int BufferredFrameCount = 10;
-        private const int CompressedFrameCount = 2000 / BufferredFrameCount * BufferredFrameCount;
+        private const int CompressedFrameCount = 1000 / BufferredFrameCount * BufferredFrameCount;
         private byte[] _buffer = new byte[6 * BufferredFrameCount];
         private int _bufferFrame = 0;
         private bool _compressed;
         private int _compressedRawSection, _compressedBlockSection;
         private byte[] _compressedBuffer;
         private int _compressedFrame = 0;
-
-        public static void Test()
-        {
-            var rep = new ReplayFile(@"E:\x.repx");
-        }
+        private int _totalFrames = 0;
 
         public ReplayRecorder()
         {
@@ -83,10 +79,16 @@ namespace AMLCore.Injection.Game.Replay
             }
         }
 
+        public void WriteChat(int player, string msg)
+        {
+            _stream.WriteChatMessage(_totalFrames, player, msg);
+        }
+
         public void WriteFrame(bool[] buffer, int offset)
         {
             WriteFrame(buffer, offset, _buffer, _bufferFrame * 6);
             _bufferFrame += 1;
+            _totalFrames += 1;
             if (_bufferFrame == BufferredFrameCount)
             {
                 ClearBuffer();
@@ -101,7 +103,7 @@ namespace AMLCore.Injection.Game.Replay
                 {
                     _stream.AppendSection(_compressedRawSection, _buffer, 0, BufferredFrameCount * 6);
 
-                    Array.Copy(_buffer, 0, _compressedBuffer, _compressedFrame, BufferredFrameCount * 6);
+                    Array.Copy(_buffer, 0, _compressedBuffer, _compressedFrame * 6, BufferredFrameCount * 6);
                     _compressedFrame += BufferredFrameCount;
                     if (_compressedFrame == CompressedFrameCount)
                     {
@@ -160,6 +162,7 @@ namespace AMLCore.Injection.Game.Replay
             if (input[inputOffset + 6]) m += 64;
             if (input[inputOffset + 7]) m += 128;
             buffer[bufferOffset] = m;
+            buffer[bufferOffset + 1] = 0;
             if (input[inputOffset + 8]) buffer[bufferOffset + 1] += 1;
         }
     }

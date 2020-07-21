@@ -10,7 +10,6 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-using TinyJson;
 
 namespace AMLCore.Internal
 {
@@ -63,7 +62,7 @@ namespace AMLCore.Internal
             {
                 client.Headers.Add("User-Agent", "aml2");
                 var ret = client.DownloadString(url);
-                var r = ret.FromJson<Release>();
+                var r = JsonSerialization.Deserialize<Release>(ret);
                 _Version = r.name;
                 if (r.assets.Length != 2)
                 {
@@ -95,7 +94,7 @@ namespace AMLCore.Internal
             //TODO skip version in config
             var v = _CurrentVersion;
             var vcheck = new Version(v.Major, v.Minor, v.Build);
-            var vconfigstr = new IniFile("Core.ini").Read("Update", "LatestVersion", _CurrentVersion.ToString());
+            var vconfigstr = new IniFile("Core").Read("Update", "LatestVersion", _CurrentVersion.ToString());
             var vconfig = new Version(vconfigstr);
             try
             {
@@ -176,7 +175,7 @@ namespace AMLCore.Internal
         private static void Restart()
         {
             CoreLoggers.Update.Info("writing update config");
-            new IniFile("Core.ini").Write("Update", "LatestVersion", _CurrentVersion.ToString());
+            new IniFile("Core").Write("Update", "LatestVersion", _CurrentVersion.ToString());
             CoreLoggers.Update.Info("trying to restart");
             try
             {

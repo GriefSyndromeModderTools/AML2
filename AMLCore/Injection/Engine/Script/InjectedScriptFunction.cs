@@ -61,7 +61,7 @@ namespace AMLCore.Injection.Engine.Script
 
             //call
             int originalRet = 1;
-            if (SquirrelFunctions.call(vm, nargs, 1, 0) != 0)
+            if (SquirrelFunctions.call(vm, nargs, 1, 1) != 0)
             {
                 originalRet = -1;
 

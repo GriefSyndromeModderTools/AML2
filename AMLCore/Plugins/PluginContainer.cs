@@ -10,18 +10,22 @@ namespace AMLCore.Plugins
 {
     internal class PluginContainer
     {
-        private string _AssemblyName, _InternalName;
+        private Assembly _Assembly;
+        private string _AssemblyName, _InternalName, _AssemblyVersion;
         private IPluginDescription _Desc;
         private IPluginOption _Option;
         private IEntryPointPreload[] _Pre;
         private IEntryPointLoad[] _Load;
         private IEntryPointPostload[] _Post;
+        private IEntryPointGSO[] _GSO;
         private IPresetProvider[] _Presets;
         private PluginType _Type;
 
-        public PluginContainer(Assembly assembly, bool noEntry)
+        public PluginContainer(Assembly assembly)
         {
+            _Assembly = assembly;
             _AssemblyName = assembly.GetName().Name;
+            _AssemblyVersion = assembly.GetName().Version.ToString();
             CoreLoggers.Loader.Info("initializing assembly {0}", _AssemblyName);
 
             var d = CreateInstances<IPluginDescription>(assembly);
@@ -42,16 +46,24 @@ namespace AMLCore.Plugins
             {
                 CoreLoggers.Loader.Error("more than 1 option object in {0}", _AssemblyName);
             }
-            if (!noEntry)
-            {
-                _Pre = CreateInstances<IEntryPointPreload>(assembly);
-                _Load = CreateInstances<IEntryPointLoad>(assembly);
-                _Post = CreateInstances<IEntryPointPostload>(assembly);
-            }
             _Presets = CreateInstances<IPresetProvider>(assembly);
             _Type = _Desc?.PluginType ?? PluginType.Debug;
             _InternalName = _Desc?.InternalName ?? "unknown";
             CoreLoggers.Loader.Info("initialized assembly {0}", _AssemblyName);
+        }
+
+        public void LoadNormalEntry()
+        {
+            if (_Pre != null) return;
+            _Pre = CreateInstances<IEntryPointPreload>(_Assembly);
+            _Load = CreateInstances<IEntryPointLoad>(_Assembly);
+            _Post = CreateInstances<IEntryPointPostload>(_Assembly);
+        }
+
+        public void LoadGSOEntry()
+        {
+            if (_GSO != null) return;
+            _GSO = CreateInstances<IEntryPointGSO>(_Assembly);
         }
 
         private static T[] CreateInstances<T>(Assembly a) where T : class
@@ -78,10 +90,13 @@ namespace AMLCore.Plugins
                 try
                 {
                     var obj = Activator.CreateInstance(t);
-                    var cobj = (T)obj;
-                    if (cobj != null)
+                    if (obj is T cobj)
                     {
                         ret.Add(cobj);
+                    }
+                    else
+                    {
+                        var d1 = obj.GetType().GetInterfaces()[0].Assembly == typeof(T).Assembly;
                     }
                 }
                 catch (Exception e)
@@ -108,6 +123,11 @@ namespace AMLCore.Plugins
         public string InternalName
         {
             get { return _InternalName; }
+        }
+
+        public string AssemblyVersion
+        {
+            get { return _AssemblyVersion; }
         }
 
         public string DisplayName
@@ -224,6 +244,11 @@ namespace AMLCore.Plugins
             Array.ForEach(_Post, x => { LogEntry("postload", x); x.Run(); });
         }
 
+        public void GSOLoad()
+        {
+            Array.ForEach(_GSO, x => { LogEntry("gso", x); x.Run(); });
+        }
+
         public void CollectPresets(List<Preset> list)
         {
             foreach (var provider in _Presets)
@@ -245,6 +270,11 @@ namespace AMLCore.Plugins
                         _AssemblyName, e.ToString());
                 }
             }
+        }
+
+        public T GetExtension<T>() where T : class
+        {
+            return _Option as T;
         }
     }
 }

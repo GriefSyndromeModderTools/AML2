@@ -9,7 +9,7 @@ namespace AMLCore.Injection.Game.Replay
     internal class ReplayFileStream
     {
         private const int Magic = 0x50525347;
-        private const int InitInputFrame = 60 * 10;
+        private const int InitInputFrame = 60 * 5;
         private const int InitAmlOffset = 16 + InitInputFrame * 6 + ByteCountPerAMLMove * 2;
 
         private const int BlockSize = 256;
@@ -437,6 +437,13 @@ namespace AMLCore.Injection.Game.Replay
         {
             if (_chatMessageOffset.Count == 1)
             {
+                //Before we move, we need to check whether the empty one has enough space
+                var lastPos = GetChatFileOffset(_chatMessageOffset.Count - 1);
+                if (lastPos + 12 + 2 + ByteCountPerAMLMove > _amlDataStart)
+                {
+                    MoveAMLDataStep();
+                }
+
                 AppendEmptyFrames(FrameCountPerAMLMove);
                 UpdateRepInputSize();
                 WriteLastChatMessage();

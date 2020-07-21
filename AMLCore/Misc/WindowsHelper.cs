@@ -31,7 +31,7 @@ namespace AMLCore.Misc
 
         public static void MessageBox(string text)
         {
-            System.Windows.Forms.MessageBox.Show(text);
+            System.Windows.Forms.MessageBox.Show(text, "AML");
         }
 
         private static volatile bool _Stopped;

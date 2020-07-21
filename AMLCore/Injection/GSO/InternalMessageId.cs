@@ -11,5 +11,7 @@ namespace AMLCore.Injection.GSO
         public const int Debug1 = 0x61;
         public const int RequestModString = 0x70;
         public const int ReplyModString = 0x71;
+        public const int CustomMessageClient = 0x72; //From client to server (server will broadcast)
+        public const int CustomMessageServer = 0x73; //From server to all clients
     }
 }
