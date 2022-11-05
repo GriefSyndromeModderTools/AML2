@@ -30,7 +30,7 @@ namespace AMLCore.Injection.Game.Replay
             var mode = _Config.Read("Replay", "Compression", "compatible");
             if (mode == "compatible")
             {
-                return PluginLoader.ContainsFunctionalMods();
+                return PluginLoader.ContainsFunctionalMods(false);
             }
             else if (mode == "always")
             {

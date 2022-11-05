@@ -19,7 +19,7 @@ namespace AMLCore.Internal
             _isFunctional.Add(name, isF);
             v = container?.AssemblyVersion ?? "0";
             _version.Add(name, v);
-            ignoreList = container.GetExtension<IPluginOptionExtSyncArgument>()?.GetOptionSyncIgnoreList() ?? new string[0];
+            ignoreList = container?.GetExtension<IPluginOptionExtSyncArgument>()?.GetOptionSyncIgnoreList() ?? new string[0];
             _optionIgnoreList.Add(name, ignoreList);
         }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AMLCore.Plugins;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,7 +19,11 @@ namespace AMLCore.Injection.Game.Pat
 
         public static void RegisterPatFileOffset(string path, int offset)
         {
-            PatFileResLoaderEntry._offset[path] = offset;
+            PatFileResLoaderEntry._patFiles[path] = new PatFileResLoaderEntry.PatFileInfo()
+            {
+                Offset = offset,
+                Mod = PluginLoader.InitializingAssembly,
+            };
         }
     }
 }

@@ -13,5 +13,6 @@ namespace AMLCore.Injection.GSO
         public const int ReplyModString = 0x71;
         public const int CustomMessageClient = 0x72; //From client to server (server will broadcast)
         public const int CustomMessageServer = 0x73; //From server to all clients
+        public const int UserDefined = 0xE0; //Not handled by AML
     }
 }

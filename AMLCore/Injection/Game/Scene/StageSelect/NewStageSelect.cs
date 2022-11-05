@@ -558,6 +558,12 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
             };
             _bgPanel = _bgImage.Select(ii => new WallPanel()).ToArray();
 
+            //TODO we need to support 2 stage lists
+            //one for main stages (mandatory for design)
+            //the other for side stages (optional, practice)
+            //when side stages exist, move EXIT button to lower position
+
+            //TODO create image list based on elements (try to find by name)
             _stageImageAll = new[]
             {
                 new StagePanalGroup(_env, 1),
@@ -569,6 +575,7 @@ namespace AMLCore.Injection.Game.Scene.StageSelect
             };
 
             var newStageState = ReadStageResults();
+            //TODO allow reordering of stages (sort by element.X?)
             _stageIndexMap = Enumerable.Range(0, newStageState.Length)
                 .Select(ii => new { Index = ii, State = newStageState[ii] })
                 .Where(ss => ss.State >= 1 || ss.Index == 0 || _unlockAllStages)

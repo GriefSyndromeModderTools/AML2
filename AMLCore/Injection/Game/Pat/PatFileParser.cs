@@ -7,7 +7,7 @@ namespace AMLCore.Injection.Game.Pat
 {
     internal class PatFileParser
     {
-        public static void Modify(byte[] data, int offset)
+        public static void Modify(byte[] data, int offset, Dictionary<int, int> seOffsets)
         {
             int pos = 0;
 
@@ -27,7 +27,7 @@ namespace AMLCore.Injection.Game.Pat
 
                 for (int i = 0; i < animationCount; ++i)
                 {
-                    SkipAnimation(data, ref pos, offset);
+                    SkipAnimation(data, ref pos, offset, seOffsets);
 
                     //sometimes the stream ends before getting all the animations
                     if (pos >= data.Length)
@@ -38,7 +38,7 @@ namespace AMLCore.Injection.Game.Pat
             }
         }
 
-        private static void SkipAnimation(byte[] data, ref int pos, int offset)
+        private static void SkipAnimation(byte[] data, ref int pos, int offset, Dictionary<int, int> seOffsets)
         {
             int animationID = BitConverter.ToInt32(data, pos);
             pos += 4;
@@ -59,14 +59,23 @@ namespace AMLCore.Injection.Game.Pat
             pos += 4;
             for (int i = 0; i < frameCount; ++i)
             {
-                SkipFrame(data, ref pos);
+                SkipFrame(data, ref pos, seOffsets);
             }
         }
 
-        private static void SkipFrame(byte[] data, ref int pos)
+        private static void SkipFrame(byte[] data, ref int pos, Dictionary<int, int> seOffsets)
         {
             pos += 18;
             SkipIM(data, ref pos);
+
+            //Apply SE offsets.
+            var sePos = pos + 34;
+            var seId = BitConverter.ToInt16(data, sePos);
+            if (!seOffsets.TryGetValue(seId, out var seOffset))
+            {
+                seOffset = 0;
+            }
+            Buffer.BlockCopy(BitConverter.GetBytes((short)(seId + seOffset)), 0, data, sePos, 2);
 
             pos += 49;
 

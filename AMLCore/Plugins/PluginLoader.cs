@@ -14,6 +14,8 @@ namespace AMLCore.Plugins
         private static Dictionary<Assembly, PluginContainer> _Plugins =
             new Dictionary<Assembly, PluginContainer>();
 
+        public static Assembly InitializingAssembly;
+
         private static void InitCorePlugin()
         {
             InitAssembly(typeof(PluginLoader).Assembly, true, true);
@@ -164,10 +166,14 @@ namespace AMLCore.Plugins
         /// Currently we enable anti-cheating when this function returns true.
         /// </summary>
         /// <returns></returns>
-        public static bool ContainsFunctionalMods()
+        public static bool ContainsFunctionalMods(bool considerACIgnoreList)
         {
             foreach (var p in _Plugins.Values)
             {
+                if (considerACIgnoreList && AMLFeatureLevel.IsInACIgnoreList(p.InternalName))
+                {
+                    continue;
+                }
                 if (p.Type != PluginType.Debug && p.Type != PluginType.Optimization)
                 {
                     return true;

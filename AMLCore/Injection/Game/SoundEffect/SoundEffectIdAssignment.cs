@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AMLCore.Plugins;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -32,7 +33,11 @@ namespace AMLCore.Injection.Game.SoundEffect
 
         public static void RegisterSEFileOffset(string path, int offset)
         {
-            SoundEffectResLoadEntry._offsetList[path] = offset;
+            SoundEffectResLoadEntry._seFiles[path] = new SoundEffectResLoadEntry.SEInfo()
+            {
+                Offset = offset,
+                Mod = PluginLoader.InitializingAssembly,
+            };
         }
     }
 }

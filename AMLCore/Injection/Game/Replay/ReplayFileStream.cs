@@ -50,32 +50,32 @@ namespace AMLCore.Injection.Game.Replay
         //For testing in VS imm window.
         public static void Test1()
         {
-            var rep = new ReplayFileStream(@"E:\test.dat", 0x1234);
-            rep.WriteChatMessage(60, 0, "吼吼");
-            rep.WriteChatMessage(120, 1, new string('x', 255));
-            rep.WriteInputData(new byte[60 * 12 * 6], 0, 60 * 12);
-            rep.WriteInputData(new byte[] { 0x10, 0, 0, 0, 0, 0 }, 0, 1);
-            var s1 = rep.CreateSection("aml.test");
-            rep.AppendSection(s1, new byte[] { 1, 2, 3, 4 }, 0, 4);
-            rep.WriteInputData(new byte[60 * 12 * 6], 0, 60 * 12);
-            rep.MoveChatDataStep();
-            var s2 = rep.CreateSection("aml.compressed");
-            rep.AppendSection(s2, Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 280);
-            rep.WriteInputData(new byte[60 * 24 * 6], 0, 60 * 24);
-            for (int i = 0; i < 10; ++i)
-            {
-                rep.WriteChatMessage(i * 20 + 200, 0, i.ToString() + new string('!', 200));
-            }
-            rep.AppendSection(rep.CreateSection("aml.x2"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 251);
-            rep.AppendSection(rep.CreateSection("aml.x3"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 252);
-            rep.AppendSection(rep.CreateSection("aml.x4"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 253);
-            rep.AppendSection(rep.CreateSection("aml.x5"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 254);
-            rep.AppendSection(rep.CreateSection("aml.x6"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 255);
-            rep.ResetSection(s2);
-            rep.AppendSection(rep.CreateSection("aml.x7"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 256);
-            rep.Close();
-
-            var read = new ReplayFile(@"E:\test.dat");
+            //var rep = new ReplayFileStream(@"E:\test.dat", 0x1234);
+            //rep.WriteChatMessage(60, 0, "吼吼");
+            //rep.WriteChatMessage(120, 1, new string('x', 255));
+            //rep.WriteInputData(new byte[60 * 12 * 6], 0, 60 * 12);
+            //rep.WriteInputData(new byte[] { 0x10, 0, 0, 0, 0, 0 }, 0, 1);
+            //var s1 = rep.CreateSection("aml.test");
+            //rep.AppendSection(s1, new byte[] { 1, 2, 3, 4 }, 0, 4);
+            //rep.WriteInputData(new byte[60 * 12 * 6], 0, 60 * 12);
+            //rep.MoveChatDataStep();
+            //var s2 = rep.CreateSection("aml.compressed");
+            //rep.AppendSection(s2, Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 280);
+            //rep.WriteInputData(new byte[60 * 24 * 6], 0, 60 * 24);
+            //for (int i = 0; i < 10; ++i)
+            //{
+            //    rep.WriteChatMessage(i * 20 + 200, 0, i.ToString() + new string('!', 200));
+            //}
+            //rep.AppendSection(rep.CreateSection("aml.x2"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 251);
+            //rep.AppendSection(rep.CreateSection("aml.x3"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 252);
+            //rep.AppendSection(rep.CreateSection("aml.x4"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 253);
+            //rep.AppendSection(rep.CreateSection("aml.x5"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 254);
+            //rep.AppendSection(rep.CreateSection("aml.x6"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 255);
+            //rep.ResetSection(s2);
+            //rep.AppendSection(rep.CreateSection("aml.x7"), Enumerable.Range(0, 280).Select(x => (byte)x).ToArray(), 0, 256);
+            //rep.Close();
+            //
+            //var read = new ReplayFile(@"E:\test.dat");
         }
 
         public ReplayFileStream(string filename, int maxLap)

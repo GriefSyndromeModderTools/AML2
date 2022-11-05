@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AMLCore.Internal;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,8 @@ namespace AMLCore.Plugins
         //AC algorithm v2.
         public const uint AML110 = 110;
 
+        private static readonly HashSet<string> _ignoreACList = new HashSet<string>();
+
         internal static uint Value;
 
         //Plugins should call this method with the value for the lowest version of AML that supports it.
@@ -28,6 +31,17 @@ namespace AMLCore.Plugins
         internal static bool CheckFeatureLevel(uint value)
         {
             return Value >= value;
+        }
+
+        public static void IgnorePluginAC(string id)
+        {
+            CoreLoggers.Loader.Info($"{id} added to AC ignore list");
+            _ignoreACList.Add(id);
+        }
+
+        internal static bool IsInACIgnoreList(string id)
+        {
+            return _ignoreACList.Contains(id);
         }
     }
 }

@@ -231,22 +231,34 @@ namespace AMLCore.Plugins
 
         public void Preload()
         {
+            var lastAssembly = _Assembly;
+            PluginLoader.InitializingAssembly = _Assembly;
             Array.ForEach(_Pre, x => { LogEntry("preload", x); x.Run(); });
+            PluginLoader.InitializingAssembly = _Assembly;
         }
 
         public void Load()
         {
+            var lastAssembly = _Assembly;
+            PluginLoader.InitializingAssembly = _Assembly;
             Array.ForEach(_Load, x => { LogEntry("load", x); x.Run(); });
+            PluginLoader.InitializingAssembly = _Assembly;
         }
 
         public void Postload()
         {
+            var lastAssembly = _Assembly;
+            PluginLoader.InitializingAssembly = _Assembly;
             Array.ForEach(_Post, x => { LogEntry("postload", x); x.Run(); });
+            PluginLoader.InitializingAssembly = _Assembly;
         }
 
         public void GSOLoad()
         {
+            var lastAssembly = _Assembly;
+            PluginLoader.InitializingAssembly = _Assembly;
             Array.ForEach(_GSO, x => { LogEntry("gso", x); x.Run(); });
+            PluginLoader.InitializingAssembly = _Assembly;
         }
 
         public void CollectPresets(List<Preset> list)

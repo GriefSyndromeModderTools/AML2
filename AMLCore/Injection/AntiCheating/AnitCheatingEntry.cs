@@ -47,7 +47,7 @@ namespace AMLCore.Injection.AntiCheating
             Marshal.WriteByte(_strictMode, 0);
             Marshal.WriteInt32(_renderUpdateInt, 0);
 
-            if (!PluginLoader.ContainsFunctionalMods())
+            if (!PluginLoader.ContainsFunctionalMods(true))
             {
                 CoreLoggers.Main.Info("no AML mods loaded. AntiCheating function disabled.");
                 return;

@@ -7,7 +7,7 @@ namespace AMLCore.Injection.Game.SoundEffect
 {
     internal class SoundEffectListModification
     {
-        public static byte[] Modify(byte[] data, int offset)
+        public static byte[] Modify(byte[] data, int offset, Dictionary<int, int> results)
         {
             Encrypt(data);
             var str = Encoding.ASCII.GetString(data);
@@ -30,6 +30,8 @@ namespace AMLCore.Injection.Game.SoundEffect
 
                 values[0] = (id + offset).ToString();
                 sb.AppendLine(string.Join(",", values));
+
+                results[id] = offset;
             }
             var newData = Encoding.ASCII.GetBytes(sb.ToString());
             Encrypt(newData);
