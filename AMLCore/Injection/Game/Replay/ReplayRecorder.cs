@@ -39,7 +39,7 @@ namespace AMLCore.Injection.Game.Replay
             return false;
         }
 
-        private ReplayFileStream _stream;
+        internal ReplayFileStream _stream;
         private const int BufferredFrameCount = 10;
         private const int CompressedFrameCount = 1000 / BufferredFrameCount * BufferredFrameCount;
         private byte[] _buffer = new byte[6 * BufferredFrameCount];

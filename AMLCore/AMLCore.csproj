@@ -85,6 +85,7 @@
     <Compile Include="Injection\Game\Replay\FramerateControl\GuiController.Designer.cs">
       <DependentUpon>GuiController.cs</DependentUpon>
     </Compile>
+    <Compile Include="Injection\Game\Replay\GSOReplay.cs" />
     <Compile Include="Injection\Game\Replay\ReplayFileStream.cs" />
     <Compile Include="Injection\Game\Replay\ReplayRecorder.cs" />
     <Compile Include="Injection\Game\Replay\ReplayRecorderEntry.cs" />
@@ -148,6 +149,7 @@
     <Compile Include="Injection\GSO\InternalMessageId.cs" />
     <Compile Include="Injection\GSO\Localization\GSOLocalization.cs" />
     <Compile Include="Injection\GSO\PostGSOInjection.cs" />
+    <Compile Include="Injection\GSO\ReliableDataSync.cs" />
     <Compile Include="Injection\Native\CalliGenerator.cs" />
     <Compile Include="Injection\Native\ModifyRegisterInjection.cs" />
     <Compile Include="Injection\Native\OverlapCheck.cs" />

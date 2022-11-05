@@ -20,7 +20,7 @@ namespace AMLCore.Injection.Game.Replay
         public static int MaxLap;
         public static bool DisableRecording = false;
 
-        private static ReplayRecorder _recorder;
+        internal static ReplayRecorder _recorder;
         private bool[] _buffer = new bool[27];
 
         public void Run()

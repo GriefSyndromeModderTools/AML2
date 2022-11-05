@@ -30,6 +30,7 @@ namespace AMLCore.Injection.GSO
             {
                 ReplayRecorderEntry.DisableRecording = true;
                 FramerateControlEntry.Enabled = true;
+                GSOReplay.IsReplaying = true;
 
                 var str = Marshal.PtrToStringUni(env.GetParameterP(0));
                 if (str.EndsWith(".repx"))
@@ -70,6 +71,10 @@ namespace AMLCore.Injection.GSO
             public override byte[] Modify(byte[] data)
             {
                 var rep = new ReplayFile(data);
+                if (rep.AMLSections.Count > 0)
+                {
+                    GSOReplay._readSections = rep.AMLSections;
+                }
                 if (!rep.AMLSections.TryGetValue("aml.rep.blocks", out var blocks))
                 {
                     return null;
