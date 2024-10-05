@@ -56,6 +56,7 @@ namespace AMLCore.Injection.GSO
 
         internal readonly List<ConnectedPeer> _clients;
         public readonly ReadOnlyCollection<ConnectedPeer> Clients;
+        public int ClientCount => Clients.Count(p => p != null);
 
         public readonly IntPtr Server;
         public readonly IntPtr Socket;
@@ -251,7 +252,7 @@ namespace AMLCore.Injection.GSO
 
         public static event Action<GSOConnectionStatusChangeType> StatusChange;
 
-        public static int PeerCount => (ServerStatus?.Clients.Count ?? ClientStatus?.ClientCount ?? -1) + 1;
+        public static int PeerCount => (ServerStatus?.ClientCount ?? ClientStatus?.ClientCount ?? -1) + 1;
         public static int PeerIndex => IsServer ? 0 : (ClientStatus?.ClientNumber ?? -1);
 
         internal static void InvokeStatusChange(GSOConnectionStatusChangeType type)

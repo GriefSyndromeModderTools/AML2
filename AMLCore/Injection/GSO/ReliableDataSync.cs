@@ -78,7 +78,6 @@ namespace AMLCore.Injection.GSO
         private static Thread _backgroundSender;
         private static readonly object _backgroundSenderLock = new object();
 
-        //TODO called when showing title
         internal static void Sync()
         {
             foreach (var c in _channels.Values)
@@ -185,7 +184,7 @@ namespace AMLCore.Injection.GSO
             while (SendTick != null)
             {
                 Thread.Sleep(100);
-                SendTick();
+                SendTick?.Invoke();
             }
         }
     }
@@ -199,6 +198,7 @@ namespace AMLCore.Injection.GSO
         private bool _synced = false;
 
         public byte[][] GetData() => !_synced ? throw new InvalidOperationException() : _data;
+        public event Action SyncFinished;
 
         private readonly AutoResetEvent _ackEvent = new AutoResetEvent(false);
 
@@ -255,10 +255,17 @@ namespace AMLCore.Injection.GSO
                 {
                     break;
                 }
+                WindowsHelper.MessageBox("TODO");
+                //TODO need to check received all
+                //TODO fix invalid message id error
+                //  this is because remote may send message before this side registers the channel
+                //  need to allow channel to be created (and set data) during init, but only send after showing main window
+                //  so the mod using this API won't need D3D API or others for creating channels
                 _ackEvent.WaitOne(100);
             }
             ReliableDataSync.SendTick -= Resend;
             _synced = true;
+            SyncFinished?.Invoke();
         }
 
         internal void Ack(int destPeer)
