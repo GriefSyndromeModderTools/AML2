@@ -13,31 +13,46 @@ namespace AMLCore.Internal
         public string Mods { get; set; }
         public List<Tuple<string, string>> Options { get; protected set; }
         public Dictionary<string, string> ModVersions { get; protected set; }
+        internal PresetSelection PresetSelection { get; private set; }
 
         public CommonArguments()
         {
             Mods = "";
             Options = new List<Tuple<string, string>>();
             ModVersions = new Dictionary<string, string>();
+            PresetSelection = null;
         }
         
         public CommonArguments(IEnumerable<CommonArguments> aa)
         {
-            Mods = String.Join(",", aa.SelectMany(a => a.SplitMods()).Distinct());
+            MergeFrom(aa);
+        }
+
+        private void MergeFrom(IEnumerable<CommonArguments> aa)
+        {
+            Mods = string.Join(",", aa.SelectMany(a => a.SplitMods()).Distinct());
             Options = aa.SelectMany(a => a.Options).Distinct().ToList();
             ModVersions = new Dictionary<string, string>(); //Merging presets, no version info.
         }
 
-        public byte[] Serialize(bool includeModVersions = false)
+        public byte[] Serialize(bool includeModVersions = false, bool includePresetSelection = false)
         {
             var ms = new MemoryStream();
             using (var bw = new BinaryWriter(ms, Encoding.UTF8))
             {
                 bw.Write(0);
-                bw.Write(Mods != null);
-                if (Mods != null) bw.Write(Mods);
-                bw.Write(Options.Count);
-                foreach (var o in Options)
+
+                CommonArguments baseArgument =
+                    includePresetSelection && PresetSelection != null ? PresetSelection.DefaultPreset : this;
+
+                //Mods and options.
+                bw.Write(baseArgument.Mods != null);
+                if (baseArgument.Mods != null)
+                {
+                    bw.Write(baseArgument.Mods);
+                }
+                bw.Write(baseArgument.Options.Count);
+                foreach (var o in baseArgument.Options)
                 {
                     if (o.Item1 != null && o.Item2 != null)
                     {
@@ -45,10 +60,12 @@ namespace AMLCore.Internal
                         bw.Write(o.Item2);
                     }
                 }
-                if (includeModVersions && ModVersions.Count > 0)
+
+                //Mod version list.
+                if (includeModVersions && baseArgument.ModVersions.Count > 0)
                 {
-                    bw.Write(ModVersions.Count);
-                    foreach (var o in ModVersions)
+                    bw.Write(baseArgument.ModVersions.Count);
+                    foreach (var o in baseArgument.ModVersions)
                     {
                         if (o.Key != null && o.Value != null)
                         {
@@ -57,14 +74,38 @@ namespace AMLCore.Internal
                         }
                     }
                 }
+                else
+                {
+                    bw.Write(0);
+                }
+
+                //Preset selection.
+                if (includePresetSelection && PresetSelection != null)
+                {
+                    bw.Write(PresetSelection.SelectedPresets.Count);
+                    foreach (var p in PresetSelection.SelectedPresets)
+                    {
+                        if (!string.IsNullOrEmpty(p.Preset))
+                        {
+                            bw.Write(p.Preset);
+                            bw.Write(p.Source ?? string.Empty);
+                        }
+                    }
+                }
+                else
+                {
+                    bw.Write(0);
+                }
+
                 ms.Position = 0;
                 ms.Write(BitConverter.GetBytes(ms.Length - 4), 0, 4);
                 return ms.ToArray();
             }
         }
 
-        public void Read(BinaryReader br)
+        public void Read(BinaryReader br, bool forcePresetSelection = false)
         {
+            //Mods and options.
             Mods = br.ReadBoolean() ? br.ReadString() : null;
             Options = new List<Tuple<string, string>>();
             int c = br.ReadInt32();
@@ -75,17 +116,39 @@ namespace AMLCore.Internal
                 Options.Add(new Tuple<string, string>(key, val));
             }
 
-            //Optional mod version list
-            if (br.BaseStream.Position == br.BaseStream.Length)
-            {
-                return;
-            }
+            //Mod version list.
             c = br.ReadInt32();
             for (int i = 0; i < c; ++i)
             {
                 var key = br.ReadString();
                 var val = br.ReadString();
                 ModVersions.Add(key, val);
+            }
+
+            //Preset selection.
+            c = br.ReadInt32();
+            if (c > 0 || forcePresetSelection)
+            {
+                var selectedPresets = new List<PresetWithSource>();
+                for (int i = 0; i < c; ++i)
+                {
+                    selectedPresets.Add(new PresetWithSource
+                    {
+                        Preset = br.ReadString(),
+                        Source = br.ReadString(),
+                    });
+                }
+
+                //Move Mods and Options.
+                //Don't move ModVersions.
+                var defaultPreset = Preset.CreateDefaultPreset();
+                defaultPreset.Mods = Mods;
+                defaultPreset.Options = Options;
+                Mods = null;
+                Options = new List<Tuple<string, string>>();
+                PresetSelection = new PresetSelection(defaultPreset, selectedPresets);
+
+                ResolvePresetSelection();
             }
         }
 
@@ -116,6 +179,79 @@ namespace AMLCore.Internal
         public string[] GetPluginFiles()
         {
             return GetModFileListFromMods();
+        }
+
+        private void ResolvePresetSelection()
+        {
+            if (PresetSelection == null)
+            {
+                return;
+            }
+            if (PresetSelection.SelectedPresets.Count == 0)
+            {
+                Mods = PresetSelection.DefaultPreset.Mods.ToString();
+                Options = PresetSelection.DefaultPreset.Options.ToList();
+                return;
+            }
+
+            var loadedContainerPresets = new Dictionary<string, Dictionary<string, Preset>>();
+            var presetsWithoutSource = new Dictionary<string, Preset>();
+            var tempPresetList = new List<Preset>();
+            foreach (var p in PresetSelection.SelectedPresets)
+            {
+                if (string.IsNullOrEmpty(p.Source))
+                {
+                    presetsWithoutSource.Add(p.Preset, null);
+                }
+                if (loadedContainerPresets.ContainsKey(p.Source))
+                {
+                    continue;
+                }
+                var container = PluginLoader.GetTemporaryContainer(p.Source);
+                if (container != null)
+                {
+                    CoreLoggers.Loader.Error("Cannot find preset " + p.Preset + " from " + p.Source);
+                    continue;
+                }
+                tempPresetList.Clear();
+                container.CollectPresets(tempPresetList);
+                loadedContainerPresets.Add(p.Source, tempPresetList.ToDictionary(pp => pp.Name));
+            }
+
+            if (presetsWithoutSource.Count > 0)
+            {
+                int remaining = presetsWithoutSource.Count;
+                foreach (var pi in Preset.GetPresetsInfoFromJson())
+                {
+                    if (presetsWithoutSource.ContainsKey(pi.Name))
+                    {
+                        presetsWithoutSource[pi.Name] = new Preset(pi, false);
+                    }
+                    if (--remaining == 0)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            //Note that we must keep the order of selection.
+            var additionalPresets = new List<Preset>();
+            additionalPresets.Add(PresetSelection.DefaultPreset);
+            foreach (var p in PresetSelection.SelectedPresets)
+            {
+                if (presetsWithoutSource.TryGetValue(p.Preset, out var preset))
+                {
+                    additionalPresets.Add(preset);
+                }
+                else if (loadedContainerPresets.TryGetValue(p.Source, out var presets) &&
+                    presets.TryGetValue(p.Preset, out preset))
+                {
+                    additionalPresets.Add(preset);
+                }
+            }
+
+            //Merge presets into this.
+            MergeFrom(additionalPresets);
         }
 
         internal void SetPluginOptions(PluginContainer[] plugins)

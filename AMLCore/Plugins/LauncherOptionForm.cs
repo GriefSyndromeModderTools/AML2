@@ -183,16 +183,9 @@ namespace AMLCore.Plugins
             RefreshControls();
         }
 
-        private class LoadingPreset
-        {
-            public string Name;
-            public string Mods;
-            public string[] Options;
-        }
-
         private void ReadPresets()
         {
-            _Presets.Add(new Preset("(默认)", true));
+            _Presets.Add(Preset.CreateDefaultPreset());
             _Presets[0].Mods = string.Join(",",
                 Options.Where(oo => oo.Type == PluginType.Optimization).Select(oo => oo.AssemblyName));
 
@@ -201,33 +194,7 @@ namespace AMLCore.Plugins
                 c.CollectPresets(_Presets);
             }
 
-            foreach (var file in Directory.EnumerateFiles(PathHelper.GetPath("aml/presets/"), "*.*"))
-            {
-                try
-                {
-                    var str = File.ReadAllText(file);
-                    var list = JsonSerialization.Deserialize<LoadingPreset[]>(str);
-                    foreach (var p in list)
-                    {
-                        var n = new Preset(p.Name, false);
-                        n.Mods = p.Mods;
-                        n.Options.AddRange(p.Options
-                                .Where(oo => oo.Length > 0 && oo.Contains("="))
-                                .Select(oo => oo.Split('='))
-                                .Select(oo => new Tuple<string, string>(oo[0], oo[1])));
-                        _Presets.Add(n);
-                    }
-                }
-                catch
-                {
-                    CoreLoggers.Loader.Error("Cannot load preset file {0}", file);
-                }
-            }
-
-            //var p1 = new Preset("草草", false);
-            //p1.Mods = "StageSelectControl";
-            //p1.Options.Add(new Tuple<string, string>("StageSelectControl.SelectStagePosition", "true"));
-            //_Presets.Add(p1);
+            Preset.GetPresetsFromJson(_Presets, false);
         }
 
         private void SavePresets()
