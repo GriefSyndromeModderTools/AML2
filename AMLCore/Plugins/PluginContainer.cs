@@ -273,6 +273,7 @@ namespace AMLCore.Plugins
                         var preset = new Preset(pp.Name, false);
                         preset.Mods = pp.PluginLists;
                         preset.Options.AddRange(pp.Options);
+                        preset.SourcePlugin = AssemblyName;
                         list.Add(preset);
                     }
                 }

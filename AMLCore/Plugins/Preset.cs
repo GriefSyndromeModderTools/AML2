@@ -10,6 +10,7 @@ namespace AMLCore.Plugins
     {
         public string Name { get; set; }
         public bool Editable { get; private set; }
+        public string SourcePlugin { get; set; }
 
         public Preset(string name, bool editable)
         {
@@ -24,9 +25,9 @@ namespace AMLCore.Plugins
 
         public void ParseModsAndOptions(string[] args)
         {
-            base.Mods = "";
-            base.Options.Clear();
-            base.ParseArgumentList(args);
+            Mods = "";
+            Options.Clear();
+            ParseArgumentList(args);
         }
     }
 }
