@@ -80,6 +80,7 @@ namespace AMLCore.Internal
 
             if (GSOLoadingInjection.IsGSO)
             {
+                GSOLoadingInjection.LoadConfig();
                 GSOLoadingInjection.Inject();
                 GSOLoadingInjection.PreparePlugins(args);
             }

@@ -13,33 +13,60 @@ namespace AMLCore.Internal
 {
     internal class GSOLoadingInjection
     {
+        private enum ModCheckMode
+        {
+            Unknown = 0,
+            Disabled = 1,
+            Warn = 2,
+            Synchronize = 3,
+        }
+
         public static readonly bool IsGSO = Marshal.ReadInt32(AddressHelper.Code(0x286080)) == 0x00730067;
         public static bool IsGSOLoaded => AddressHelper.Code("gso", 0) != IntPtr.Zero;
-
-        public static bool RequireGSOLoading => ModCheckSync;
-        public static readonly bool ModCheckSync, ModCheck;
-
         public static bool IsGameStarted { get; private set; }
 
-        static GSOLoadingInjection()
+        private static ModCheckMode _checkMode;
+        private static ModCheckMode CheckMode => _checkMode == 0 ? throw new Exception("config not loaded") : _checkMode;
+        public static bool ModCheckSync => CheckMode == ModCheckMode.Synchronize;
+        public static bool ModCheck => CheckMode >= ModCheckMode.Warn;
+        public static bool RequireGSOLoading => ModCheckSync;
+
+        private static InjectedArguments _arguments;
+
+        public static void LoadConfig()
         {
-            var syncType = new IniFile("Core").Read("GSO", "ModCheckMode", "check");
+            var ini = new IniFile("Core");
+            var syncType = ini.Read("GSO", "ModCheckMode", "check");
             if (syncType == "sync")
             {
-                ModCheck = ModCheckSync = true;
+                _checkMode = ModCheckMode.Synchronize;
             }
             else if (syncType == "check")
             {
-                ModCheck = true;
-                ModCheckSync = false;
+                if (WindowsHelper.MessageBoxYesNo("联机Mod列表同步模式当前为“仅检查(check)”。\r\n" +
+                    "此模式下客机只会接收主机汇报的Mod列表并检查是否一致，但不会主动改变已经选择的Mod，" +
+                    "因此主机可能无法使用联机器上的Mod选择功能。\r\n\r\n" +
+                    "是否将Mod列表同步模式改为“自动同步(sync)”？\r\n\r\n" +
+                    "此提示只会出现一次。如果需要再次修改请自行编辑Core.ini，具体方法见使用说明。"))
+                {
+                    ini.Write("GSO", "ModCheckMode", "sync");
+                    _checkMode = ModCheckMode.Synchronize;
+                }
+                else
+                {
+                    ini.Write("GSO", "ModCheckMode", "warn");
+                    _checkMode = ModCheckMode.Warn;
+                }
+            }
+            else if (syncType == "warn")
+            {
+                _checkMode = ModCheckMode.Warn;
             }
             else
             {
-                ModCheck = ModCheckSync = false;
+                _checkMode = ModCheckMode.Disabled;
             }
         }
-
-        private static InjectedArguments _arguments;
 
         public static void Inject()
         {

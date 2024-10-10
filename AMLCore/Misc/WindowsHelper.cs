@@ -34,6 +34,11 @@ namespace AMLCore.Misc
             System.Windows.Forms.MessageBox.Show(text, "AML");
         }
 
+        public static bool MessageBoxYesNo(string text)
+        {
+            return System.Windows.Forms.MessageBox.Show(text, "AML", MessageBoxButtons.YesNo) == DialogResult.Yes;
+        }
+
         private static volatile bool _Stopped;
         
         [STAThread]
