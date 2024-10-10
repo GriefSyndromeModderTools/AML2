@@ -164,7 +164,7 @@ namespace AMLCore.Internal
         {
             var a = FunctionalModListHelper.SelectFunctionalMods(_arguments);
             FunctionalModListHelper.AddModVersionInfo(a);
-            return a.Serialize(true);
+            return a.Serialize(true, false);
         }
 
         private static void LoadingThreadEntry()

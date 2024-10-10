@@ -66,7 +66,7 @@ namespace AMLCore.Internal
         public static ShortcutArguments Create(PluginContainer[] containers, ShortcutStartupMode mode)
         {
             var ret = new ShortcutArguments();
-            ret.GetPluginOptions(containers);
+            ret.GetPluginOptions(containers, null);
             ret.Mode = mode;
             return ret;
         }

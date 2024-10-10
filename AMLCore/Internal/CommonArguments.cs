@@ -41,10 +41,10 @@ namespace AMLCore.Internal
         [EditorBrowsable(EditorBrowsableState.Never)]
         public byte[] Serialize(bool includeModVersions)
         {
-            return Serialize(includeModVersions, false);
+            return Serialize(includeModVersions, true);
         }
 
-        public byte[] Serialize(bool includeModVersions = false, bool includePresetSelection = false)
+        public byte[] Serialize(bool includeModVersions, bool includePresetSelection)
         {
             var ms = new MemoryStream();
             using (var bw = new BinaryWriter(ms, Encoding.UTF8))
@@ -217,7 +217,7 @@ namespace AMLCore.Internal
                     continue;
                 }
                 var container = PluginLoader.GetTemporaryContainer(p.Source);
-                if (container != null)
+                if (container == null)
                 {
                     CoreLoggers.Loader.Error("Cannot find preset " + p.Preset + " from " + p.Source);
                     continue;
@@ -289,9 +289,9 @@ namespace AMLCore.Internal
             }
         }
 
-        internal void GetPluginOptions(PluginContainer[] plugins)
+        internal void GetPluginOptions(PluginContainer[] plugins, PresetSelection presetSelection)
         {
-            Mods = String.Join(",", plugins.Select(p => p.AssemblyName));
+            Mods = string.Join(",", plugins.Select(p => p.AssemblyName));
             var options = new List<Tuple<string, string>>();
             var currentPlugin = "";
             Action<string, string> append = (string a, string b) =>
@@ -307,6 +307,7 @@ namespace AMLCore.Internal
                 }
             }
             Options = options;
+            PresetSelection = presetSelection;
         }
 
         protected void ParseArgumentList(string[] args)

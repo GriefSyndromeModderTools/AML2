@@ -135,7 +135,7 @@ namespace Launcher
             }
 
             //Prepare for command-line arguments
-            IntPtr dataPtr = WriteRemoteData(pInfo.hProcess, args.Serialize());
+            IntPtr dataPtr = WriteRemoteData(pInfo.hProcess, args.Serialize(false));
             if (dataPtr == IntPtr.Zero)
             {
                 Error("cannot write argument data");

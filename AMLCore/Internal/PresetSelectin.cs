@@ -22,5 +22,19 @@ namespace AMLCore.Internal
             DefaultPreset = defaultPreset;
             SelectedPresets = selectedPresets;
         }
+
+        public PresetSelection(Preset defaultPreset, IEnumerable<Preset> presets)
+        {
+            DefaultPreset = defaultPreset;
+            SelectedPresets = new List<PresetWithSource>();
+            foreach (var p in presets)
+            {
+                SelectedPresets.Add(new PresetWithSource
+                {
+                    Preset = p.Name,
+                    Source = p.SourcePlugin,
+                });
+            }
+        }
     }
 }

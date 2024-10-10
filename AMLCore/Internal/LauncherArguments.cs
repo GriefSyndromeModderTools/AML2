@@ -100,7 +100,7 @@ namespace AMLCore.Internal
         //For compatibility.
         public byte[] WriteInjectedData()
         {
-            return this.Serialize();
+            return Serialize(false, true);
         }
 
         public void LogOptions()
@@ -128,7 +128,7 @@ namespace AMLCore.Internal
             }
 
             CoreLoggers.Loader.Info("config finished from option form");
-            GetPluginOptions(dialog.Options);
+            GetPluginOptions(dialog.Options, dialog.GetPresetSelection());
             switch (dialog.LauncherMode)
             {
                 case LaunchMode.NewGame:

@@ -75,6 +75,7 @@ namespace AMLCore.Plugins
         }
 
         public PluginContainer[] Options { get; private set; }
+
         public LaunchMode LauncherMode { get; private set; }
         private List<Control> _EditControls = new List<Control>();
 
@@ -89,6 +90,12 @@ namespace AMLCore.Plugins
                 .Where(i => i.Checked)
                 .Select(i => (PluginContainer)i.Tag)
                 .ToArray();
+        }
+
+        public PresetSelection GetPresetSelection()
+        {
+            return new PresetSelection(_Presets[0],
+                GetCheckedPresetIds().Where(i => i != 0).Select(i => _Presets[i]));
         }
 
         private ShortcutArguments GetShortcutOptions(Internal.ShortcutStartupMode mode)
@@ -391,7 +398,7 @@ namespace AMLCore.Plugins
                 RefreshControls();
                 return;
             }
-            _Presets[sel].GetPluginOptions(Options);
+            _Presets[sel].GetPluginOptions(Options, null);
             _Presets[sel].Mods = String.Join(",",
                 listView1.Items.OfType<ListViewItem>()
                 .Where(i => i.Checked)
