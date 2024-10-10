@@ -2,6 +2,7 @@
 using AMLCore.Plugins;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -33,6 +34,14 @@ namespace AMLCore.Internal
             Mods = string.Join(",", aa.SelectMany(a => a.SplitMods()).Distinct());
             Options = aa.SelectMany(a => a.Options).Distinct().ToList();
             ModVersions = new Dictionary<string, string>(); //Merging presets, no version info.
+        }
+
+        //This method is provided for binary compatibility with Launcher.exe.
+        //Upon updating, the exe file has a much higher chance to be identified as a malware.
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public byte[] Serialize(bool includeModVersions)
+        {
+            return Serialize(includeModVersions, false);
         }
 
         public byte[] Serialize(bool includeModVersions = false, bool includePresetSelection = false)
