@@ -98,6 +98,7 @@ namespace AMLCore.Internal
             GSOWindowLog.Inject();
             PostGSOInjection.Invoke();
             GSOReplayRedirect.Inject();
+            GSOWindowExtension.Inject();
             //TODO run gso entry point (maybe in PostGSOInjection)
 
             CoreLoggers.GSO.Info("post-gso injection finishes");

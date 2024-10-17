@@ -28,6 +28,12 @@ namespace AMLCore.Internal
         [DllImport("kernel32.dll")]
         public static extern void GetCurrentThreadStackLimits(out IntPtr low, out IntPtr high);
 
+        [DllImport("user32.dll", EntryPoint = "CreateWindowExW")]
+        public static extern IntPtr CreateWindowEx(int dwExStyle,
+            [In, MarshalAs(UnmanagedType.LPWStr)] string className,
+            [In, MarshalAs(UnmanagedType.LPWStr)] string windowName,
+            int dwStyle, int x, int y, int w, int h, IntPtr hParent, IntPtr hMenu, IntPtr hInstance, IntPtr lpParam);
+
         [DllImport("user32.dll", EntryPoint = "SendMessageW")]
         public static extern IntPtr SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
         [DllImport("user32.dll", EntryPoint = "SendMessageW")]
