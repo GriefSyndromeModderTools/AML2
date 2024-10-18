@@ -8,6 +8,7 @@ namespace AMLCore.Internal
 {
     internal class FunctionalModListHelper
     {
+        public const string VersionOfNonExistingMod = "-";
         private static Dictionary<string, bool> _isFunctional = new Dictionary<string, bool>();
         private static Dictionary<string, string> _version = new Dictionary<string, string>();
         private static Dictionary<string, string[]> _optionIgnoreList = new Dictionary<string, string[]>();
@@ -17,7 +18,7 @@ namespace AMLCore.Internal
             var container = PluginLoader.GetTemporaryContainer(name);
             isF = container != null && (container.Type == PluginType.EffectOnly || container.Type == PluginType.Functional);
             _isFunctional.Add(name, isF);
-            v = container?.AssemblyVersion ?? "0";
+            v = container?.AssemblyVersion ?? VersionOfNonExistingMod;
             _version.Add(name, v);
             ignoreList = container?.GetExtension<IPluginOptionExtSyncArgument>()?.GetOptionSyncIgnoreList() ?? new string[0];
             _optionIgnoreList.Add(name, ignoreList);
@@ -165,16 +166,24 @@ namespace AMLCore.Internal
             }
         }
 
-        public static bool CheckModVersion(CommonArguments args)
+        public static bool CheckModVersion(CommonArguments args, out bool foundAll)
         {
+            bool matchAll = true;
             foreach (var vv in args.ModVersions)
             {
-                if (GetLocalVersion(vv.Key) != vv.Value)
+                var lv = GetLocalVersion(vv.Key);
+                if (lv == VersionOfNonExistingMod)
                 {
+                    foundAll = false;
                     return false;
                 }
+                if (lv != vv.Value)
+                {
+                    matchAll = false;
+                }
             }
-            return true;
+            foundAll = true;
+            return matchAll;
         }
     }
 }

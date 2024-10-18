@@ -32,6 +32,7 @@ namespace AMLCore.Internal
         public static bool RequireGSOLoading => ModCheckSync;
 
         private static InjectedArguments _arguments;
+        private static byte[] _replacedArguments;
 
         public static void LoadConfig()
         {
@@ -104,36 +105,43 @@ namespace AMLCore.Internal
             CoreLoggers.GSO.Info("post-gso injection finishes");
         }
 
-        //Also called when playing rep files.
-        public static void ServerGameStart()
+        public static void ReplaceArguments(byte[] replacedArgs)
         {
-            if (IsGameStarted) return;
-            IsGameStarted = true;
-
-            if (!RequireGSOLoading) return;
-            CoreLoggers.GSO.Info("server starting with original argument");
-
-            var th = new Thread(LoadingThreadEntry);
-            th.Start();
-            th.Join();
+            _replacedArguments = replacedArgs;
         }
 
-        public static void ClientGameStart(byte[] replacedArgs)
+        public static void ReplayGameStart()
+        {
+            GameStart("replay");
+        }
+
+        public static void ServerGameStart()
+        {
+            GameStart("server");
+        }
+
+        public static void ClientGameStart()
+        {
+            GameStart("client");
+        }
+
+        private static void GameStart(string sideName)
         {
             if (IsGameStarted) return;
             IsGameStarted = true;
 
             if (!RequireGSOLoading) return;
-            if (replacedArgs != null)
+
+            if (_replacedArguments != null)
             {
-                var a = InjectedArguments.Deserialize(replacedArgs);
+                var a = InjectedArguments.Deserialize(_replacedArguments);
                 FunctionalModListHelper.ReplaceFunctionalMods(_arguments, a);
 
-                CoreLoggers.GSO.Info("client starting with replaced argument: {0}", _arguments.ToString());
+                CoreLoggers.GSO.Info($"{sideName} starting with replaced argument: {_arguments}");
             }
             else
             {
-                CoreLoggers.GSO.Info("client starting with original argument");
+                CoreLoggers.GSO.Info($"{sideName} starting with original argument");
             }
 
             var th = new Thread(LoadingThreadEntry);
@@ -148,17 +156,17 @@ namespace AMLCore.Internal
             if (FunctionalModListHelper.CompareFunctionalMods(_arguments, a))
             {
                 argCheckResult = true;
-                if (FunctionalModListHelper.CheckModVersion(a))
+                if (FunctionalModListHelper.CheckModVersion(a, out _))
                 {
                     versionCheckResult = true;
                 }
             }
         }
 
-        public static bool ClientCheckModVersion(byte[] replacedArgs)
+        public static bool ClientCheckModVersion(byte[] replacedArgs, out bool foundAll)
         {
             var a = InjectedArguments.Deserialize(replacedArgs);
-            return FunctionalModListHelper.CheckModVersion(a);
+            return FunctionalModListHelper.CheckModVersion(a, out foundAll);
         }
 
         public static byte[] ServerGetModString()

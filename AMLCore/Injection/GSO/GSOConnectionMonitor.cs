@@ -288,7 +288,6 @@ namespace AMLCore.Injection.GSO
         private class ClientConnectionMonitor : IMessageFilter
         {
             private Crc32 _crc = new Crc32();
-            private byte[] _serverModString;
 
             public void FilterReceive(ConnectedPeer peer, IntPtr buffer, ref int len)
             {
@@ -299,7 +298,7 @@ namespace AMLCore.Injection.GSO
                 }
                 else if (msg == 0x45)
                 {
-                    GSOLoadingInjection.ClientGameStart(_serverModString);
+                    GSOLoadingInjection.ClientGameStart();
                 }
                 else if (msg == InternalMessageId.ReplyModString)
                 {
@@ -317,40 +316,48 @@ namespace AMLCore.Injection.GSO
                         }
                         else
                         {
-                            _serverModString = copy.Skip(1).ToArray();
+                            var serverModString = copy.Skip(1).ToArray();
                             CoreLoggers.GSO.Info("mod list message received");
                             GSOWindowLog.WriteLine(GSOLocalization.ModListReceived);
 
                             if (GSOLoadingInjection.ModCheckSync)
                             {
-                                if (GSOLoadingInjection.ClientCheckModVersion(_serverModString))
+                                var matchAll = GSOLoadingInjection.ClientCheckModVersion(serverModString, out var foundAll);
+                                if (matchAll)
                                 {
-                                    CoreLoggers.GSO.Info("versions are the same");
+                                    GSOLoadingInjection.ReplaceArguments(serverModString);
+                                    CoreLoggers.GSO.Info("mod sync: replaced");
                                     GSOWindowLog.WriteLine(GSOLocalization.ModListReplaced);
+                                }
+                                else if (foundAll)
+                                {
+                                    GSOLoadingInjection.ReplaceArguments(serverModString);
+                                    CoreLoggers.GSO.Info("mod sync: replaced, version inconsitent");
+                                    GSOWindowLog.WriteLine(GSOLocalization.ModListReplacedVersionInconsistent);
                                 }
                                 else
                                 {
-                                    CoreLoggers.GSO.Info("versions are different");
-                                    GSOWindowLog.WriteLine(GSOLocalization.ModListVersionCheckFailure);
+                                    CoreLoggers.GSO.Info("mod sync: not replaced");
+                                    GSOWindowLog.WriteLine(GSOLocalization.ModListReplaceFailed);
                                 }
                             }
                             else if (GSOLoadingInjection.ModCheck)
                             {
-                                GSOLoadingInjection.ClientCheckArgs(_serverModString, out var argCheck, out var versionCheck);
+                                GSOLoadingInjection.ClientCheckArgs(serverModString, out var argCheck, out var versionCheck);
                                 if (argCheck && versionCheck)
                                 {
-                                    CoreLoggers.GSO.Info("mod list consistent, and versions are the same");
-                                    GSOWindowLog.WriteLine(GSOLocalization.ModListArgCheckSuccess);
+                                    CoreLoggers.GSO.Info("mod validate: passed");
+                                    GSOWindowLog.WriteLine(GSOLocalization.ModListValidated);
                                 }
                                 else if (argCheck)
                                 {
-                                    CoreLoggers.GSO.Info("mod list consistent, but versions are different");
-                                    GSOWindowLog.WriteLine(GSOLocalization.ModListVersionCheckFailure);
+                                    CoreLoggers.GSO.Info("mod validate: passed, version inconsitent");
+                                    GSOWindowLog.WriteLine(GSOLocalization.ModListValidatedVersionInconsistent);
                                 }
                                 else
                                 {
-                                    CoreLoggers.GSO.Info("mod list inconsistent");
-                                    GSOWindowLog.WriteLine(GSOLocalization.ModListArgCheckFailure);
+                                    CoreLoggers.GSO.Info("mod validate: failed");
+                                    GSOWindowLog.WriteLine(GSOLocalization.ModListValidateFailed);
                                 }
                             }
                         }
@@ -372,7 +379,7 @@ namespace AMLCore.Injection.GSO
             protected override void Triggered(NativeEnvironment env)
             {
                 //TODO in the future we may extract mod information
-                GSOLoadingInjection.ServerGameStart();
+                GSOLoadingInjection.ReplayGameStart();
             }
         }
 
