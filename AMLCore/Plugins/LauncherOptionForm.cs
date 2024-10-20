@@ -43,6 +43,18 @@ namespace AMLCore.Plugins
             this.tabControl1.SelectTab(0); //TODO
         }
 
+        public bool SelectLauncherMode
+        {
+            get => button1.Visible;
+            set
+            {
+                button1.Visible = value;
+                button3.Visible = value;
+                button4.Visible = value;
+                button11.Visible = !value;
+            }
+        }
+
         private void DisableUnfinished()
         {
             //button3.Enabled = false;
@@ -165,6 +177,14 @@ namespace AMLCore.Plugins
             this.Options = GetOptions();
             this.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.LauncherMode = LaunchMode.InjectOnline;
+            this.Close();
+        }
+
+        private void button11_Click(object sender, EventArgs e)
+        {
+            this.Options = GetOptions();
+            this.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.LauncherMode = LaunchMode.NewGame;
             this.Close();
         }
 

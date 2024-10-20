@@ -20,6 +20,7 @@ namespace AMLCore.Plugins
             var containers = PluginLoader.InitializeAllInGame();
             read.SetPluginOptions(containers);
             var dialog = new LauncherOptionForm(containers, false);
+            dialog.SelectLauncherMode = false;
             dialog.LoadArgPresetOptions(read.PresetSelection);
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
