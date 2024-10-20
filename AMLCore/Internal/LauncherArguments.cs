@@ -120,7 +120,9 @@ namespace AMLCore.Internal
             var loadedPlugins = PluginLoader.InitializeAllInLauncher();
             SetPluginOptions(loadedPlugins);
 
-            var dialog = new LauncherOptionForm(loadedPlugins, allowOnlineInjection, PresetOptions);
+            var dialog = new LauncherOptionForm(loadedPlugins, allowOnlineInjection);
+            dialog.LoadArgPresetOptions(PresetOptions);
+
             if (dialog.ShowDialog() == DialogResult.Cancel)
             {
                 CoreLoggers.Loader.Info("exit from option form");

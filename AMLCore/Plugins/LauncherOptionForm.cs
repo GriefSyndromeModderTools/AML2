@@ -14,7 +14,7 @@ namespace AMLCore.Plugins
 {
     internal partial class LauncherOptionForm : Form
     {
-        public LauncherOptionForm(PluginContainer[] plugins, bool allowLoad, string presetOptions)
+        public LauncherOptionForm(PluginContainer[] plugins, bool allowLoad)
         {
             InitializeComponent();
 
@@ -41,8 +41,6 @@ namespace AMLCore.Plugins
 
             DisableUnfinished();
             this.tabControl1.SelectTab(0); //TODO
-
-            LoadArgPresetOptions(presetOptions);
         }
 
         private void DisableUnfinished()
@@ -53,7 +51,7 @@ namespace AMLCore.Plugins
             tabControl1.TabPages.RemoveAt(0);
         }
 
-        private void LoadArgPresetOptions(string presetOptions)
+        public void LoadArgPresetOptions(string presetOptions)
         {
             if (presetOptions == null) return;
             var seg = presetOptions.Split(';');
@@ -70,6 +68,27 @@ namespace AMLCore.Plugins
 
             seg[1] = "Mods=" + seg[1];
             _Presets[0].ParseModsAndOptions(seg.Skip(1).ToArray());
+
+            RefreshControls();
+        }
+
+        public void LoadArgPresetOptions(PresetSelection presetSelection)
+        {
+            if (presetSelection == null) return;
+            var presets = new HashSet<string>(presetSelection.SelectedPresets.Select(p => p.Preset));
+
+            //Start from 1.
+            for (int i = 1; i < _Presets.Count; ++i)
+            {
+                if (presets.Contains(_Presets[i].Name))
+                {
+                    listView2.Items[i].Checked = true;
+                }
+            }
+
+            _Presets[0].Mods = presetSelection.DefaultPreset.Mods;
+            _Presets[0].Options.Clear();
+            _Presets[0].Options.AddRange(presetSelection.DefaultPreset.Options);
 
             RefreshControls();
         }

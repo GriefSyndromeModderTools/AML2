@@ -110,6 +110,18 @@ namespace AMLCore.Internal
             _replacedArguments = replacedArgs;
         }
 
+        public static CommonArguments GetCurrentArguments()
+        {
+            if (_replacedArguments != null)
+            {
+                return InjectedArguments.Deserialize(_replacedArguments);
+            }
+            else
+            {
+                return _arguments;
+            }
+        }
+
         public static void ReplayGameStart()
         {
             GameStart("replay");

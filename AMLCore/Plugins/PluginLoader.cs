@@ -142,6 +142,12 @@ namespace AMLCore.Plugins
             CoreLoggers.Loader.Info("initialization finished");
         }
 
+        public static PluginContainer[] InitializeAllInGame()
+        {
+            //Same as launcher.
+            return InitializeAllInLauncher();
+        }
+
         public static PluginContainer[] InitializeAllInLauncher()
         {
             var d = PathHelper.GetPath("aml/mods");
