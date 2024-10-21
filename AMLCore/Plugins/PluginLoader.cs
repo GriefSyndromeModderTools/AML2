@@ -152,11 +152,12 @@ namespace AMLCore.Plugins
         {
             var d = PathHelper.GetPath("aml/mods");
             var plugins = Directory.EnumerateFiles(d, "*.dll").ToArray();
+            var ret = new List<PluginContainer>();
             foreach (var p in plugins)
             {
                 try
                 {
-                    InitAssembly(Assembly.LoadFile(p), false, false);
+                    ret.Add(InitAssembly(Assembly.LoadFile(p), false, false));
                 }
                 catch (Exception e)
                 {
@@ -164,7 +165,7 @@ namespace AMLCore.Plugins
                         p, e.ToString());
                 }
             }
-            return _Plugins.Values.ToArray();
+            return ret.ToArray();
         }
 
         /// <summary>

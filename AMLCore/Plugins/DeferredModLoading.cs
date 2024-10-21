@@ -22,6 +22,9 @@ namespace AMLCore.Plugins
             var dialog = new LauncherOptionForm(containers, false);
             dialog.SelectLauncherMode = false;
             dialog.LoadArgPresetOptions(read.PresetSelection);
+            dialog.DisablePresetEdit();
+            dialog.DisableNonFunctional();
+            dialog.DisableGSO();
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 write.GetPluginOptions(dialog.Options, dialog.GetPresetSelection());

@@ -140,6 +140,11 @@ namespace AMLCore.Plugins
             get { return _Option != null; }
         }
 
+        public bool HasGSOLoaded
+        {
+            get { return _GSO != null && _GSO.Length > 0; }
+        }
+
         public PluginType Type
         {
             get { return _Type; }

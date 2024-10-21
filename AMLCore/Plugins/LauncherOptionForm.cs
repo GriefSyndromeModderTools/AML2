@@ -30,6 +30,7 @@ namespace AMLCore.Plugins
                 {
                     var page = new TabPage(p.DisplayName);
                     page.Controls.Add(ctrl);
+                    page.Tag = p;
                     ctrl.Dock = DockStyle.Fill;
                     tabControl1.TabPages.Add(page);
                     _EditControls.Add(ctrl);
@@ -41,6 +42,9 @@ namespace AMLCore.Plugins
 
             DisableUnfinished();
             this.tabControl1.SelectTab(0); //TODO
+
+            PrepareDisableListViewItem(listView1);
+            PrepareDisableListViewItem(listView2);
         }
 
         public bool SelectLauncherMode
@@ -52,6 +56,121 @@ namespace AMLCore.Plugins
                 button3.Visible = value;
                 button4.Visible = value;
                 button11.Visible = !value;
+            }
+        }
+
+        public void DisablePresetEdit()
+        {
+            button7.Enabled = false;
+            button12.Enabled = false;
+        }
+
+        public void DisableNonFunctional()
+        {
+            HashSet<string> excludedItems = new HashSet<string>();
+            foreach (var m in Options)
+            {
+                if (m.Type != PluginType.Functional)
+                {
+                    excludedItems.Add(m.InternalName);
+                }
+            }
+            DisableItems(excludedItems);
+        }
+
+        public void DisableGSO()
+        {
+            HashSet<string> excludedItems = new HashSet<string>();
+            foreach (var m in Options)
+            {
+                if (m.HasGSOLoaded)
+                {
+                    excludedItems.Add(m.InternalName);
+                }
+            }
+            DisableItems(excludedItems);
+        }
+
+        private void DisableItems(HashSet<string> excludedItems)
+        {
+            foreach (var modItem in listView1.Items.OfType<ListViewItem>())
+            {
+                var m = (PluginContainer)modItem.Tag;
+                if (excludedItems.Contains(m.InternalName))
+                {
+                    DisableListViewItem(modItem);
+                }
+            }
+            foreach (var presetItem in listView2.Items.OfType<ListViewItem>())
+            {
+                var p = (Preset)presetItem.Tag;
+                if (p == _Presets[0])
+                {
+                    continue;
+                }
+                foreach (var m in p.SplitMods())
+                {
+                    if (excludedItems.Contains(m))
+                    {
+                        DisableListViewItem(presetItem);
+                        break;
+                    }
+                }
+            }
+            foreach (var tab in tabControl1.TabPages.OfType<TabPage>())
+            {
+                var m = (PluginContainer)tab.Tag;
+                if (m != null && excludedItems.Contains(m.InternalName))
+                {
+                    foreach (var ctrl in tab.Controls.OfType<Control>())
+                    {
+                        ctrl.Enabled = false;
+                    }
+                }
+            }
+        }
+
+        private static void PrepareDisableListViewItem(ListView listView)
+        {
+            listView.Tag = new HashSet<object>();
+            listView.ItemSelectionChanged += (sender, e) =>
+            {
+                var item = e.Item;
+                if (item.ForeColor != Color.Gray)
+                {
+                    return;
+                }
+                if (e.Item.Selected)
+                {
+                    e.Item.Selected = false;
+                }
+            };
+            listView.ItemCheck += (sender, e) =>
+            {
+                var item = ((ListView)sender).Items[e.Index];
+                if (item.ForeColor != Color.Gray)
+                {
+                    return;
+                }
+                var shouldBeChecked = ((HashSet<object>)((ListView)sender).Tag).Contains(item.Tag);
+                if (shouldBeChecked != (e.NewValue == CheckState.Checked))
+                {
+                    e.NewValue = shouldBeChecked ? CheckState.Checked : CheckState.Unchecked;
+                    //item.Checked = shouldBeChecked;
+                }
+            };
+        }
+
+        private static void DisableListViewItem(ListViewItem listViewItem)
+        {
+            if (listViewItem.ForeColor == Color.Gray)
+            {
+                return;
+            }
+            listViewItem.ForeColor = Color.Gray;
+            if (listViewItem.Checked)
+            {
+                ((HashSet<object>)listViewItem.ListView.Tag).Add(listViewItem.Tag);
             }
         }
 
