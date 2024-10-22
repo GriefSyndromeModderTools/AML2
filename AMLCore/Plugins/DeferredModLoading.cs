@@ -1,4 +1,6 @@
-﻿using AMLCore.Internal;
+﻿using AMLCore.Injection.GSO;
+using AMLCore.Internal;
+using AMLCore.Misc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +12,7 @@ namespace AMLCore.Plugins
     {
         public bool Check => GSOLoadingInjection.ModCheck;
         public bool Sync => GSOLoadingInjection.ModCheckSync;
+        public bool AllowModSelection => !Sync || !GSOConnectionStatus.IsClient;
     }
 
     public static class DeferredModLoading
@@ -23,30 +26,11 @@ namespace AMLCore.Plugins
 
         public static GSOModSyncMode GSOModSyncMode { get; } = new GSOModSyncMode();
 
-        private static bool ShowModSelectionDialogInternal(CommonArguments read, CommonArguments write)
-        {
-            var containers = PluginLoader.InitializeAllInGame();
-            read.SetPluginOptions(containers);
-            var dialog = new LauncherOptionForm(containers, false);
-            dialog.SelectLauncherMode = false;
-            dialog.LoadArgPresetOptions(read.PresetSelection);
-            dialog.DisablePresetEdit();
-            dialog.DisableNonFunctional();
-            dialog.DisableGSO();
-            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                write.GetPluginOptions(dialog.Options, dialog.GetPresetSelection());
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
         public static bool ShowModSelectionDialog()
         {
-            if (!GSOLoadingInjection.IsGSO || GSOLoadingInjection.IsGameStarted)
+            if (!GSOLoadingInjection.IsGSO ||
+                GSOLoadingInjection.IsGameStarted ||
+                !AllowModSelectionInternal())
             {
                 return false;
             }
@@ -57,6 +41,48 @@ namespace AMLCore.Plugins
             }
             GSOLoadingInjection.ReplaceArguments(result.Serialize(false, true));
             return true;
+        }
+
+        private static bool ShowModSelectionDialogInternal(CommonArguments read, CommonArguments write)
+        {
+            var containers = PluginLoader.InitializeAllInGame();
+            read.SetPluginOptions(containers);
+            var dialog = new LauncherOptionForm(containers, false);
+            dialog.SelectLauncherMode = false;
+            dialog.LoadArgPresetOptions(read.PresetSelection);
+            dialog.DisablePresetEdit();
+            dialog.DisableNonFunctional();
+            dialog.DisableGSO();
+            dialog.FormClosing += (sender, e) =>
+            {
+                if (e.CloseReason == System.Windows.Forms.CloseReason.UserClosing &&
+                    dialog.DialogResult == System.Windows.Forms.DialogResult.OK)
+                {
+                    if (!AllowModSelectionInternal())
+                    {
+                        WindowsHelper.MessageBox("当前连结状态下无法修改Mod列表，请点击取消。");
+                        e.Cancel = true;
+                    }
+                }
+            };
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                if (!AllowModSelectionInternal())
+                {
+                    return false;
+                }
+                write.GetPluginOptions(dialog.Options, dialog.GetPresetSelection());
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        private static bool AllowModSelectionInternal()
+        {
+            return GSOModSyncMode.AllowModSelection;
         }
     }
 }
