@@ -6,6 +6,12 @@ using System.Text;
 
 namespace AMLCore.Plugins
 {
+    public sealed class GSOModSyncMode
+    {
+        public bool Check => GSOLoadingInjection.ModCheck;
+        public bool Sync => GSOLoadingInjection.ModCheckSync;
+    }
+
     public static class DeferredModLoading
     {
         //This class will contain API related with deferred loading of mods.
@@ -14,6 +20,8 @@ namespace AMLCore.Plugins
         //Currently when AML is loaded in GSO, mod loading is automatically deferred.
         //For other online tools, AML cannot automatically detect it, so it has to request AML to do so.
         //Before all these happen, we have the mod selection API in this class.
+
+        public static GSOModSyncMode GSOModSyncMode { get; } = new GSOModSyncMode();
 
         private static bool ShowModSelectionDialogInternal(CommonArguments read, CommonArguments write)
         {
