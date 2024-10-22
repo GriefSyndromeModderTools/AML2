@@ -117,7 +117,7 @@ namespace AMLCore.Plugins
             CoreLoggers.Loader.Info("gso entry points finished");
         }
 
-        public static void Initialize(InjectedArguments args, bool loadNormalEntry, bool loadGSOEntry)
+        public static void Initialize(CommonArguments args, bool loadNormalEntry, bool loadGSOEntry)
         {
             InitCorePlugin();
             Queue<string> loadList = new Queue<string>(args.GetPluginFiles());

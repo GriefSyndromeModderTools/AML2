@@ -31,8 +31,9 @@ namespace AMLCore.Internal
         public static bool ModCheck => CheckMode >= ModCheckMode.Warn;
         public static bool RequireGSOLoading => ModCheckSync;
 
-        private static InjectedArguments _arguments;
+        private static InjectedArguments _originalArguments;
         private static byte[] _replacedArguments;
+        private static CommonArguments _mergedArguments;
 
         public static void LoadConfig()
         {
@@ -76,7 +77,7 @@ namespace AMLCore.Internal
 
         public static void PreparePlugins(InjectedArguments args)
         {
-            _arguments = args;
+            _originalArguments = args;
             PluginLoader.Initialize(args, false, true);
             PluginLoader.RunGSOEntryPoints();
         }
@@ -118,7 +119,7 @@ namespace AMLCore.Internal
             }
             else
             {
-                return _arguments;
+                return _originalArguments;
             }
         }
 
@@ -147,12 +148,14 @@ namespace AMLCore.Internal
             if (_replacedArguments != null)
             {
                 var a = InjectedArguments.Deserialize(_replacedArguments);
-                FunctionalModListHelper.ReplaceFunctionalMods(_arguments, a);
+                _mergedArguments = new CommonArguments(new[] { _originalArguments });
+                FunctionalModListHelper.ReplaceFunctionalMods(_mergedArguments, a);
 
-                CoreLoggers.GSO.Info($"{sideName} starting with replaced argument: {_arguments}");
+                CoreLoggers.GSO.Info($"{sideName} starting with replaced argument: {_originalArguments}");
             }
             else
             {
+                _mergedArguments = _originalArguments;
                 CoreLoggers.GSO.Info($"{sideName} starting with original argument");
             }
 
@@ -165,7 +168,7 @@ namespace AMLCore.Internal
         {
             argCheckResult = versionCheckResult = false;
             var a = InjectedArguments.Deserialize(replacedArgs);
-            if (FunctionalModListHelper.CompareFunctionalMods(_arguments, a))
+            if (FunctionalModListHelper.CompareFunctionalMods(GetCurrentArguments(), a))
             {
                 argCheckResult = true;
                 if (FunctionalModListHelper.CheckModVersion(a, out _))
@@ -183,7 +186,7 @@ namespace AMLCore.Internal
 
         public static byte[] ServerGetModString()
         {
-            var a = FunctionalModListHelper.SelectFunctionalMods(_arguments);
+            var a = FunctionalModListHelper.SelectFunctionalMods(GetCurrentArguments());
             FunctionalModListHelper.AddModVersionInfo(a);
             return a.Serialize(true, false);
         }
@@ -191,7 +194,7 @@ namespace AMLCore.Internal
         private static void LoadingThreadEntry()
         {
             ThreadHelper.InitInternalThread("GSOInject");
-            PluginLoader.Initialize(_arguments, true, false);
+            PluginLoader.Initialize(_mergedArguments, true, false);
             PluginLoader.RunEntryPoints();
         }
 
