@@ -171,6 +171,7 @@ namespace AMLCore.Injection.GSO
             for (int i = 0; i < GSOExtensionMenu._createdMenuItems.Count; ++i)
             {
                 var item = GSOExtensionMenu._createdMenuItems[i];
+                item.Item.TriggerBeforeShow();
                 if (item.State != item.Item.State)
                 {
                     var s = item.Item.State;

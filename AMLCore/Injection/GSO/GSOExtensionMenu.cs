@@ -14,6 +14,7 @@ namespace AMLCore.Injection.GSO
             public bool FinishGroup { get; }
             public MenuItemState State;
 
+            public event EventHandler BeforeShow;
             public event EventHandler Click;
 
             public MenuItemInfo(string text)
@@ -26,6 +27,11 @@ namespace AMLCore.Injection.GSO
                 Text = text;
                 StartGroup = startGroup;
                 FinishGroup = finishGroup;
+            }
+
+            internal void TriggerBeforeShow()
+            {
+                BeforeShow?.Invoke(this, EventArgs.Empty);
             }
 
             internal void TriggerClick()
